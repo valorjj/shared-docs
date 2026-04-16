@@ -28,6 +28,17 @@ const guides: Guide[] = [
     color: 'navy',
   },
   {
+    id: 'cleaning',
+    emoji: '🧹',
+    title: '입주 청소 가이드',
+    subtitle: '권선대우 325동201호 · 32평',
+    description: '전체 철거 후 입주 청소. 재질별 세제, 공간별 순서, 2인 주말 플랜.',
+    path: '/cleaning',
+    status: 'done',
+    tags: ['입주청소', '인테리어'],
+    color: 'teal',
+  },
+  {
     id: 'interior',
     emoji: '🏠',
     title: '인테리어 체크리스트',
