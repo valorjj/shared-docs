@@ -277,6 +277,29 @@
 /* ── DIVIDER ── */
 .divider { height: 1px; background: var(--border); margin: 24px 0; }
 
+/* ── DISTRICT CARDS ── */
+.district-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+.district-card { background: #fff; border-radius: var(--r12); border: 1px solid var(--border); overflow: hidden; transition: transform .15s, box-shadow .15s; }
+.district-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,.08); }
+.district-card--recommended { border: 2px solid var(--gold); box-shadow: 0 4px 16px rgba(184,145,58,.15); grid-column: 1 / -1; }
+@media (min-width: 700px) {
+  .district-card--recommended { display: grid; grid-template-columns: 280px 1fr; }
+  .district-card--recommended .district-head { border-bottom: none; border-right: 1px solid var(--border); }
+}
+.district-head { padding: 18px 20px; background: var(--cream); border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 4px; }
+.district-head--rec { background: linear-gradient(135deg, #F8F0DA 0%, #FBF4E2 100%); }
+.district-num { font-family: var(--serif); font-size: 26px; font-weight: 600; color: var(--paris); }
+.district-name { font-size: 13px; color: var(--muted); font-weight: 400; }
+.district-badge { display: inline-block; font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 12px; background: var(--paris-bg); color: var(--paris); margin-top: 6px; width: fit-content; }
+.district-badge--rec { background: var(--gold-bg); color: #7A5C10; border: 1px solid rgba(184,145,58,.3); }
+.district-body { padding: 18px 20px; }
+.district-price { font-size: 13px; font-weight: 700; color: var(--paris); margin-bottom: 10px; background: var(--paris-bg); display: inline-block; padding: 2px 10px; border-radius: 6px; }
+.district-desc { font-size: 13px; color: var(--text); line-height: 1.7; margin-bottom: 12px; }
+.district-desc strong { color: var(--text); }
+.district-pros, .district-cons { list-style: none; padding: 0; margin: 0 0 8px; }
+.district-pros li, .district-cons li { font-size: 12px; color: var(--muted); line-height: 1.7; padding: 2px 0; }
+.district-pros li strong, .district-cons li strong { color: var(--text); }
+
 /* ── Responsive ── */
 @media (max-width: 640px) {
   .hero { padding: 40px 20px 36px; }

@@ -297,6 +297,174 @@ export default function Honeymoon() {
         </div>
       </div>
 
+      {/* ══ PARIS DISTRICT GUIDE ══ */}
+      <div className="section">
+        <div className="wrap">
+          <div className="sec-head">
+            <div className="sec-eyebrow">파리 숙소 가이드</div>
+            <div className="sec-title">어느 구(arrondissement)에 묵을까?</div>
+            <div className="sec-sub">파리는 1~20구까지 달팽이 모양으로 펼쳐져요. 구마다 분위기와 가격이 완전히 다릅니다.</div>
+          </div>
+
+          <div className="district-grid">
+            {/* 15구 — 추천 */}
+            <div className="district-card district-card--recommended">
+              <div className="district-head district-head--rec">
+                <div className="district-num">15구</div>
+                <div className="district-name">Vaugirard</div>
+                <span className="district-badge district-badge--rec">⭐ 아내 추천</span>
+              </div>
+              <div className="district-body">
+                <div className="district-price">에어비앤비 1박 €80~130</div>
+                <div className="district-desc">
+                  파리에서 <strong>가장 넓고 인구가 많은 구</strong>. 관광지가 아니라 현지인 동네 — 그래서 가성비가 압도적이에요.
+                  에펠탑 도보 15~20분, 메트로 6·12호선으로 어디든 20분 이내. 대형 마트·빵집·레스토랑이 일상적 가격.
+                </div>
+                <ul className="district-pros">
+                  <li>✅ 에펠탑 도보권 — 야경 산책 가능</li>
+                  <li>✅ 1박 €80~130 — 마레·생제르맹 대비 30~40% 저렴</li>
+                  <li>✅ 현지인 동네라 치안 양호, 조용함</li>
+                  <li>✅ Rue du Commerce 상점가 — 마트·약국·카페 밀집</li>
+                  <li>✅ RER C로 베르사유 접근 편리</li>
+                </ul>
+                <ul className="district-cons">
+                  <li>⚠️ 밤 문화·트렌디한 바는 적음</li>
+                  <li>⚠️ 관광 중심부(루브르·마레)까지 메트로 20~25분</li>
+                </ul>
+              </div>
+            </div>
+
+            {/* 4구 마레 */}
+            <div className="district-card">
+              <div className="district-head">
+                <div className="district-num">3~4구</div>
+                <div className="district-name">Le Marais</div>
+                <span className="district-badge">인기 No.1</span>
+              </div>
+              <div className="district-body">
+                <div className="district-price">에어비앤비 1박 €130~200</div>
+                <div className="district-desc">
+                  관광객 인기 1위. 파리에서 가장 활기찬 동네. 갤러리·빈티지숍·팔라펠·카페가 골목마다.
+                  노트르담·바스티유·보주 광장 도보권.
+                </div>
+                <ul className="district-pros">
+                  <li>✅ 도보로 주요 명소 접근</li>
+                  <li>✅ 밤까지 활기찬 분위기</li>
+                  <li>✅ 맛집·카페 밀집</li>
+                </ul>
+                <ul className="district-cons">
+                  <li>⚠️ 가격대 높음 — 같은 조건 15구 대비 1.5~2배</li>
+                  <li>⚠️ 주말 인파 많음</li>
+                </ul>
+              </div>
+            </div>
+
+            {/* 6구 생제르맹 */}
+            <div className="district-card">
+              <div className="district-head">
+                <div className="district-num">5~6구</div>
+                <div className="district-name">Saint-Germain / Latin Quarter</div>
+                <span className="district-badge">클래식</span>
+              </div>
+              <div className="district-body">
+                <div className="district-price">에어비앤비 1박 €140~220</div>
+                <div className="district-desc">
+                  파리의 클래식. 뤽상부르 공원, Café de Flore, 셰익스피어 서점. 고급스럽고 조용한 분위기.
+                  오르세 미술관·로댕 미술관 도보권.
+                </div>
+                <ul className="district-pros">
+                  <li>✅ 파리 감성 최고 — 신혼여행 분위기</li>
+                  <li>✅ 치안 우수</li>
+                  <li>✅ 뤽상부르 공원 조깅·산책</li>
+                </ul>
+                <ul className="district-cons">
+                  <li>⚠️ 파리에서 가장 비싼 구 중 하나</li>
+                  <li>⚠️ 에펠탑까지 메트로 필요</li>
+                </ul>
+              </div>
+            </div>
+
+            {/* 7구 */}
+            <div className="district-card">
+              <div className="district-head">
+                <div className="district-num">7구</div>
+                <div className="district-name">Tour Eiffel / Invalides</div>
+                <span className="district-badge">에펠탑</span>
+              </div>
+              <div className="district-body">
+                <div className="district-price">에어비앤비 1박 €120~180</div>
+                <div className="district-desc">
+                  에펠탑이 있는 구. 앵발리드·로댕 미술관 도보권. 조용한 주거 지역으로 치안 최상.
+                </div>
+                <ul className="district-pros">
+                  <li>✅ 에펠탑 바로 옆 — 방에서 야경 가능한 숙소도</li>
+                  <li>✅ 치안 최상급</li>
+                  <li>✅ 15구와 인접 — 가성비 식당 접근 가능</li>
+                </ul>
+                <ul className="district-cons">
+                  <li>⚠️ 밤에 조용함 — 바·클럽 거의 없음</li>
+                  <li>⚠️ 마레·오페라 지역까지 거리 있음</li>
+                </ul>
+              </div>
+            </div>
+
+            {/* 9구 */}
+            <div className="district-card">
+              <div className="district-head">
+                <div className="district-num">9~10구</div>
+                <div className="district-name">Opéra / Canal Saint-Martin</div>
+                <span className="district-badge">가성비</span>
+              </div>
+              <div className="district-body">
+                <div className="district-price">에어비앤비 1박 €90~140</div>
+                <div className="district-desc">
+                  오페라 가르니에·갤러리 라파예트 백화점 도보권. 10구 생마르탱 운하 주변은 힙한 카페·바 밀집.
+                </div>
+                <ul className="district-pros">
+                  <li>✅ 교통 허브 — 파리 북역·동역 가까움</li>
+                  <li>✅ 마레·몽마르트르 사이 위치</li>
+                  <li>✅ 15구만큼은 아니지만 합리적 가격</li>
+                </ul>
+                <ul className="district-cons">
+                  <li>⚠️ 10구 북역 주변은 밤에 혼잡·소란</li>
+                  <li>⚠️ 에펠탑까지 메트로 25분+</li>
+                </ul>
+              </div>
+            </div>
+
+            {/* 11구 */}
+            <div className="district-card">
+              <div className="district-head">
+                <div className="district-num">11구</div>
+                <div className="district-name">Bastille / Oberkampf</div>
+                <span className="district-badge">가성비</span>
+              </div>
+              <div className="district-body">
+                <div className="district-price">에어비앤비 1박 €80~120</div>
+                <div className="district-desc">
+                  바스티유 광장 중심. 파리 젊은층 나이트라이프 성지. 자연와인 바·라이브 클럽 밀집.
+                  마레지구 바로 옆이라 접근성 좋음.
+                </div>
+                <ul className="district-pros">
+                  <li>✅ 마레지구 도보 5분</li>
+                  <li>✅ 가격 합리적 — 15구와 비슷한 수준</li>
+                  <li>✅ 밤 문화 풍부</li>
+                </ul>
+                <ul className="district-cons">
+                  <li>⚠️ 밤에 시끄러울 수 있음 (바 밀집 구역)</li>
+                  <li>⚠️ 에펠탑·개선문까지 거리 있음</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div className="tip-box" style={{ marginTop: 20 }}>
+            <span>💡</span>
+            <span><strong>결론: 15구 Vaugirard 강력 추천.</strong> 신혼여행 3박이면 숙소비 차이가 €100~200 정도. 그 돈으로 Jan Restaurant 디너 한 번 더 가능. 에펠탑 야경도 걸어서 보러 갈 수 있고, Rue du Commerce에서 현지인처럼 장도 볼 수 있어요.</span>
+          </div>
+        </div>
+      </div>
+
       {/* ══ A안 ITINERARY ══ */}
       <div className={`plan-content ${plan === 'a' ? 'active' : ''}`}>
         {/* 파리 A안 */}
@@ -337,7 +505,7 @@ export default function Honeymoon() {
                   <div className="sched-time-row"><div className="sched-t">밤</div><div className="sched-c"><strong>마레지구 저녁</strong> — 숙소 근처 비스트로 또는 편의점 간단히. 오늘은 이동만으로 충분.</div></div>
                   <div className="tip-box"><span>💡</span><span>파리 도착 첫날 — 비행 12시간 후입니다. 진짜 아무것도 안 해도 됩니다.</span></div>
                   <div className="links-row">
-                    <a href="https://www.paris.fr/en" target="_blank" rel="noopener noreferrer" className="link-btn link-btn-paris">🗼 Paris 공식</a>
+                    <a href="https://www.paris.fr" target="_blank" rel="noopener noreferrer" className="link-btn link-btn-paris">🗼 Paris 공식</a>
                   </div>
                 </div>
               </div>
@@ -665,7 +833,7 @@ export default function Honeymoon() {
                   <div className="sched-time-row"><div className="sched-t">20:00</div><div className="sched-c"><strong>아시아나 직항 출발</strong> → 인천</div></div>
                   <div className="links-row">
                     <a href="https://www.boqueria.barcelona" target="_blank" rel="noopener noreferrer" className="link-btn link-btn-bcn">🥩 보케리아 시장</a>
-                    <a href="https://www.laparadeta.com" target="_blank" rel="noopener noreferrer" className="link-btn link-btn-bcn">🦐 La Paradeta</a>
+                    <a href="https://laparadeta.com" target="_blank" rel="noopener noreferrer" className="link-btn link-btn-bcn">🦐 La Paradeta</a>
                   </div>
                 </div>
               </div>
@@ -827,7 +995,7 @@ export default function Honeymoon() {
                 <div className="sched-time-row"><div className="sched-t">저녁</div><div className="sched-c"><strong>El Nacional</strong> — 그랜드 푸드홀. 여러 콘셉트 공간.</div></div>
                 <div className="links-row">
                   <a href="https://www.sagradafamilia.org" target="_blank" rel="noopener noreferrer" className="link-btn link-btn-bcn">⛪ 사그라다 파밀리아</a>
-                  <a href="https://www.santpaurecinte.org" target="_blank" rel="noopener noreferrer" className="link-btn link-btn-bcn">🏛 산타 파우 병원</a>
+                  <a href="https://santpaubarcelona.org" target="_blank" rel="noopener noreferrer" className="link-btn link-btn-bcn">🏛 산타 파우 병원</a>
                   <a href="https://www.elnacionalbcn.com" target="_blank" rel="noopener noreferrer" className="link-btn link-btn-bcn">🍽 El Nacional</a>
                 </div>
               </div>
@@ -844,7 +1012,7 @@ export default function Honeymoon() {
                 <div className="sched-time-row"><div className="sched-t">오후</div><div className="sched-c"><strong>바르셀로네타 해변</strong> 산책 + 해산물 저녁</div></div>
                 <div className="links-row">
                   <a href="https://www.parkguell.barcelona" target="_blank" rel="noopener noreferrer" className="link-btn link-btn-bcn">🌿 파크 구엘 예약</a>
-                  <a href="https://www.museupicasso.bcn.cat" target="_blank" rel="noopener noreferrer" className="link-btn link-btn-bcn">🎨 피카소 미술관</a>
+                  <a href="https://www.museupicassobcn.org" target="_blank" rel="noopener noreferrer" className="link-btn link-btn-bcn">🎨 피카소 미술관</a>
                   <a href="https://www.boqueria.barcelona" target="_blank" rel="noopener noreferrer" className="link-btn link-btn-bcn">🥩 보케리아 시장</a>
                 </div>
               </div>
