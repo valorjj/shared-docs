@@ -1,0 +1,116 @@
+import { useNavigate } from 'react-router-dom'
+import './Hub.css'
+
+type GuideStatus = 'done' | 'wip' | 'todo'
+
+interface Guide {
+  id: string
+  emoji: string
+  title: string
+  subtitle: string
+  description: string
+  path: string
+  status: GuideStatus
+  tags: string[]
+  color: string
+}
+
+const guides: Guide[] = [
+  {
+    id: 'honeymoon',
+    emoji: '✈️',
+    title: '신혼여행 가이드',
+    subtitle: '파리 · 니스 · 바르셀로나 9박 10일',
+    description: 'A안/B안 비교, 캘린더 뷰, 공식 링크 총정리.',
+    path: '/honeymoon',
+    status: 'done',
+    tags: ['여행', '유럽'],
+    color: 'navy',
+  },
+  {
+    id: 'interior',
+    emoji: '🏠',
+    title: '인테리어 체크리스트',
+    subtitle: '권선대우 아파트 리모델링',
+    description: '공정별 체크사항 및 시공 메모.',
+    path: '/interior',
+    status: 'todo',
+    tags: ['리모델링', '체크리스트'],
+    color: 'teal',
+  },
+  {
+    id: 'loan',
+    emoji: '🏦',
+    title: '대출 가이드',
+    subtitle: '디딤돌 · 신생아 특례',
+    description: '대출 구조, 조건, 갈아타기 타이밍 정리.',
+    path: '/loan',
+    status: 'todo',
+    tags: ['대출', '부동산'],
+    color: 'green',
+  },
+  {
+    id: 'stock',
+    emoji: '📈',
+    title: '주식 투자 가이드',
+    subtitle: 'ISA · TIGER S&P500 ETF',
+    description: 'ISA 계좌, ETF 적립식 전략 총정리.',
+    path: '/stock',
+    status: 'todo',
+    tags: ['투자', 'ETF'],
+    color: 'orange',
+  },
+]
+
+const statusLabel: Record<GuideStatus, string> = {
+  done: '완성',
+  wip: '작성 중',
+  todo: '준비 중',
+}
+
+export default function Hub() {
+  const navigate = useNavigate()
+
+  const handleClick = (guide: Guide) => {
+    if (guide.status === 'todo') return
+    navigate(guide.path)
+  }
+
+  return (
+    <div className="hub">
+      <header className="hub__header">
+        <h1 className="hub__title">우리의 가이드북</h1>
+        <p className="hub__subtitle">필요한 정보를 한눈에 정리했어요</p>
+      </header>
+
+      <main className="hub__grid">
+        {guides.map((guide) => (
+          <article
+            key={guide.id}
+            className={`card card--${guide.color} ${guide.status === 'todo' ? 'card--disabled' : ''}`}
+            onClick={() => handleClick(guide)}
+          >
+            <div className="card__emoji">{guide.emoji}</div>
+            <span className={`card__badge card__badge--${guide.status}`}>
+              {statusLabel[guide.status]}
+            </span>
+            <h2 className="card__title">{guide.title}</h2>
+            <p className="card__subtitle">{guide.subtitle}</p>
+            <p className="card__desc">{guide.description}</p>
+            <div className="card__tags">
+              {guide.tags.map((tag) => (
+                <span key={tag} className="card__tag">
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </article>
+        ))}
+      </main>
+
+      <footer className="hub__footer">
+        <p>&copy; 2026 &mdash; with ❤️</p>
+      </footer>
+    </div>
+  )
+}
