@@ -1,11 +1,22 @@
 import { useNavigate } from 'react-router-dom'
+import FloatingToc, { type TocItem } from '../components/FloatingToc'
 import './Cleaning.css'
+
+const tocItems: TocItem[] = [
+  { id: 'sec-principles', label: '3가지 대원칙', emoji: '⚠️' },
+  { id: 'sec-materials', label: '재질별 세제', emoji: '🧴' },
+  { id: 'sec-rooms', label: '공간별 순서', emoji: '🏠' },
+  { id: 'sec-supplies', label: '추천 용품', emoji: '🛒' },
+  { id: 'sec-schedule', label: '주말 타임라인', emoji: '⏰' },
+]
 
 export default function Cleaning() {
   const navigate = useNavigate()
 
   return (
     <div className="cleaning">
+      <FloatingToc items={tocItems} />
+
       <button className="back-btn" onClick={() => navigate('/')}>
         ← 홈으로
       </button>
@@ -32,7 +43,7 @@ export default function Cleaning() {
       <div className="spacer"></div>
 
       {/* ══ SECTION 1: 대원칙 ══ */}
-      <div className="sec-header">
+      <div className="sec-header" id="sec-principles">
         <div className="sec-num">PRINCIPLE 01</div>
         <div className="sec-title">절대로 어기면 안 되는 3가지 대원칙</div>
       </div>
@@ -108,7 +119,7 @@ export default function Cleaning() {
       <div className="spacer"></div>
 
       {/* ══ SECTION 2: 재질별 세제 가이드 ══ */}
-      <div className="sec-header">
+      <div className="sec-header" id="sec-materials">
         <div className="sec-num">PRINCIPLE 02</div>
         <div className="sec-title">재질별 세제 선택 완전 가이드</div>
       </div>
@@ -225,7 +236,7 @@ export default function Cleaning() {
       <div className="spacer"></div>
 
       {/* ══ SECTION 3: 공간별 청소 순서 ══ */}
-      <div className="sec-header">
+      <div className="sec-header" id="sec-rooms">
         <div className="sec-num">PRINCIPLE 03</div>
         <div className="sec-title">공간별 청소 순서 상세 가이드</div>
       </div>
@@ -349,7 +360,7 @@ export default function Cleaning() {
       <div className="spacer"></div>
 
       {/* ══ SECTION 4: 추천 용품 ══ */}
-      <div className="sec-header">
+      <div className="sec-header" id="sec-supplies">
         <div className="sec-num">SUPPLY LIST</div>
         <div className="sec-title">추천 용품 목록 (다이소 + 마트)</div>
       </div>
@@ -382,7 +393,7 @@ export default function Cleaning() {
       <div className="spacer"></div>
 
       {/* ══ SECTION 5: 2인 주말 스케줄 ══ */}
-      <div className="sec-header">
+      <div className="sec-header" id="sec-schedule">
         <div className="sec-num">SCHEDULE</div>
         <div className="sec-title">2인 주말 청소 타임라인</div>
       </div>

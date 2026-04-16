@@ -1,5 +1,7 @@
 /* ── Cleaning Guide Styles ── */
 .cleaning {
+  scroll-behavior: smooth;
+  scroll-padding-top: 20px;
   --ink: #1a1714;
   --ink2: #3d3833;
   --ink3: #6b6560;
@@ -137,6 +139,28 @@
 /* ── BACK BTN ── */
 .cleaning .back-btn { position: fixed; top: 16px; left: 16px; z-index: 200; display: flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 24px; border: none; background: rgba(255,255,255,0.9); backdrop-filter: blur(8px); color: var(--ink); font-family: var(--sans); font-size: 13px; font-weight: 500; cursor: pointer; box-shadow: 0 2px 12px rgba(0,0,0,0.1); transition: transform 0.15s, box-shadow 0.15s; }
 .cleaning .back-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,0,0,0.15); }
+
+@media (max-width: 640px) {
+  .cleaning .hero { padding: 40px 16px 36px; }
+  .cleaning .hero h1 { font-size: 22px; }
+  .cleaning .sec-header { padding: 32px 16px 0; }
+  .cleaning .principles { padding: 0 16px; }
+  .cleaning .principle { flex-direction: column; }
+  .cleaning .principle-num { min-width: unset; padding: 12px; font-size: 20px; }
+  .cleaning .mat-section { padding: 0 16px; }
+  .cleaning .mat-card-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .cleaning .room-section { padding: 0 16px; }
+  .cleaning .room-header { flex-wrap: wrap; gap: 8px; padding: 14px 16px; }
+  .cleaning .room-note { margin-left: 0; }
+  .cleaning .supply-section { padding: 0 16px; }
+  .cleaning .supply-table { display: block; overflow-x: auto; }
+  .cleaning .supply-table th, .cleaning .supply-table td { padding: 8px 10px; }
+  .cleaning .schedule-section { padding: 0 16px; }
+  .cleaning .time-row { flex-direction: column; }
+  .cleaning .time-cell { min-width: unset; border-right: none; border-bottom: 1px solid var(--rule); padding: 8px 14px; }
+  .cleaning .prohib-box { margin: 16px 16px 0; }
+  .cleaning .back-btn { top: 10px; left: 10px; font-size: 12px; padding: 6px 12px; }
+}
 
 @media print {
   .cleaning { font-size: 12px; }

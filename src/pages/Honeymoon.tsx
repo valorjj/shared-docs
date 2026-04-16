@@ -1,8 +1,19 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import FloatingToc, { type TocItem } from '../components/FloatingToc'
 import './Honeymoon.css'
 
 type Plan = 'a' | 'b'
+
+const tocItems: TocItem[] = [
+  { id: 'sec-calendar', label: '캘린더 뷰', emoji: '📅' },
+  { id: 'sec-compare', label: 'A안 vs B안', emoji: '⚖️' },
+  { id: 'sec-district', label: '파리 숙소 가이드', emoji: '🏘️' },
+  { id: 'sec-itinerary', label: '상세 일정', emoji: '🗺️' },
+  { id: 'sec-info', label: '필수 정보', emoji: '📱' },
+  { id: 'sec-budget', label: '예산 가이드', emoji: '💰' },
+  { id: 'sec-checklist', label: '체크리스트', emoji: '✅' },
+]
 
 export default function Honeymoon() {
   const [plan, setPlan] = useState<Plan>('a')
@@ -13,6 +24,8 @@ export default function Honeymoon() {
       <button className="back-btn" onClick={() => navigate('/')}>
         ← 홈으로
       </button>
+
+      <FloatingToc items={tocItems} />
 
       {/* ══ HERO ══ */}
       <div className="hero">
@@ -51,7 +64,7 @@ export default function Honeymoon() {
       </div>
 
       {/* ══ CALENDAR OVERVIEW ══ */}
-      <div className="section">
+      <div className="section" id="sec-calendar">
         <div className="wrap">
           <div className="sec-head">
             <div className="sec-eyebrow">10일 전체 일정</div>
@@ -256,7 +269,7 @@ export default function Honeymoon() {
       </div>
 
       {/* ══ PLAN COMPARISON ══ */}
-      <div className="section" style={{ background: 'var(--cream2)' }}>
+      <div className="section" id="sec-compare" style={{ background: 'var(--cream2)' }}>
         <div className="wrap">
           <div className="sec-head">
             <div className="sec-eyebrow">두 플랜 비교</div>
@@ -298,7 +311,7 @@ export default function Honeymoon() {
       </div>
 
       {/* ══ PARIS DISTRICT GUIDE ══ */}
-      <div className="section">
+      <div className="section" id="sec-district">
         <div className="wrap">
           <div className="sec-head">
             <div className="sec-eyebrow">파리 숙소 가이드</div>
@@ -466,7 +479,7 @@ export default function Honeymoon() {
       </div>
 
       {/* ══ A안 ITINERARY ══ */}
-      <div className={`plan-content ${plan === 'a' ? 'active' : ''}`}>
+      <div id="sec-itinerary" className={`plan-content ${plan === 'a' ? 'active' : ''}`}>
         {/* 파리 A안 */}
         <div className="city-header">
           <div className="city-header-inner">
@@ -1037,7 +1050,7 @@ export default function Honeymoon() {
       </div>
 
       {/* ══ PRACTICAL INFO ══ */}
-      <div className="section">
+      <div className="section" id="sec-info">
         <div className="wrap">
           <div className="sec-head">
             <div className="sec-eyebrow">유럽 첫 여행 필수 정보</div>
@@ -1089,7 +1102,7 @@ export default function Honeymoon() {
       </div>
 
       {/* ══ BUDGET ══ */}
-      <div className="section" style={{ background: 'var(--cream2)' }}>
+      <div className="section" id="sec-budget" style={{ background: 'var(--cream2)' }}>
         <div className="wrap">
           <div className="sec-head">
             <div className="sec-eyebrow">예산 가이드</div>
@@ -1125,7 +1138,7 @@ export default function Honeymoon() {
       </div>
 
       {/* ══ CHECKLIST ══ */}
-      <div className="section">
+      <div className="section" id="sec-checklist">
         <div className="wrap">
           <div className="sec-head">
             <div className="sec-eyebrow">사전 예약 체크리스트</div>

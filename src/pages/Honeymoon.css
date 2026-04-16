@@ -2,6 +2,8 @@
 /* Extracted from honeymoon_v5.html */
 
 .honeymoon {
+  scroll-behavior: smooth;
+  scroll-padding-top: 60px;
   --cream: #F4EFE5;
   --cream2: #EBE4D6;
   --cream3: #DDD4C2;
@@ -303,11 +305,27 @@
 /* ── Responsive ── */
 @media (max-width: 640px) {
   .hero { padding: 40px 20px 36px; }
-  .section { padding: 40px 20px; }
-  .city-header { padding: 24px 20px 0; }
-  .days-wrap { padding: 0 20px; }
-  .day-block { grid-template-columns: 64px 1fr; }
+  .hero h1 { font-size: 24px; }
+  .section { padding: 32px 16px; }
+  .city-header { padding: 20px 16px 0; }
+  .days-wrap { padding: 0 16px; }
+  .day-block { grid-template-columns: 56px 1fr; }
+  .day-dot { width: 34px; height: 34px; font-size: 14px; }
+  .day-num-label { font-size: 9px; }
   .compare-grid { grid-template-columns: 1fr; }
-  .plan-selector-wrap { padding: 0 20px; }
-  .city-banner { padding: 20px; }
+  .plan-selector-wrap { padding: 0 16px; }
+  .plan-tab { font-size: 11px; padding: 12px 12px; }
+  .city-banner { padding: 16px; flex-direction: column; align-items: flex-start; }
+  .cb-title { font-size: 22px; }
+  .cb-badges { align-items: flex-start; flex-direction: row; flex-wrap: wrap; }
+  .sched-time-row { flex-direction: column; gap: 2px; }
+  .sched-t { min-width: unset; }
+  .links-row { gap: 4px; }
+  .link-btn { font-size: 10px; padding: 4px 8px; }
+  .info-grid { grid-template-columns: 1fr; }
+  .budget-table { font-size: 11px; display: block; overflow-x: auto; }
+  .budget-table th, .budget-table td { padding: 8px 10px; white-space: nowrap; }
+  .check-grid { grid-template-columns: 1fr; }
+  .district-grid { grid-template-columns: 1fr; }
+  .back-btn { top: 10px; left: 10px; font-size: 12px; padding: 6px 12px; }
 }
