@@ -1,0 +1,134 @@
+.comments {
+  max-width: 720px;
+  margin: 2.5rem auto;
+  padding: 1.5rem;
+  background: #fff;
+  border: 1px solid #e5e0d6;
+  border-radius: 12px;
+  font-family: 'Noto Sans KR', system-ui, sans-serif;
+  color: #1c1916;
+}
+
+.comments__title {
+  margin: 0 0 1rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.comments__status {
+  margin: 0.75rem 0;
+  color: #6b6660;
+  font-size: 0.9rem;
+}
+
+.comments__status--error {
+  color: #b3261e;
+}
+
+.comments__list {
+  list-style: none;
+  margin: 0 0 1.25rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.comments__item {
+  padding: 0.75rem 0.9rem;
+  background: #f8f5ee;
+  border-radius: 8px;
+}
+
+.comments__meta {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.8rem;
+  color: #6b6660;
+  margin-bottom: 0.3rem;
+}
+
+.comments__author-name {
+  font-weight: 600;
+  color: #1c1916;
+}
+
+.comments__time {
+  flex: 1;
+}
+
+.comments__delete {
+  background: transparent;
+  border: none;
+  color: #b3261e;
+  font-size: 0.8rem;
+  cursor: pointer;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+}
+
+.comments__delete:hover:not(:disabled) {
+  background: rgba(179, 38, 30, 0.08);
+}
+
+.comments__delete:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.comments__body {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.comments__form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  border-top: 1px solid #efe9dd;
+  padding-top: 1rem;
+}
+
+.comments__author,
+.comments__content {
+  padding: 0.55rem 0.7rem;
+  border: 1px solid #d9d3c5;
+  border-radius: 6px;
+  background: #fff;
+  font-family: inherit;
+  font-size: 0.95rem;
+  color: inherit;
+  resize: vertical;
+}
+
+.comments__author:focus,
+.comments__content:focus {
+  outline: 2px solid #1b3a5c;
+  outline-offset: 1px;
+  border-color: transparent;
+}
+
+.comments__submit {
+  align-self: flex-end;
+  padding: 0.55rem 1.1rem;
+  background: #1b3a5c;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.comments__submit:hover:not(:disabled) {
+  background: #14304d;
+}
+
+.comments__submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

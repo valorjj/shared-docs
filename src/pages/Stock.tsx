@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import FloatingToc, { type TocItem } from '../components/FloatingToc'
+import Comments from '../components/Comments'
 import './Stock.css'
 
 const tocItems: TocItem[] = [
@@ -1096,6 +1097,8 @@ export default function Stock() {
           모든 투자 결정의 책임은 부부 본인에게 있습니다.
         </div>
       </div>
+
+      <Comments pageId="stock" />
     </div>
   )
 }

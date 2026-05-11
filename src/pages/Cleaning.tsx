@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import FloatingToc, { type TocItem } from '../components/FloatingToc'
+import Comments from '../components/Comments'
 import './Cleaning.css'
 
 const tocItems: TocItem[] = [
@@ -693,6 +694,8 @@ export default function Cleaning() {
         권선대우 325동201호 · 32평 B타입 · 156 SPACE DESIGN<br />
         입주 청소 완전 가이드 — 2인 주말 플랜
       </div>
+
+      <Comments pageId="cleaning" />
     </div>
   )
 }

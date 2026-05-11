@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import FloatingToc, { type TocItem } from '../components/FloatingToc'
+import Comments from '../components/Comments'
 import './Honeymoon.css'
 
 type Plan = 'a' | 'b'
@@ -1188,6 +1189,8 @@ export default function Honeymoon() {
         아시아나항공 직항 · 2026년 10월 5일~14일 · 9박 10일<br />
         숙소는 3개월 전 / TGV·저가항공은 2개월 전 / 사그라다 파밀리아는 반드시 사전 예약
       </div>
+
+      <Comments pageId="honeymoon" />
     </div>
   )
 }

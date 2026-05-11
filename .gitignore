@@ -22,3 +22,12 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Claude Code state
+.claude/
+.agents/
+skills-lock.json
+
+# Env (local-only env files should not be committed; *.local already covered above)
+.env
+
