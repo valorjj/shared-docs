@@ -36,7 +36,7 @@ export default function Comments({ pageId, title = '댓글' }: CommentsProps) {
 
   return (
     <section className="comments">
-      <h3 className="comments__title">{title}</h3>
+      {title && <h3 className="comments__title">{title}</h3>}
 
       {isLoading && <p className="comments__status">불러오는 중…</p>}
       {isError && (

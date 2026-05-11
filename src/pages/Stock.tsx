@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import FloatingToc, { type TocItem } from '../components/FloatingToc'
-import Comments from '../components/Comments'
+import CommentsFab from '../components/CommentsFab'
 import './Stock.css'
 
 const tocItems: TocItem[] = [
@@ -1098,7 +1098,7 @@ export default function Stock() {
         </div>
       </div>
 
-      <Comments pageId="stock" />
+      <CommentsFab pageId="stock" />
     </div>
   )
 }
