@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
+import { X } from 'lucide-react'
 import {
   useCreateTodo,
   useTodoCategories,
@@ -82,7 +83,9 @@ export default function TodoForm({ open, onClose, initial }: Props) {
       <div className="tform" role="dialog" aria-modal="true" aria-label={isEdit ? '할 일 수정' : '할 일 추가'}>
         <header className="tform__header">
           <h2 className="tform__title">{isEdit ? '할 일 수정' : '할 일 추가'}</h2>
-          <button type="button" className="tform__close" onClick={onClose} aria-label="닫기">✕</button>
+          <button type="button" className="tform__close" onClick={onClose} aria-label="닫기">
+            <X size={18} strokeWidth={2} />
+          </button>
         </header>
 
         <form className="tform__body" onSubmit={handleSubmit}>

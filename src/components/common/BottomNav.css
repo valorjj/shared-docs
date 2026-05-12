@@ -40,8 +40,16 @@
 }
 
 .bottom-nav__icon {
-  font-size: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
   line-height: 1;
+}
+
+.bottom-nav__icon svg {
+  display: block;
 }
 
 .bottom-nav__label {

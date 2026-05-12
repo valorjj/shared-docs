@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
+import { X } from 'lucide-react'
 import {
   useAnniversaryCategories,
   useCreateAnniversary,
@@ -88,7 +89,9 @@ export default function AnniversaryForm({ open, onClose, initial }: Props) {
       <div className="aform" role="dialog" aria-modal="true">
         <header className="aform__header">
           <h2 className="aform__title">{isEdit ? '기념일 수정' : '기념일 추가'}</h2>
-          <button type="button" className="aform__close" onClick={onClose}>✕</button>
+          <button type="button" className="aform__close" onClick={onClose} aria-label="닫기">
+            <X size={18} strokeWidth={2} />
+          </button>
         </header>
 
         <form className="aform__body" onSubmit={submit}>

@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { DayPicker } from 'react-day-picker'
 import { ko } from 'react-day-picker/locale'
 import 'react-day-picker/style.css'
+import { Calendar as CalendarIcon, Cake, CheckSquare } from 'lucide-react'
 import {
   isoOf,
   monthRange,
@@ -51,7 +52,10 @@ export default function CalendarPage() {
   return (
     <div className="cal-page">
       <header className="cal-page__header">
-        <h1 className="cal-page__title">📅 캘린더</h1>
+        <h1 className="cal-page__title">
+          <CalendarIcon size={24} strokeWidth={2} aria-hidden="true" />
+          <span>캘린더</span>
+        </h1>
         <p className="cal-page__sub">기념일 · 마감일이 한눈에</p>
       </header>
 
@@ -92,8 +96,10 @@ export default function CalendarPage() {
               key={`${e.type}-${e.refId}-${e.date}`}
               className={`cal-page__event cal-page__event--${e.type}`}
             >
-              <span className="cal-page__event-icon">
-                {e.type === 'anniversary' ? '🎉' : '✅'}
+              <span className="cal-page__event-icon" aria-hidden="true">
+                {e.type === 'anniversary'
+                  ? <Cake size={18} strokeWidth={2} />
+                  : <CheckSquare size={18} strokeWidth={2} />}
               </span>
               <div className="cal-page__event-body">
                 <div className="cal-page__event-title">{e.title}</div>

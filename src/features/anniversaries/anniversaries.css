@@ -30,6 +30,18 @@
   font-family: 'Noto Serif KR', 'Noto Sans KR', serif;
   font-size: 1.55rem;
   font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: #1b3a5c;
+}
+
+.anniv__title svg {
+  display: block;
+}
+
+.anniv__title > span {
+  color: #1c1916;
 }
 
 .anniv__section {
@@ -150,8 +162,16 @@
 }
 
 .anniv__gift {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
   font-size: 0.85rem;
   color: #4a4540;
+}
+
+.anniv__gift svg {
+  color: #d97706;
+  flex-shrink: 0;
 }
 
 .anniv__del-btn {

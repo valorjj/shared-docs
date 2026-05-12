@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { MessageCircle, X } from 'lucide-react'
 import Comments from './Comments'
 import { useComments } from '../api/comments'
 import './CommentsFab.css'
@@ -34,7 +35,9 @@ export default function CommentsFab({ pageId }: CommentsFabProps) {
         onClick={() => setOpen(true)}
         aria-label={`댓글 열기${count > 0 ? ` (${count}개)` : ''}`}
       >
-        <span className="comments-fab__icon" aria-hidden="true">💬</span>
+        <span className="comments-fab__icon" aria-hidden="true">
+          <MessageCircle size={24} strokeWidth={2} />
+        </span>
         {count > 0 && <span className="comments-fab__badge">{count}</span>}
       </button>
 
@@ -59,7 +62,7 @@ export default function CommentsFab({ pageId }: CommentsFabProps) {
             onClick={() => setOpen(false)}
             aria-label="댓글 닫기"
           >
-            ✕
+            <X size={18} strokeWidth={2} />
           </button>
         </header>
         <div className="comments-drawer__body">

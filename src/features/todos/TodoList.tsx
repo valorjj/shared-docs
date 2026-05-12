@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { ListTodo, Plus, Check, Trash2 } from 'lucide-react'
 import { useAuth } from '../../auth/AuthContext'
 import {
   daysUntil,
@@ -57,7 +58,10 @@ export default function TodoList() {
     <div className="todos">
       <header className="todos__header">
         <Link to="/data" className="todos__back">← 데이터</Link>
-        <h1 className="todos__title">✅ 할 일</h1>
+        <h1 className="todos__title">
+          <ListTodo size={22} strokeWidth={2} aria-hidden="true" />
+          <span>할 일</span>
+        </h1>
       </header>
 
       <div className="todos__tabs">
@@ -113,7 +117,7 @@ export default function TodoList() {
         aria-label="할 일 추가"
         onClick={() => { setEditing(null); setFormOpen(true) }}
       >
-        +
+        <Plus size={26} strokeWidth={2.5} aria-hidden="true" />
       </button>
 
       <TodoForm
@@ -168,7 +172,7 @@ function TodoRow({
         disabled={toggling}
         aria-label={isDone ? '미완료로 표시' : '완료로 표시'}
       >
-        {isDone ? '✓' : ''}
+        {isDone ? <Check size={14} strokeWidth={3} aria-hidden="true" /> : null}
       </button>
 
       <div className="todos__row-body" onClick={onEdit}>
@@ -199,7 +203,7 @@ function TodoRow({
           onClick={onDelete}
           aria-label="삭제"
         >
-          🗑
+          <Trash2 size={16} strokeWidth={2} aria-hidden="true" />
         </button>
       )}
     </li>

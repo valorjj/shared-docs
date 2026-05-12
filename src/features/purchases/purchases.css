@@ -31,6 +31,18 @@
   font-family: 'Noto Serif KR', 'Noto Sans KR', serif;
   font-size: 1.55rem;
   font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: #1b3a5c;
+}
+
+.purchase__title svg {
+  display: block;
+}
+
+.purchase__title > span {
+  color: #1c1916;
 }
 
 /* ── Controls (month picker + category filter + totals) ── */

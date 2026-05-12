@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { Wallet, Plus } from 'lucide-react'
 import MobileTable, { type Column } from '../../components/common/MobileTable'
 import { useAuth } from '../../auth/AuthContext'
 import {
@@ -113,7 +114,10 @@ export default function PurchaseList() {
     <div className="purchase">
       <header className="purchase__header">
         <Link to="/data" className="purchase__back">← 데이터</Link>
-        <h1 className="purchase__title">💰 구매 내역</h1>
+        <h1 className="purchase__title">
+          <Wallet size={22} strokeWidth={2} aria-hidden="true" />
+          <span>구매 내역</span>
+        </h1>
       </header>
 
       <section className="purchase__controls">
@@ -199,7 +203,7 @@ export default function PurchaseList() {
         aria-label="구매 추가"
         onClick={() => { setEditing(null); setFormOpen(true) }}
       >
-        +
+        <Plus size={26} strokeWidth={2.5} aria-hidden="true" />
       </button>
 
       <PurchaseForm

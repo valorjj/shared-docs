@@ -1,20 +1,21 @@
 import { NavLink, useLocation } from 'react-router-dom'
+import { BookOpen, Database, Calendar, Settings, type LucideIcon } from 'lucide-react'
 import { useIsMobile } from '../../lib/useMediaQuery'
 import { useAuth } from '../../auth/AuthContext'
 import './BottomNav.css'
 
 type NavItem = {
   to: string
-  icon: string
+  Icon: LucideIcon
   label: string
   adminOnly?: boolean
 }
 
 const ITEMS: NavItem[] = [
-  { to: '/',         icon: '📚', label: '가이드' },
-  { to: '/data',     icon: '📊', label: '데이터' },
-  { to: '/calendar', icon: '📅', label: '캘린더' },
-  { to: '/admin',    icon: '⚙️', label: '관리', adminOnly: true },
+  { to: '/',         Icon: BookOpen, label: '가이드' },
+  { to: '/data',     Icon: Database, label: '데이터' },
+  { to: '/calendar', Icon: Calendar, label: '캘린더' },
+  { to: '/admin',    Icon: Settings, label: '관리', adminOnly: true },
 ]
 
 const HIDDEN_PREFIXES = ['/login', '/auth', '/doc']
@@ -40,7 +41,9 @@ export default function BottomNav() {
             `bottom-nav__item${isActive ? ' bottom-nav__item--active' : ''}`
           }
         >
-          <span className="bottom-nav__icon" aria-hidden="true">{it.icon}</span>
+          <span className="bottom-nav__icon" aria-hidden="true">
+            <it.Icon size={22} strokeWidth={2} />
+          </span>
           <span className="bottom-nav__label">{it.label}</span>
         </NavLink>
       ))}

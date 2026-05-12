@@ -30,6 +30,18 @@
   font-family: 'Noto Serif KR', 'Noto Sans KR', serif;
   font-size: 1.55rem;
   font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: #1b3a5c;
+}
+
+.todos__title svg {
+  display: block;
+}
+
+.todos__title > span {
+  color: #1c1916;
 }
 
 .todos__tabs {

@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
+import { X } from 'lucide-react'
 import {
   SUPPORTED_CURRENCIES,
   useCreatePurchase,
@@ -99,7 +100,9 @@ export default function PurchaseForm({ open, onClose, initial }: Props) {
       <div className="pform" role="dialog" aria-modal="true" aria-label={isEdit ? '구매 수정' : '구매 추가'}>
         <header className="pform__header">
           <h2 className="pform__title">{isEdit ? '구매 수정' : '구매 추가'}</h2>
-          <button type="button" className="pform__close" onClick={onClose} aria-label="닫기">✕</button>
+          <button type="button" className="pform__close" onClick={onClose} aria-label="닫기">
+            <X size={18} strokeWidth={2} />
+          </button>
         </header>
 
         <form className="pform__body" onSubmit={handleSubmit}>

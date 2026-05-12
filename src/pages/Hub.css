@@ -74,8 +74,15 @@
 }
 
 .hub__quick-icon {
-  font-size: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #1b3a5c;
   line-height: 1;
+}
+
+.hub__quick-icon svg {
+  display: block;
 }
 
 .hub__quick-label {

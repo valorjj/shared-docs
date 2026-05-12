@@ -1,4 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom'
+import { Database, Calendar } from 'lucide-react'
 import { useAuth } from '../auth/AuthContext'
 import './Hub.css'
 
@@ -101,14 +102,18 @@ export default function Hub() {
 
       <nav className="hub__quick-nav" aria-label="섹션 바로가기">
         <Link to="/data" className="hub__quick-link">
-          <span className="hub__quick-icon" aria-hidden="true">📊</span>
+          <span className="hub__quick-icon" aria-hidden="true">
+            <Database size={22} strokeWidth={2} />
+          </span>
           <span>
             <span className="hub__quick-label">데이터</span>
             <span className="hub__quick-sub">구매 · 할 일 · 기념일</span>
           </span>
         </Link>
         <Link to="/calendar" className="hub__quick-link">
-          <span className="hub__quick-icon" aria-hidden="true">📅</span>
+          <span className="hub__quick-icon" aria-hidden="true">
+            <Calendar size={22} strokeWidth={2} />
+          </span>
           <span>
             <span className="hub__quick-label">캘린더</span>
             <span className="hub__quick-sub">기념일 · 마감일을 한눈에</span>

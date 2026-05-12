@@ -18,6 +18,18 @@
   font-family: 'Noto Serif KR', 'Noto Sans KR', serif;
   font-size: 1.65rem;
   font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: #1b3a5c;
+}
+
+.data-hub__title svg {
+  display: block;
+}
+
+.data-hub__title > span {
+  color: #1c1916;
 }
 
 .data-hub__sub {
@@ -65,9 +77,24 @@
   background: #faf6ed;
 }
 
-.data-hub__emoji {
-  font-size: 2rem;
-  line-height: 1;
+.data-hub__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: rgba(27, 58, 92, 0.08);
+  color: #1b3a5c;
+}
+
+.data-hub__card--todo .data-hub__icon {
+  background: rgba(107, 102, 96, 0.12);
+  color: #6b6660;
+}
+
+.data-hub__icon svg {
+  display: block;
 }
 
 .data-hub__badge {

@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { Cake, Plus, Trash2, Gift } from 'lucide-react'
 import { useAuth } from '../../auth/AuthContext'
 import {
   daysFromToday,
@@ -57,7 +58,10 @@ export default function AnniversaryList() {
     <div className="anniv">
       <header className="anniv__header">
         <Link to="/data" className="anniv__back">← 데이터</Link>
-        <h1 className="anniv__title">🎉 기념일</h1>
+        <h1 className="anniv__title">
+          <Cake size={22} strokeWidth={2} aria-hidden="true" />
+          <span>기념일</span>
+        </h1>
       </header>
 
       {isLoading && <p className="anniv__status">불러오는 중…</p>}
@@ -119,7 +123,7 @@ export default function AnniversaryList() {
         aria-label="기념일 추가"
         onClick={() => { setEditing(null); setFormOpen(true) }}
       >
-        +
+        <Plus size={26} strokeWidth={2.5} aria-hidden="true" />
       </button>
 
       <AnniversaryForm
@@ -178,7 +182,12 @@ function Row({
             {dayLabel}
           </span>
         </div>
-        {a.gift && <div className="anniv__gift">🎁 {a.gift}</div>}
+        {a.gift && (
+          <div className="anniv__gift">
+            <Gift size={14} strokeWidth={2} aria-hidden="true" />
+            <span>{a.gift}</span>
+          </div>
+        )}
       </div>
       {canDelete && (
         <button
@@ -187,7 +196,7 @@ function Row({
           onClick={onDelete}
           aria-label="삭제"
         >
-          🗑
+          <Trash2 size={16} strokeWidth={2} aria-hidden="true" />
         </button>
       )}
     </li>

@@ -1,9 +1,18 @@
 import { Link } from 'react-router-dom'
+import {
+  Database,
+  Wallet,
+  ListTodo,
+  Cake,
+  Link as LinkIcon,
+  ChefHat,
+  type LucideIcon,
+} from 'lucide-react'
 import './DataHub.css'
 
 type FeatureCard = {
   id: string
-  emoji: string
+  Icon: LucideIcon
   title: string
   description: string
   path: string
@@ -13,7 +22,7 @@ type FeatureCard = {
 const features: FeatureCard[] = [
   {
     id: 'purchases',
-    emoji: '💰',
+    Icon: Wallet,
     title: '구매 내역',
     description: '일상 지출과 외화 결제를 함께 기록합니다.',
     path: '/data/purchases',
@@ -21,7 +30,7 @@ const features: FeatureCard[] = [
   },
   {
     id: 'todos',
-    emoji: '✅',
+    Icon: ListTodo,
     title: '할 일',
     description: '공동 할 일 목록과 마감일.',
     path: '/data/todos',
@@ -29,7 +38,7 @@ const features: FeatureCard[] = [
   },
   {
     id: 'anniversaries',
-    emoji: '🎉',
+    Icon: Cake,
     title: '기념일',
     description: '결혼기념일, 생일, 약속.',
     path: '/data/anniversaries',
@@ -37,7 +46,7 @@ const features: FeatureCard[] = [
   },
   {
     id: 'links',
-    emoji: '🔗',
+    Icon: LinkIcon,
     title: '유용한 링크',
     description: '쇼핑 · 정보 · 자주 가는 사이트 모음.',
     path: '/data/links',
@@ -45,7 +54,7 @@ const features: FeatureCard[] = [
   },
   {
     id: 'recipes',
-    emoji: '🍳',
+    Icon: ChefHat,
     title: '레시피',
     description: '재료 · 순서 · 1인분 환산.',
     path: '/data/recipes',
@@ -63,7 +72,10 @@ export default function DataHub() {
   return (
     <div className="data-hub">
       <header className="data-hub__header">
-        <h1 className="data-hub__title">📊 데이터</h1>
+        <h1 className="data-hub__title">
+          <Database size={24} strokeWidth={2} aria-hidden="true" />
+          <span>데이터</span>
+        </h1>
         <p className="data-hub__sub">우리 둘이 함께 쌓아가는 데이터입니다.</p>
       </header>
 
@@ -74,7 +86,9 @@ export default function DataHub() {
             <article
               className={`data-hub__card data-hub__card--${f.status}`}
             >
-              <div className="data-hub__emoji">{f.emoji}</div>
+              <div className="data-hub__icon" aria-hidden="true">
+                <f.Icon size={32} strokeWidth={1.6} />
+              </div>
               <span className={`data-hub__badge data-hub__badge--${f.status}`}>
                 {STATUS_LABEL[f.status]}
               </span>
