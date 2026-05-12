@@ -33,7 +33,7 @@ const features: FeatureCard[] = [
     title: '기념일',
     description: '결혼기념일, 생일, 약속.',
     path: '/data/anniversaries',
-    status: 'todo',
+    status: 'done',
   },
   {
     id: 'links',
