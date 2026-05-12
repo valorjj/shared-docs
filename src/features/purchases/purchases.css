@@ -311,6 +311,37 @@
   color: #8a857c;
 }
 
+.purchase__grid-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.75rem;
+  background: #faf6ed;
+  border-block-end: 1px solid #e5e0d6;
+}
+
+.purchase__grid-toolbar .purchase__grid-btn {
+  padding: 0.4rem 0.85rem;
+  font-size: 0.88rem;
+}
+
+.purchase__grid-toolbar-hint {
+  font-size: 0.78rem;
+  color: #8a857c;
+}
+
+.purchase__grid-toolbar-hint kbd {
+  display: inline-block;
+  padding: 0.05rem 0.4rem;
+  margin: 0 0.1rem;
+  border: 1px solid #d9d3c5;
+  border-radius: 4px;
+  background: #fff;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.72rem;
+  color: #4a4540;
+}
+
 /* ── FAB ── */
 .purchase__fab {
   position: fixed;

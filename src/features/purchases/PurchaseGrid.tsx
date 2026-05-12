@@ -114,33 +114,39 @@ export default function PurchaseGrid({ rows, onEditDetails }: Props) {
     [draft, rows],
   )
 
+  const commitDraft = () => {
+    if (!isDraftReady(draft) || createMut.isPending) return
+    createMut.mutate(toPayload(draft), {
+      onSuccess: () => setDraft(makeDraft(defaultCategory)),
+    })
+  }
+
   const columns = useMemo<Column<GridRow>[]>(() => {
     const catNames = categories.filter((c) => c.active).map((c) => c.name)
     return [
       {
         key: 'date',
         name: '날짜',
-        width: 130,
+        width: 120,
         renderEditCell: dateEditor,
       },
       {
         key: 'item',
         name: '품목',
-        width: 200,
+        width: 180,
         renderEditCell: renderTextEditor,
       },
       {
         key: 'store',
         name: '상점',
-        width: 140,
+        width: 120,
         renderEditCell: renderTextEditor,
       },
       {
         key: 'amount',
         name: '금액',
-        width: 130,
+        width: 115,
         cellClass: 'rdg-cell--right',
-        headerCellClass: 'rdg-header--right',
         renderCell: ({ row }) =>
           row.id === DRAFT_ID && row.amount === 0
             ? <span className="purchase__grid-placeholder">—</span>
@@ -150,20 +156,20 @@ export default function PurchaseGrid({ rows, onEditDetails }: Props) {
       {
         key: 'currency',
         name: '통화',
-        width: 90,
+        width: 80,
         renderEditCell: (p) => selectEditor(p, SUPPORTED_CURRENCIES),
       },
       {
         key: 'category',
         name: '카테고리',
-        width: 150,
+        width: 130,
         renderCell: ({ row }) => <CategoryCell row={row} categories={categories} />,
         renderEditCell: (p) => selectEditor(p, catNames),
       },
       {
         key: 'byName',
         name: '누가',
-        width: 120,
+        width: 100,
         renderCell: ({ row }) => {
           if (row.id === DRAFT_ID) return <span className="purchase__grid-placeholder">—</span>
           return (
@@ -177,7 +183,7 @@ export default function PurchaseGrid({ rows, onEditDetails }: Props) {
       {
         key: '__actions',
         name: '',
-        width: 130,
+        width: 110,
         cellClass: 'rdg-cell--actions',
         renderCell: ({ row }) => {
           if (row.id === DRAFT_ID) {
@@ -259,18 +265,41 @@ export default function PurchaseGrid({ rows, onEditDetails }: Props) {
 
   return (
     <div className="purchase__grid-wrap">
+      <div className="purchase__grid-toolbar">
+        <button
+          type="button"
+          className="purchase__grid-btn purchase__grid-btn--primary"
+          disabled={!isDraftReady(draft) || createMut.isPending}
+          onClick={commitDraft}
+        >
+          <Plus size={14} strokeWidth={2.5} aria-hidden="true" />
+          <span>항목 추가</span>
+        </button>
+        <span className="purchase__grid-toolbar-hint">
+          상단 행을 채운 뒤 <kbd>⌘/Ctrl + Enter</kbd> 또는 추가 버튼
+        </span>
+      </div>
+
       <DataGrid<GridRow>
         className="rdg-light purchase__grid"
         columns={columns}
         rows={dataRows}
         rowKeyGetter={(r) => r.id}
         onRowsChange={handleRowsChange}
+        onCellKeyDown={({ row, mode }, event) => {
+          if (mode !== 'SELECT') return
+          if (event.key !== 'Enter') return
+          if (!(event.ctrlKey || event.metaKey)) return
+          if (row.id !== DRAFT_ID) return
+          event.preventGridDefault()
+          commitDraft()
+        }}
         defaultColumnOptions={{ resizable: true, sortable: false }}
         rowHeight={42}
         headerRowHeight={40}
       />
       <p className="purchase__grid-hint">
-        셀을 더블클릭(또는 Enter)하면 편집됩니다 · Tab/Shift+Tab 이동 · Ctrl+C/V 복사·붙여넣기
+        셀 더블클릭(또는 Enter)으로 편집 · Tab 이동 · Ctrl+C/V 복사·붙여넣기
       </p>
     </div>
   )
