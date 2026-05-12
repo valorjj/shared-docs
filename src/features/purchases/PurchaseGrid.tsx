@@ -276,15 +276,20 @@ export default function PurchaseGrid({ rows, onEditDetails }: Props) {
   )
 }
 
+function focusInput(el: HTMLInputElement | HTMLSelectElement | null) {
+  el?.focus()
+  if (el instanceof HTMLInputElement && el.type !== 'date') el.select()
+}
+
 function dateEditor(p: RenderEditCellProps<GridRow>) {
   return (
     <input
-      autoFocus
+      ref={focusInput}
       type="date"
-      className="rdg-text-editor"
+      className="purchase__cell-input"
       value={p.row.date}
       onChange={(e) => p.onRowChange({ ...p.row, date: e.target.value })}
-      onBlur={() => p.onClose(true)}
+      onBlur={() => p.onClose(true, false)}
     />
   )
 }
@@ -292,14 +297,14 @@ function dateEditor(p: RenderEditCellProps<GridRow>) {
 function amountEditor(p: RenderEditCellProps<GridRow>) {
   return (
     <input
-      autoFocus
+      ref={focusInput}
       type="number"
       min="0"
       step="any"
-      className="rdg-text-editor rdg-text-editor--right"
+      className="purchase__cell-input purchase__cell-input--right"
       value={p.row.amount === 0 ? '' : p.row.amount}
       onChange={(e) => p.onRowChange({ ...p.row, amount: Number(e.target.value) || 0 })}
-      onBlur={() => p.onClose(true)}
+      onBlur={() => p.onClose(true, false)}
     />
   )
 }
@@ -309,11 +314,11 @@ function selectEditor(p: RenderEditCellProps<GridRow>, options: string[]) {
   const value = (p.row[key] ?? '') as string
   return (
     <select
-      autoFocus
-      className="rdg-text-editor"
+      ref={focusInput}
+      className="purchase__cell-input"
       value={value}
       onChange={(e) => p.onRowChange({ ...p.row, [key]: e.target.value } as GridRow, true)}
-      onBlur={() => p.onClose(false)}
+      onBlur={() => p.onClose(false, false)}
     >
       {options.map((o) => (
         <option key={o} value={o}>{o}</option>

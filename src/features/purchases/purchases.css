@@ -196,9 +196,8 @@
 }
 
 .purchase__grid {
-  block-size: auto;
-  min-block-size: 220px;
-  max-block-size: calc(100dvh - 320px);
+  block-size: calc(100dvh - 320px);
+  min-block-size: 360px;
 
   --rdg-color: #1c1916;
   --rdg-background-color: #fff;
@@ -214,56 +213,33 @@
   border: none;
 }
 
-.purchase__grid .rdg-header-row {
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  color: #4a4540;
-  text-transform: none;
-}
-
-.purchase__grid .rdg-cell {
-  padding-inline: 0.7rem;
-  border-inline-end: 1px solid #efe9dd;
-  border-block-end: 1px solid #efe9dd;
-  display: flex;
-  align-items: center;
-}
-
-.purchase__grid .rdg-cell--right,
-.purchase__grid .rdg-header--right {
-  justify-content: flex-end;
+.purchase__grid .rdg-cell--right {
   text-align: end;
   font-variant-numeric: tabular-nums;
 }
 
 .purchase__grid .rdg-cell--actions {
-  justify-content: center;
   padding-inline: 0.4rem;
 }
 
-.purchase__grid .rdg-row[aria-rowindex='2'] {
-  background: #faf6ed;
-}
-
-.purchase__grid .rdg-row[aria-rowindex='2'] .rdg-cell {
-  font-weight: 500;
-}
-
-.purchase__grid .rdg-text-editor {
+/* Inputs/selects used as in-cell editors. Distinct class so it does NOT
+   collide with renderTextEditor's own .rdg-text-editor class. */
+.purchase__cell-input {
   inline-size: 100%;
   block-size: 100%;
-  padding-inline: 0.7rem;
+  padding-block: 0;
+  padding-inline: 6px;
   border: 2px solid #1b3a5c;
-  border-radius: 4px;
   font-family: inherit;
   font-size: inherit;
   background: #fff;
   color: inherit;
   outline: none;
   box-sizing: border-box;
+  appearance: none;
 }
 
-.purchase__grid .rdg-text-editor--right {
+.purchase__cell-input--right {
   text-align: end;
   font-variant-numeric: tabular-nums;
 }
