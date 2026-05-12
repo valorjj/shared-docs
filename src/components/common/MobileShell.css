@@ -1,0 +1,11 @@
+.mobile-shell {
+  min-height: 100dvh;
+}
+
+/* When a bottom nav is present, leave room for it on mobile so content
+   isn't hidden behind the fixed nav. Desktop ignores this (nav is hidden). */
+@media (max-width: 767px) {
+  .mobile-shell--has-nav {
+    padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px));
+  }
+}

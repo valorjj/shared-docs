@@ -1,0 +1,26 @@
+{
+  "name": "우리의 가이드북",
+  "short_name": "우리집",
+  "description": "진과 채연을 위한 비공개 공간 — 가이드, 데이터, 캘린더",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f4efe5",
+  "theme_color": "#1b3a5c",
+  "lang": "ko",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}
