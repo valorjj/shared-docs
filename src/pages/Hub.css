@@ -44,6 +44,66 @@
   margin: 0;
 }
 
+/* ── Quick nav strip (data + calendar) ── */
+.hub__quick-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  padding: 0 24px 28px;
+}
+
+.hub__quick-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 18px;
+  background: #fff;
+  border: 1px solid #e5e0d6;
+  border-radius: 999px;
+  text-decoration: none;
+  color: var(--text);
+  transition: transform 0.12s, box-shadow 0.12s, border-color 0.12s;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.hub__quick-link:hover {
+  transform: translateY(-1px);
+  border-color: #1b3a5c;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.hub__quick-icon {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.hub__quick-label {
+  display: block;
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--text);
+}
+
+.hub__quick-sub {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+@media (max-width: 640px) {
+  .hub__quick-nav {
+    padding: 0 16px 24px;
+  }
+  .hub__quick-link {
+    padding: 10px 14px;
+  }
+  .hub__quick-sub {
+    display: none;
+  }
+}
+
 .hub__grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));

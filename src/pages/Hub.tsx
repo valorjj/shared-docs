@@ -99,6 +99,23 @@ export default function Hub() {
         <p className="hub__subtitle">필요한 정보를 한눈에 정리했어요</p>
       </header>
 
+      <nav className="hub__quick-nav" aria-label="섹션 바로가기">
+        <Link to="/data" className="hub__quick-link">
+          <span className="hub__quick-icon" aria-hidden="true">📊</span>
+          <span>
+            <span className="hub__quick-label">데이터</span>
+            <span className="hub__quick-sub">구매 · 할 일 · 기념일</span>
+          </span>
+        </Link>
+        <Link to="/calendar" className="hub__quick-link">
+          <span className="hub__quick-icon" aria-hidden="true">📅</span>
+          <span>
+            <span className="hub__quick-label">캘린더</span>
+            <span className="hub__quick-sub">기념일 · 마감일을 한눈에</span>
+          </span>
+        </Link>
+      </nav>
+
       <main className="hub__grid">
         {guides.map((guide) => (
           <article
