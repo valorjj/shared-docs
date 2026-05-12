@@ -1,127 +1,163 @@
 shared-docs — 프로젝트 지침서
 > Claude Code와 함께 이어가기 위한 컨텍스트 및 작업 가이드
+
 ***프로젝트 개요
-개인 가이드 허브 웹앱. 신혼집 인테리어, 신혼여행, 대출, 주식 등 생활 정보를 독립적인 HTML 페이지로 관리하고, React 메인 화면에서 카드 뷰로 선택하는 구조.
-배포: Vercel
-스택: Vite + React + TypeScript
-핵심 아이디어: 각 가이드는 순수 HTML 파일로 독립 존재. React는 메인 허브 역할만 담당.
-***디렉토리 구조
-shared-docs/
-├── public/
-│   ├── honeymoon_v5.html       ✅ 완성 (신혼여행 가이드)
-│   ├── interior_check.html     🚧 미완성
-│   ├── loan_guide.html         🚧 미완성
-│   └── stock_guide.html        🚧 미완성
-├── src/
-│   ├── App.tsx                 ✅ 카드 메인 화면
-│   ├── App.css                 ✅ 스타일
-│   ├── main.tsx                (기본값 유지)
-│   └── index.css               (기본값 유지)
-├── index.html                  (기본값 유지)
-├── vercel.json                 ✅ 라우팅 설정
-├── package.json
-└── vite.config.ts
-***현재 완성된 것
-✅ src/App.tsx — 메인 카드 허브
-Noto Sans KR 폰트 적용
-guides 배열로 카드 목록 관리
-카드 클릭 → 해당 HTML 파일로 이동 (새 탭)
-status 값에 따라 카드 활성/비활성 처리
-카드 status 값:
-값	의미	동작
-`'done'`	완성	클릭 가능, 초록 뱃지
-`'wip'`	작성 중	클릭 가능, 노란 뱃지
-`'todo'`	준비 중	클릭 불가, 회색 뱃지
-✅ public/honeymoon_v5.html — 신혼여행 가이드
-파리·니스·바르셀로나 9박 10일 완전 가이드
-A안(추천)/B안(일반) 토글 기능
-10일 캘린더 뷰
-모든 공식 링크 포함
-Noto Sans KR 폰트, 지중해 컬러 팔레트
-✅ vercel.json — 라우팅 설정
-{
-"rewrites": [
-{ "source": "/((?!.*\\.html$).*)", "destination": "/index.html" }
-]
-}
-.html 확장자 파일은 직접 서빙, 나머지는 React SPA로 처리.
-***아직 해야 할 것
-🚧 1. 나머지 HTML 가이드 작성
-각 파일은 public/ 폴더에 위치해야 함.
-파일명	제목	주요 내용
-`interior_check.html`	인테리어 체크리스트	공정별 체크사항, 시공 메모, 업체 정보
-`loan_guide.html`	대출 가이드	디딤돌 구조, 신생아 특례 조건, 갈아타기 타이밍
-`stock_guide.html`	주식 투자 가이드	ISA, TIGER S&P500 ETF, 적립식 전략
-HTML 파일 작성 규칙 (기존 honeymoon_v5.html과 동일한 스타일 유지):
-<!-- 반드시 포함할 것 -->
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Noto+Serif+KR:wght@400;600&display=swap" rel="stylesheet">
-<!-- 컬러 팔레트 기준 (CSS 변수로 정의) -->
-<style>
-:root {
-  --cream: #F4EFE5;
-  --text: #1C1916;
-  --muted: #6B6660;
-  /* 섹션 컬러는 주제에 맞게 선택 */
-}
-</style>
-***🚧 2. App.tsx에서 카드 상태 업데이트
-HTML 파일 완성 시 guides 배열에서 해당 항목 수정:
-// src/App.tsx — guides 배열
-{
-  id: 'interior',
-  emoji: '🏠',
-  title: '인테리어 체크리스트',
-  subtitle: '권선대우 아파트 리모델링',
-  description: '공정별 체크사항 및 시공 메모.',
-  href: '/interior_check.html',
-  status: 'todo',   // ← 완성 후 'done' 또는 'wip'으로 변경
-  tags: ['리모델링', '체크리스트'],
-  color: 'teal',
-},
-***🚧 3. Vercel 배포 연결 (최초 1회)
-# 1. GitHub에 push
-git add .
-git commit -m "init: guide hub"
-git push origin main
-# 2. vercel.com 접속
-# → Add New Project → GitHub repo import
-# → Framework: Vite (자동 감지)
-# → Build Command: npm run build
-# → Output Directory: dist
-# → Deploy
-이후 main 브랜치에 push하면 자동 재배포.
-***새 가이드 추가 절차 (반복 작업)
-1. public/ 폴더에 새 HTML 파일 추가
-         ↓
-2. App.tsx의 guides 배열에 항목 추가 or status 변경
-         ↓
-3. git add . && git commit -m "add: xxx 가이드" && git push
-         ↓
-4. Vercel 자동 배포 완료
-***디자인 원칙
-모든 HTML 가이드 파일은 아래 기준을 따름:
-폰트: Noto Sans KR (본문), Noto Serif KR (제목)
-배경: #F4EFE5 (warm cream)
-텍스트: #1C1916 (거의 검정)
-섹션 컬러: 주제별 고유 색상 (파리=네이비, 니스=청록, 바르셀로나=테라코타 등)
-링크: 공식 사이트 링크는 반드시 포함, 버튼 스타일로 표시
-반응형: 모바일에서도 읽기 편하게
-***참고 — honeymoon_v5.html 주요 기능
-향후 다른 HTML 파일 작성 시 참고할 패턴:
-// 탭/플랜 전환 (JavaScript)
-function selectPlan(p) {
-  document.querySelectorAll('.plan-tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.plan-content').forEach(c => c.classList.remove('active'));
-  event.currentTarget.classList.add('active');
-  document.getElementById('cal-' + p).classList.add('active');
-  document.getElementById('plan-' + p).classList.add('active');
-}
-/* 도시/섹션별 컬러 구조 패턴 */
-.city-paris { --acc: #1B3A5C; --bg: #E8F0F8; }
-.city-nice  { --acc: #0B6E7A; --bg: #E4F5F7; }
-.city-bcn   { --acc: #A84010; --bg: #FAF0E8; }
+진과 채연 두 사람을 위한 비공개 웹앱. 가이드 문서 + 데이터 트래킹(구매 내역, 공동 할 일, 기념일) + 캘린더가 한곳에 모인다.
+배포: Vercel(프론트엔드) + Cloudflare Tunnel → 맥미니 Docker(백엔드 + MariaDB)
+스택: Vite + React 19 + TypeScript (프론트), Spring Boot + Kotlin (백엔드, 별도 레포 `shared-docs-backend`)
+접근 제어: Google OAuth2 + 이메일 화이트리스트(현재 2명) + JWT
+중요: 모든 UI 텍스트는 한국어.
+
+***상위 폴더 구조
+```
+shared-docs-root/
+├── shared-docs/           ← 이 레포 (프론트엔드)
+│   ├── src/
+│   ├── public/
+│   ├── package.json
+│   └── vite.config.ts
+└── shared-docs-backend/   ← 별도 레포 (Spring Boot, 자체 GitHub Actions 배포)
+    └── docs/
+        ├── AUTH_BLUEPRINT.md      ← Google OAuth + JWT 설계
+        └── SCALING_BLUEPRINT.md   ← MDX, 모바일, 데이터 피처 로드맵
+```
+
+***src/ 폴더 구조 (현재)
+```
+src/
+├── api/                    ← axios 클라이언트 + 공유 QueryClient
+│   ├── client.ts           ← Bearer 토큰 인터셉터, 401→/login 리다이렉트
+│   ├── queryClient.ts
+│   ├── comments.ts         ← 댓글 API + TanStack 훅
+│   └── admin.ts            ← 관리자 API
+├── auth/                   ← 인증 컨텍스트 + 라우트 가드
+│   ├── AuthContext.tsx     ← jwt-decode로 클레임 파싱, localStorage 동기화
+│   ├── RequireAuth.tsx     ← 미로그인 → /login
+│   ├── RequireRole.tsx     ← role 불일치 → <Forbidden /> (403 페이지)
+│   └── tokenStorage.ts
+├── components/
+│   ├── common/             ← 반응형 프리미티브
+│   │   ├── MobileTable.tsx ← 모바일=카드, 데스크톱=테이블
+│   │   ├── MobileShell.tsx ← 바텀 네비를 위한 레이아웃 래퍼
+│   │   └── BottomNav.tsx   ← 모바일 전용 고정 바텀 네비
+│   ├── Comments.tsx        ← 댓글 리스트 + 폼 (Google 프로필 사용)
+│   ├── CommentsFab.tsx     ← 우하단 💬 → 슬라이드인 드로어
+│   ├── DocLayout.tsx       ← MDX 문서용 공통 래퍼
+│   └── FloatingToc.tsx     ← 우측 고정 TOC
+├── content/                ← MDX 콘텐츠 레지스트리
+│   ├── index.ts            ← import.meta.glob('./*.mdx')로 자동 발견
+│   └── honeymoon.mdx       ← 현재 스캐폴드만; 실제 내용은 /honeymoon에 남아있음
+├── features/               ← 데이터 피처별 1폴더 = 1피처
+│   ├── purchases/          ← 💰 구매 내역
+│   ├── todos/              ← ✅ 공동 할 일
+│   ├── anniversaries/      ← 🎉 기념일
+│   └── calendar/           ← 📅 캘린더 (집계 전용 — 자체 엔티티 없음)
+├── lib/useMediaQuery.ts    ← useIsDesktop / useIsMobile
+├── pages/
+│   ├── Hub.tsx             ← 메인 가이드북 카드 허브 (+ 관리자용 "관리" 칩)
+│   ├── DataHub.tsx         ← /data 인덱스 (5개 피처 카드: done/todo 상태)
+│   ├── CalendarPage.tsx    ← /calendar (react-day-picker)
+│   ├── Admin.tsx           ← /admin 사용자 + 화이트리스트 관리
+│   ├── Doc.tsx             ← /doc/:id MDX 렌더러
+│   ├── Login.tsx           ← Google 로그인 버튼
+│   ├── AuthCallback.tsx    ← #token 파싱 → localStorage 저장
+│   ├── Forbidden.tsx       ← 403 (RequireRole 미스매치)
+│   ├── NotFound.tsx        ← 404
+│   ├── Honeymoon.tsx       ← 레거시 가이드 (≈1200 LOC, MDX 이주 보류)
+│   ├── Cleaning.tsx        ← 레거시 가이드
+│   └── Stock.tsx           ← 레거시 가이드
+└── App.tsx                 ← 라우팅 (MobileShell 레이아웃 라우트 사용)
+```
+
+***라우트 매핑
+| 경로 | 페이지 | 보호 |
+|---|---|---|
+| `/login`, `/auth/callback` | Login / AuthCallback | public |
+| `/` | Hub | authed |
+| `/data` | DataHub | authed |
+| `/data/purchases` | PurchaseList | authed |
+| `/data/todos` | TodoList | authed |
+| `/data/anniversaries` | AnniversaryList | authed |
+| `/calendar` | CalendarPage | authed |
+| `/admin` | Admin | ADMIN only |
+| `/honeymoon`, `/cleaning`, `/stock` | 레거시 가이드 | authed |
+| `/doc/*` | Doc (MDX) | authed |
+| `*` | NotFound | — |
+
+***현재 완성된 데이터 피처
+✅ 구매 내역 (`/data/purchases`)
+- 월 선택 + 카테고리 필터 + 통화별 합계
+- 항목 / 카테고리 / 금액 + 통화 (BigDecimal, ISO 4217) / 메모
+- 카테고리 시드: 식비 🍱 / 교통 🚌 / 주거 🏠 / 의료 🩺 / 여가 🎬 / 의류 👕 / 기타 📦
+
+✅ 공동 할 일 (`/data/todos`)
+- 필터: 오늘 / 이번 주 / 전체 / 완료됨
+- 둘 중 누구든 완료 토글 가능; 누가 완료했는지 자동 기록
+- 카테고리 시드: 집안일 🧹 / 쇼핑 🛒 / 일정 📅 / 공사 🔨 / 기타 📦
+
+✅ 기념일 (`/data/anniversaries`)
+- "다가오는 30일" 섹션이 자동으로 위로
+- 매년 반복 체크박스; N주년 배지 자동 계산
+- 카테고리 시드: 기념일 🎉 / 생일 🎂 / 가족 👨‍👩‍👧 / 친구 🤝 / 기타 📦
+
+✅ 캘린더 (`/calendar`)
+- 백엔드 `/api/calendar/events?from&to`가 기념일(반복 적용) + 마감 있는 OPEN 할 일을 합쳐서 반환
+- 호박색 점 = 기념일, 네이비 점 = 할 일, 둘 다 = 분할 색 표시기
+- 날짜 선택 → 그 날의 이벤트 리스트
+
+***아직 안 한 것 (블루프린트 §10 후속)
+🚧 1. 유용한 링크 컬렉션 (`/data/links`) — DataHub 카드는 있지만 todo 상태
+🚧 2. 레시피 컬렉션 (`/data/recipes`) — 드래그 앤 드롭 프리미티브 필요
+🚧 3. 카테고리 관리 UI — 각 피처의 "관리" 탭. API는 이미 admin-only로 존재; curl로 가능.
+🚧 4. 전역 헤더 + 아바타 드롭다운 + 로그아웃 — 지금은 Hub 우상단 "관리" 칩만 있음
+🚧 5. MDX 콘텐츠 이주 — Honeymoon/Cleaning/Stock의 실제 내용은 아직 레거시 .tsx에 그대로
+🚧 6. 폴더 뷰 (Finder 스타일) — 문서 수가 적어 보류
+
+***데이터 피처 확장 패턴
+새 데이터 피처를 추가할 때는 기존 4개(purchases/todos/anniversaries/calendar)와 똑같이:
+1. 백엔드: `com.shareddocs.backend.<feature>/` 패키지에 Entity, Repository, Service, Controller, Dto, (선택) Category + CategoryBootstrapper
+2. 프론트: `src/features/<feature>/` 폴더에 `api.ts` + `<Feature>List.tsx` + `<Feature>Form.tsx` + `<feature>.css`
+3. `src/pages/DataHub.tsx`에서 해당 카드의 status를 `'todo'` → `'done'`으로 변경
+4. `src/App.tsx`에 라우트 추가
+
+권한 규칙(공통):
+- 읽기: 인증된 모든 사용자 (공유 데이터)
+- 수정: 작성자만
+- 삭제: 작성자 + 관리자
+- 카테고리 관리: 관리자만
+- 백엔드 `me.role` / `me.userId`로 강제
+
+***스타일 규칙
+- 모든 텍스트는 한국어
+- 폰트: Noto Sans KR (본문), Noto Serif KR (제목/타이틀)
+- 컬러 변수: --cream `#F4EFE5` (배경), --text `#1C1916`, --muted `#6B6660`, primary `#1B3A5C`
+- 모바일 우선: 최소 44×44px 터치 타겟, 바텀 네비 56px + safe-area-inset-bottom
+- BEM-스러운 클래스명: `.purchase__row--highlight`
+
+***새 문서(MDX) 추가 절차
+1. `src/content/<id>.mdx` 파일 작성 (블루프린트 §3의 `meta` 블록 형식)
+2. 인터랙티브 위젯이 필요하면 `src/content/_components/`에 작성하고 MDX에서 import
+3. Hub는 레지스트리를 통해 자동 노출됨 (App.tsx 수정 불필요; `/doc/<id>`로 접근 가능)
+
+> 현재 Hub는 하드코딩된 `guides[]` 배열을 쓰고 있고 MDX 레지스트리와 병행 중. 레거시 카드가 모두 정리되면 Hub도 레지스트리 단일 소스로 전환.
+
+***인증 흐름 (요약)
+1. 사용자가 `/`로 진입 → `RequireAuth`가 localStorage 토큰 없음 감지 → `/login`으로 리다이렉트
+2. "Google로 로그인" 클릭 → `${VITE_API_BASE_URL}/oauth2/authorization/google`로 이동
+3. Google 동의 → 백엔드 `/login/oauth2/code/google`로 콜백
+4. 백엔드 OAuth2SuccessHandler가 allowlist 검사 → users 행 upsert → JWT 발급 → `${FRONTEND_URL}/auth/callback#token=<jwt>`로 302
+5. `AuthCallback`이 fragment에서 토큰 추출 → localStorage 저장 → `/`로 navigate
+6. 이후 모든 `/api/**` 요청에 `Authorization: Bearer <jwt>` 자동 첨부 (axios 인터셉터)
+
+***백엔드 운영 메모
+- 자체 호스팅 GitHub Actions 러너가 맥미니에서 동작 (`~/actions-runner-shared-docs/`, launchd 서비스)
+- `main` 푸시 → `./gradlew bootJar` → Docker 이미지 빌드 → `docker compose up -d --force-recreate` → `/actuator/health` 확인
+- Docker 컨테이너는 모두 `restart: unless-stopped` (재부팅 시 자동 시작)
+- MariaDB는 `lunch-select-db` 컨테이너를 공유 (3307 호스트 포트, `shared_docs` DB)
+- 환경변수는 GitHub Secrets → docker-compose env로 주입; 추적 파일에는 placeholder만
+
 ***메모
-index.html (프로젝트 루트) — Vite 진입점. 건드리지 않아도 됨.
-public/ 폴더의 파일은 빌드 시 dist/로 그대로 복사됨.
-HTML 파일 내 외부 폰트, CDN 사용 가능 (Vercel 서빙 시 문제 없음).
-로컬 확인: npm run dev → localhost:5173
+- index.html / vite.config.ts / public/manifest.json — 건드릴 일 거의 없음
+- public/ 폴더는 빌드 시 dist/로 그대로 복사됨 (manifest.json, favicon.svg, 레거시 HTML 가이드)
+- 로컬 확인: `npm run dev` → localhost:5173
+- 백엔드를 로컬에서 띄울 땐 `POST /api/auth/dev-login` 으로 Google 없이 JWT 발급 가능 (local 프로필 한정)
