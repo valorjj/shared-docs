@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react'
+import { useAuth } from '../auth/AuthContext'
 import {
   useComments,
   useCreateComment,
@@ -13,24 +14,23 @@ type CommentsProps = {
 }
 
 export default function Comments({ pageId, title = '댓글' }: CommentsProps) {
+  const { user } = useAuth()
+  const isAdmin = user?.role === 'ADMIN'
+
   const { data: comments, isLoading, isError, error, refetch } = useComments(pageId)
   const createMutation = useCreateComment(pageId)
   const deleteMutation = useDeleteComment(pageId)
 
-  const [author, setAuthor] = useState('')
   const [content, setContent] = useState('')
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    const trimmedAuthor = author.trim()
-    const trimmedContent = content.trim()
-    if (!trimmedAuthor || !trimmedContent) return
+    const trimmed = content.trim()
+    if (!trimmed) return
 
     createMutation.mutate(
-      { author: trimmedAuthor, content: trimmedContent },
-      {
-        onSuccess: () => setContent(''),
-      },
+      { content: trimmed },
+      { onSuccess: () => setContent('') },
     )
   }
 
@@ -42,9 +42,7 @@ export default function Comments({ pageId, title = '댓글' }: CommentsProps) {
       {isError && (
         <p className="comments__status comments__status--error">
           댓글을 불러오지 못했습니다. {error instanceof Error ? error.message : ''}{' '}
-          <button type="button" onClick={() => refetch()}>
-            다시 시도
-          </button>
+          <button type="button" onClick={() => refetch()}>다시 시도</button>
         </p>
       )}
 
@@ -54,27 +52,35 @@ export default function Comments({ pageId, title = '댓글' }: CommentsProps) {
 
       {comments && comments.length > 0 && (
         <ul className="comments__list">
-          {comments.map((c) => (
-            <CommentRow
-              key={c.id}
-              comment={c}
-              onDelete={() => deleteMutation.mutate(c.id)}
-              deleting={deleteMutation.isPending && deleteMutation.variables === c.id}
-            />
-          ))}
+          {comments.map((c) => {
+            const canDelete =
+              (c.author.userId != null && c.author.userId === user?.userId) || isAdmin
+            return (
+              <CommentRow
+                key={c.id}
+                comment={c}
+                canDelete={canDelete}
+                onDelete={() => deleteMutation.mutate(c.id)}
+                deleting={deleteMutation.isPending && deleteMutation.variables === c.id}
+              />
+            )
+          })}
         </ul>
       )}
 
       <form className="comments__form" onSubmit={handleSubmit}>
-        <input
-          className="comments__author"
-          type="text"
-          placeholder="이름"
-          value={author}
-          onChange={(e) => setAuthor(e.target.value)}
-          maxLength={32}
-          required
-        />
+        {user && (
+          <div className="comments__me">
+            {user.pictureUrl ? (
+              <img className="comments__me-avatar" src={user.pictureUrl} alt="" />
+            ) : (
+              <span className="comments__me-avatar comments__me-avatar--initial">
+                {user.name.charAt(0).toUpperCase()}
+              </span>
+            )}
+            <span className="comments__me-name">{user.name}으로 댓글 남기기</span>
+          </div>
+        )}
         <textarea
           className="comments__content"
           placeholder="댓글을 입력하세요"
@@ -106,28 +112,39 @@ export default function Comments({ pageId, title = '댓글' }: CommentsProps) {
 
 function CommentRow({
   comment,
+  canDelete,
   onDelete,
   deleting,
 }: {
   comment: Comment
+  canDelete: boolean
   onDelete: () => void
   deleting: boolean
 }) {
   return (
     <li className="comments__item">
       <div className="comments__meta">
-        <span className="comments__author-name">{comment.author}</span>
+        {comment.author.pictureUrl ? (
+          <img className="comments__avatar" src={comment.author.pictureUrl} alt="" />
+        ) : (
+          <span className="comments__avatar comments__avatar--initial">
+            {comment.author.name.charAt(0).toUpperCase()}
+          </span>
+        )}
+        <span className="comments__author-name">{comment.author.name}</span>
         <time className="comments__time" dateTime={comment.createdAt}>
           {formatTime(comment.createdAt)}
         </time>
-        <button
-          type="button"
-          className="comments__delete"
-          onClick={onDelete}
-          disabled={deleting}
-        >
-          {deleting ? '삭제 중…' : '삭제'}
-        </button>
+        {canDelete && (
+          <button
+            type="button"
+            className="comments__delete"
+            onClick={onDelete}
+            disabled={deleting}
+          >
+            {deleting ? '삭제 중…' : '삭제'}
+          </button>
+        )}
       </div>
       <p className="comments__body">{comment.content}</p>
     </li>

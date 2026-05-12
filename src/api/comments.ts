@@ -1,10 +1,16 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from './client'
 
+export type CommentAuthor = {
+  userId: number | null     // null for legacy pre-auth comments
+  name: string
+  pictureUrl: string | null
+}
+
 export type Comment = {
   id: number
   pageId: string
-  author: string
+  author: CommentAuthor
   content: string
   createdAt: string
   updatedAt: string
@@ -12,7 +18,6 @@ export type Comment = {
 
 export type CreateCommentRequest = {
   pageId: string
-  author: string
   content: string
 }
 
