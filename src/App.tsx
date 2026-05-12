@@ -13,6 +13,7 @@ import NotFound from './pages/NotFound'
 import RequireAuth from './auth/RequireAuth'
 import RequireRole from './auth/RequireRole'
 import MobileShell from './components/common/MobileShell'
+import PurchaseList from './features/purchases/PurchaseList'
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
         <Route element={<MobileShell />}>
           <Route path="/" element={<Hub />} />
           <Route path="/data" element={<DataHub />} />
+          <Route path="/data/purchases" element={<PurchaseList />} />
           <Route path="/calendar" element={<CalendarPage />} />
           <Route path="/honeymoon" element={<Honeymoon />} />
           <Route path="/cleaning" element={<Cleaning />} />

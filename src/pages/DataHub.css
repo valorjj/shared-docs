@@ -1,0 +1,109 @@
+.data-hub {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 4rem;
+  font-family: 'Noto Sans KR', system-ui, sans-serif;
+  color: #1c1916;
+  background: #f4efe5;
+  min-height: 100dvh;
+}
+
+.data-hub__header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.data-hub__title {
+  margin: 0 0 0.3rem;
+  font-family: 'Noto Serif KR', 'Noto Sans KR', serif;
+  font-size: 1.65rem;
+  font-weight: 700;
+}
+
+.data-hub__sub {
+  margin: 0;
+  color: #6b6660;
+  font-size: 0.95rem;
+}
+
+.data-hub__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+.data-hub__card-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+.data-hub__card-link--disabled {
+  cursor: not-allowed;
+}
+
+.data-hub__card {
+  position: relative;
+  background: #fff;
+  border: 1px solid #e5e0d6;
+  border-radius: 14px;
+  padding: 1.25rem 1.2rem;
+  transition: transform 0.12s, box-shadow 0.12s;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  min-height: 140px;
+}
+
+.data-hub__card-link:hover .data-hub__card--done {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+}
+
+.data-hub__card--todo {
+  opacity: 0.65;
+  background: #faf6ed;
+}
+
+.data-hub__emoji {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.data-hub__badge {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+}
+
+.data-hub__badge--done {
+  background: rgba(61, 126, 79, 0.15);
+  color: #3d7e4f;
+}
+
+.data-hub__badge--wip {
+  background: rgba(217, 119, 6, 0.15);
+  color: #d97706;
+}
+
+.data-hub__badge--todo {
+  background: rgba(107, 102, 96, 0.15);
+  color: #6b6660;
+}
+
+.data-hub__card-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.data-hub__card-desc {
+  margin: 0;
+  color: #6b6660;
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
