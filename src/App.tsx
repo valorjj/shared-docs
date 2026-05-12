@@ -5,7 +5,9 @@ import Cleaning from './pages/Cleaning'
 import Stock from './pages/Stock'
 import Login from './pages/Login'
 import AuthCallback from './pages/AuthCallback'
+import Admin from './pages/Admin'
 import RequireAuth from './auth/RequireAuth'
+import RequireRole from './auth/RequireRole'
 
 function App() {
   return (
@@ -18,6 +20,10 @@ function App() {
         <Route path="/honeymoon" element={<Honeymoon />} />
         <Route path="/cleaning" element={<Cleaning />} />
         <Route path="/stock" element={<Stock />} />
+
+        <Route element={<RequireRole role="ADMIN" />}>
+          <Route path="/admin" element={<Admin />} />
+        </Route>
       </Route>
     </Routes>
   )

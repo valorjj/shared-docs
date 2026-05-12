@@ -1,0 +1,225 @@
+.admin {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+  font-family: 'Noto Sans KR', system-ui, sans-serif;
+  color: #1c1916;
+  background: #f4efe5;
+  min-height: 100dvh;
+}
+
+.admin__header {
+  margin-bottom: 2.5rem;
+}
+
+.admin__back {
+  display: inline-block;
+  margin-bottom: 1rem;
+  color: #6b6660;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.admin__back:hover {
+  color: #1c1916;
+  text-decoration: underline;
+}
+
+.admin__title {
+  margin: 0 0 0.4rem;
+  font-family: 'Noto Serif KR', 'Noto Sans KR', serif;
+  font-size: 1.7rem;
+  font-weight: 700;
+}
+
+.admin__sub {
+  margin: 0;
+  color: #6b6660;
+  font-size: 0.92rem;
+}
+
+.admin__section {
+  background: #fff;
+  border: 1px solid #e5e0d6;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.admin__section-title {
+  margin: 0 0 0.3rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.admin__section-hint {
+  margin: 0 0 1.25rem;
+  color: #6b6660;
+  font-size: 0.85rem;
+}
+
+.admin__status {
+  margin: 0.75rem 0;
+  color: #6b6660;
+  font-size: 0.9rem;
+}
+
+.admin__status--error {
+  color: #b3261e;
+}
+
+.admin__table-wrap {
+  overflow-x: auto;
+}
+
+.admin__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+.admin__table th,
+.admin__table td {
+  padding: 0.65rem 0.6rem;
+  text-align: left;
+  vertical-align: middle;
+  border-bottom: 1px solid #efe9dd;
+}
+
+.admin__table th {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #6b6660;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.admin__row--me {
+  background: #f8f5ee;
+}
+
+.admin__avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: inline-block;
+  background: #d9d3c5;
+  color: #1c1916;
+  text-align: center;
+  line-height: 28px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.admin__avatar--initial {
+  font-family: inherit;
+}
+
+.admin__me-tag {
+  margin-left: 0.4rem;
+  padding: 0.05rem 0.4rem;
+  background: #1b3a5c;
+  color: #fff;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  vertical-align: middle;
+}
+
+.admin__select {
+  padding: 0.3rem 0.5rem;
+  border: 1px solid #d9d3c5;
+  border-radius: 6px;
+  background: #fff;
+  font-family: inherit;
+  font-size: 0.88rem;
+  color: inherit;
+  min-width: 80px;
+}
+
+.admin__select:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  background: #f8f5ee;
+}
+
+.admin__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.admin__toggle input:disabled + span {
+  opacity: 0.55;
+}
+
+.admin__time {
+  color: #6b6660;
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+.admin__add-form {
+  display: flex;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+  align-items: stretch;
+  margin-bottom: 1.25rem;
+}
+
+.admin__input {
+  flex: 1;
+  min-width: 200px;
+  padding: 0.45rem 0.65rem;
+  border: 1px solid #d9d3c5;
+  border-radius: 6px;
+  background: #fff;
+  font-family: inherit;
+  font-size: 0.92rem;
+}
+
+.admin__input:focus {
+  outline: 2px solid #1b3a5c;
+  outline-offset: 1px;
+  border-color: transparent;
+}
+
+.admin__btn {
+  padding: 0.45rem 0.95rem;
+  border: none;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.admin__btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.admin__btn--primary {
+  background: #1b3a5c;
+  color: #fff;
+}
+
+.admin__btn--primary:hover:not(:disabled) {
+  background: #14304d;
+}
+
+.admin__btn--danger {
+  background: transparent;
+  color: #b3261e;
+  border: 1px solid #f1a8a3;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.82rem;
+}
+
+.admin__btn--danger:hover:not(:disabled) {
+  background: rgba(179, 38, 30, 0.08);
+}

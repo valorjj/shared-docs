@@ -1,4 +1,5 @@
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from '../auth/AuthContext'
 import './Hub.css'
 
 type GuideStatus = 'done' | 'wip' | 'todo'
@@ -81,6 +82,7 @@ const statusLabel: Record<GuideStatus, string> = {
 
 export default function Hub() {
   const navigate = useNavigate()
+  const { user } = useAuth()
 
   const handleClick = (guide: Guide) => {
     if (guide.status === 'todo') return
@@ -90,6 +92,9 @@ export default function Hub() {
   return (
     <div className="hub">
       <header className="hub__header">
+        {user?.role === 'ADMIN' && (
+          <Link to="/admin" className="hub__admin-link">관리</Link>
+        )}
         <h1 className="hub__title">우리의 가이드북</h1>
         <p className="hub__subtitle">필요한 정보를 한눈에 정리했어요</p>
       </header>
