@@ -25,7 +25,7 @@ const features: FeatureCard[] = [
     title: '할 일',
     description: '공동 할 일 목록과 마감일.',
     path: '/data/todos',
-    status: 'todo',
+    status: 'done',
   },
   {
     id: 'anniversaries',

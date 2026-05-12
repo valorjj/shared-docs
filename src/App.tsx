@@ -14,6 +14,7 @@ import RequireAuth from './auth/RequireAuth'
 import RequireRole from './auth/RequireRole'
 import MobileShell from './components/common/MobileShell'
 import PurchaseList from './features/purchases/PurchaseList'
+import TodoList from './features/todos/TodoList'
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
           <Route path="/" element={<Hub />} />
           <Route path="/data" element={<DataHub />} />
           <Route path="/data/purchases" element={<PurchaseList />} />
+          <Route path="/data/todos" element={<TodoList />} />
           <Route path="/calendar" element={<CalendarPage />} />
           <Route path="/honeymoon" element={<Honeymoon />} />
           <Route path="/cleaning" element={<Cleaning />} />
