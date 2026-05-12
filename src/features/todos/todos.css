@@ -9,12 +9,12 @@
 }
 
 .todos__header {
-  margin-bottom: 1.1rem;
+  margin-bottom: 1.25rem;
 }
 
 .todos__back {
   display: inline-block;
-  margin-bottom: 0.55rem;
+  margin-bottom: 0.6rem;
   color: #6b6660;
   text-decoration: none;
   font-size: 0.88rem;
@@ -30,7 +30,8 @@
   font-family: 'Noto Serif KR', 'Noto Sans KR', serif;
   font-size: 1.55rem;
   font-weight: 700;
-  display: inline-flex;
+  line-height: 1.25;
+  display: flex;
   align-items: center;
   gap: 0.55rem;
   color: #1b3a5c;

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { Wallet, Plus } from 'lucide-react'
 import MobileTable, { type Column } from '../../components/common/MobileTable'
 import { useAuth } from '../../auth/AuthContext'
+import { useIsDesktop } from '../../lib/useMediaQuery'
 import {
   currentMonthString,
   formatMoney,
@@ -13,11 +14,13 @@ import {
   type Purchase,
 } from './api'
 import PurchaseForm from './PurchaseForm'
+import PurchaseGrid from './PurchaseGrid'
 import './purchases.css'
 
 export default function PurchaseList() {
   const { user } = useAuth()
   const isAdmin = user?.role === 'ADMIN'
+  const isDesktop = useIsDesktop()
 
   const [month, setMonth] = useState<string>(currentMonthString())
   const [categoryFilter, setCategoryFilter] = useState<string>('ALL')
@@ -169,7 +172,12 @@ export default function PurchaseList() {
         </p>
       )}
 
-      {rows && (
+      {rows && (isDesktop ? (
+        <PurchaseGrid
+          rows={filtered}
+          onEditDetails={(row) => { setEditing(row); setFormOpen(true) }}
+        />
+      ) : (
         <MobileTable<Purchase>
           columns={columns}
           rows={filtered}
@@ -195,16 +203,18 @@ export default function PurchaseList() {
             ) : null
           }}
         />
-      )}
+      ))}
 
-      <button
-        type="button"
-        className="purchase__fab"
-        aria-label="구매 추가"
-        onClick={() => { setEditing(null); setFormOpen(true) }}
-      >
-        <Plus size={26} strokeWidth={2.5} aria-hidden="true" />
-      </button>
+      {!isDesktop && (
+        <button
+          type="button"
+          className="purchase__fab"
+          aria-label="구매 추가"
+          onClick={() => { setEditing(null); setFormOpen(true) }}
+        >
+          <Plus size={26} strokeWidth={2.5} aria-hidden="true" />
+        </button>
+      )}
 
       <PurchaseForm
         open={formOpen}

@@ -53,7 +53,7 @@ export default function CalendarPage() {
     <div className="cal-page">
       <header className="cal-page__header">
         <h1 className="cal-page__title">
-          <CalendarIcon size={24} strokeWidth={2} aria-hidden="true" />
+          <CalendarIcon size={22} strokeWidth={2} aria-hidden="true" />
           <span>캘린더</span>
         </h1>
         <p className="cal-page__sub">기념일 · 마감일이 한눈에</p>
