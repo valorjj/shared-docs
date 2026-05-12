@@ -6,6 +6,8 @@ import Stock from './pages/Stock'
 import Login from './pages/Login'
 import AuthCallback from './pages/AuthCallback'
 import Admin from './pages/Admin'
+import Doc from './pages/Doc'
+import NotFound from './pages/NotFound'
 import RequireAuth from './auth/RequireAuth'
 import RequireRole from './auth/RequireRole'
 
@@ -20,11 +22,14 @@ function App() {
         <Route path="/honeymoon" element={<Honeymoon />} />
         <Route path="/cleaning" element={<Cleaning />} />
         <Route path="/stock" element={<Stock />} />
+        <Route path="/doc/*" element={<Doc />} />
 
         <Route element={<RequireRole role="ADMIN" />}>
           <Route path="/admin" element={<Admin />} />
         </Route>
       </Route>
+
+      <Route path="*" element={<NotFound />} />
     </Routes>
   )
 }
