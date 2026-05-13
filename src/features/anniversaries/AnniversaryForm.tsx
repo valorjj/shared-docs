@@ -1,10 +1,22 @@
-import { useEffect, useState, type FormEvent } from 'react'
-import { X } from 'lucide-react'
+import { useState, type FormEvent } from 'react'
+import {
+  Button,
+  Checkbox,
+  ErrorText,
+  Field,
+  Input,
+  Label,
+  Modal,
+  Select,
+  Stack,
+  Textarea,
+} from '../../components/ui'
 import {
   useAnniversaryCategories,
   useCreateAnniversary,
   useUpdateAnniversary,
   type Anniversary,
+  type AnniversaryCategory,
   type AnniversaryPayload,
 } from './api'
 
@@ -12,53 +24,39 @@ type Props = {
   open: boolean
   onClose: () => void
   initial?: Anniversary | null
+  initialDate?: string
 }
 
-const empty: AnniversaryPayload = {
-  name: '',
-  date: '',
-  recurring: true,
-  category: '',
-  gift: '',
-  note: '',
+export default function AnniversaryForm({ open, onClose, initial, initialDate }: Props) {
+  return (
+    <AnniversaryFormInner
+      key={open ? (initial?.id ?? `new-${initialDate ?? ''}`) : 'closed'}
+      open={open}
+      onClose={onClose}
+      initial={initial ?? null}
+      initialDate={initialDate}
+    />
+  )
 }
 
-export default function AnniversaryForm({ open, onClose, initial }: Props) {
+function AnniversaryFormInner({
+  open,
+  onClose,
+  initial,
+  initialDate,
+}: {
+  open: boolean
+  onClose: () => void
+  initial: Anniversary | null
+  initialDate?: string
+}) {
   const { data: categories } = useAnniversaryCategories()
   const create = useCreateAnniversary()
   const update = useUpdateAnniversary()
 
-  const [form, setForm] = useState<AnniversaryPayload>(empty)
-
-  useEffect(() => {
-    if (!open) return
-    if (initial) {
-      setForm({
-        name: initial.name,
-        date: initial.date,
-        recurring: initial.recurring,
-        category: initial.category,
-        gift: initial.gift ?? '',
-        note: initial.note ?? '',
-      })
-    } else {
-      setForm({ ...empty, category: categories?.[0]?.name ?? '' })
-    }
-  }, [open, initial, categories])
-
-  useEffect(() => {
-    if (!open) return
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
-    document.addEventListener('keydown', onKey)
-    const prev = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.removeEventListener('keydown', onKey)
-      document.body.style.overflow = prev
-    }
-  }, [open, onClose])
-
-  if (!open) return null
+  const [form, setForm] = useState<AnniversaryPayload>(() =>
+    makeInitialForm(initial, categories, initialDate),
+  )
 
   const isEdit = !!initial
   const busy = create.isPending || update.isPending
@@ -84,22 +82,28 @@ export default function AnniversaryForm({ open, onClose, initial }: Props) {
   }
 
   return (
-    <>
-      <div className="aform-backdrop" onClick={onClose} />
-      <div className="aform" role="dialog" aria-modal="true">
-        <header className="aform__header">
-          <h2 className="aform__title">{isEdit ? '기념일 수정' : '기념일 추가'}</h2>
-          <button type="button" className="aform__close" onClick={onClose} aria-label="닫기">
-            <X size={18} strokeWidth={2} />
-          </button>
-        </header>
-
-        <form className="aform__body" onSubmit={submit}>
-          <label className="aform__field">
-            <span className="aform__label">이름</span>
-            <input
+    <Modal
+      open={open}
+      onClose={onClose}
+      title={isEdit ? '기념일 수정' : '기념일 추가'}
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose} disabled={busy}>
+            취소
+          </Button>
+          <Button variant="primary" type="submit" form="anniv-form" disabled={busy}>
+            {busy ? '저장 중…' : isEdit ? '저장' : '추가'}
+          </Button>
+        </>
+      }
+    >
+      <form id="anniv-form" onSubmit={submit}>
+        <Stack gap={3}>
+          <Field>
+            <Label htmlFor="aform-name">이름</Label>
+            <Input
+              id="aform-name"
               type="text"
-              className="aform__input"
               placeholder="예: 결혼기념일"
               value={form.name}
               onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
@@ -107,84 +111,100 @@ export default function AnniversaryForm({ open, onClose, initial }: Props) {
               required
               autoFocus
             />
-          </label>
+          </Field>
 
-          <label className="aform__field">
-            <span className="aform__label">날짜</span>
-            <input
+          <Field>
+            <Label htmlFor="aform-date">날짜</Label>
+            <Input
+              id="aform-date"
               type="date"
-              className="aform__input"
               value={form.date}
               onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))}
               required
             />
-          </label>
+          </Field>
 
-          <label className="aform__field aform__field--inline">
-            <input
-              type="checkbox"
-              checked={form.recurring}
-              onChange={(e) => setForm((f) => ({ ...f, recurring: e.target.checked }))}
-            />
-            <span>매년 반복</span>
-          </label>
+          <Checkbox
+            checked={form.recurring}
+            onChange={(e) => setForm((f) => ({ ...f, recurring: e.target.checked }))}
+            label="매년 반복"
+          />
 
-          <label className="aform__field">
-            <span className="aform__label">카테고리</span>
-            <select
-              className="aform__input"
+          <Field>
+            <Label htmlFor="aform-category">카테고리</Label>
+            <Select
+              id="aform-category"
               value={form.category}
               onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
               required
             >
-              <option value="" disabled>선택…</option>
+              <option value="" disabled>
+                선택…
+              </option>
               {categories?.map((c) => (
                 <option key={c.id} value={c.name}>
-                  {c.icon ? `${c.icon} ` : ''}{c.name}
+                  {c.icon ? `${c.icon} ` : ''}
+                  {c.name}
                 </option>
               ))}
-            </select>
-          </label>
+            </Select>
+          </Field>
 
-          <label className="aform__field">
-            <span className="aform__label">선물 <span className="aform__optional">(선택)</span></span>
-            <input
+          <Field>
+            <Label htmlFor="aform-gift" optional>선물</Label>
+            <Input
+              id="aform-gift"
               type="text"
-              className="aform__input"
               placeholder="예: 꽃다발, 저녁 예약"
               value={form.gift ?? ''}
               onChange={(e) => setForm((f) => ({ ...f, gift: e.target.value }))}
               maxLength={200}
             />
-          </label>
+          </Field>
 
-          <label className="aform__field">
-            <span className="aform__label">메모 <span className="aform__optional">(선택)</span></span>
-            <textarea
-              className="aform__input aform__textarea"
+          <Field>
+            <Label htmlFor="aform-note" optional>메모</Label>
+            <Textarea
+              id="aform-note"
               rows={3}
               value={form.note ?? ''}
               onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))}
               maxLength={1000}
             />
-          </label>
+          </Field>
 
           {error && (
-            <p className="aform__error">
+            <ErrorText>
               {error instanceof Error ? error.message : '저장에 실패했습니다.'}
-            </p>
+            </ErrorText>
           )}
-
-          <div className="aform__actions">
-            <button type="button" className="aform__btn aform__btn--ghost" onClick={onClose} disabled={busy}>
-              취소
-            </button>
-            <button type="submit" className="aform__btn aform__btn--primary" disabled={busy}>
-              {busy ? '저장 중…' : isEdit ? '저장' : '추가'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </>
+        </Stack>
+      </form>
+    </Modal>
   )
+}
+
+function makeInitialForm(
+  initial: Anniversary | null,
+  categories: AnniversaryCategory[] | undefined,
+  initialDate?: string,
+): AnniversaryPayload {
+  if (initial) {
+    return {
+      name: initial.name,
+      date: initial.date,
+      recurring: initial.recurring,
+      category: initial.category,
+      gift: initial.gift ?? '',
+      note: initial.note ?? '',
+    }
+  }
+  return {
+    name: '',
+    date: initialDate ?? '',
+    recurring: true,
+    category: categories?.[0]?.name ?? '',
+    gift: '',
+    note: '',
+  }
 }

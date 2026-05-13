@@ -10,7 +10,8 @@ import {
   type AdminUser,
   type AllowedEmail,
 } from '../api/admin'
-import { useAuth, type Role } from '../auth/AuthContext'
+import { useAuth } from '../auth/useAuth'
+import type { Role } from '../auth/authContext'
 import './Admin.css'
 
 const ROLE_OPTIONS: Role[] = ['USER', 'ADMIN']

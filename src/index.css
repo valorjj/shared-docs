@@ -1,9 +1,11 @@
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Noto+Serif+KR:wght@400;600&display=swap');
+@import './components/ui/tokens.css';
 
 :root {
-  --cream: #F4EFE5;
-  --text: #1C1916;
-  --muted: #6B6660;
+  /* legacy aliases — prefer tokens.css vars in new code */
+  --cream: var(--c-bg);
+  --text: var(--c-text);
+  --muted: var(--c-text-muted);
 }
 
 *,

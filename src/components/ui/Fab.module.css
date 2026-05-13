@@ -1,0 +1,34 @@
+.fab {
+  position: fixed;
+  right: 20px;
+  bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: none;
+  background: var(--c-primary);
+  color: #fff;
+  cursor: pointer;
+  z-index: 100;
+  box-shadow: var(--shadow-fab);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform var(--t-fast), box-shadow var(--t-fast);
+}
+
+.fab:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.28);
+}
+
+.fab:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-fab), 0 0 0 3px var(--c-primary-soft-strong);
+}
+
+@media (min-width: 768px) {
+  .fab {
+    bottom: 24px;
+  }
+}

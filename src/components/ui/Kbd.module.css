@@ -1,0 +1,13 @@
+.kbd {
+  display: inline-block;
+  padding: 0.08rem 0.4rem;
+  margin: 0 0.1rem;
+  border: 1px solid var(--c-border-strong);
+  border-bottom-width: 2px;
+  border-radius: var(--r-xs);
+  background: var(--c-surface);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--c-text);
+  line-height: 1.3;
+}

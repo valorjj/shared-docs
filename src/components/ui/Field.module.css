@@ -1,0 +1,32 @@
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+.label {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semi);
+  color: var(--c-text-subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.hint {
+  font-size: var(--fs-xs);
+  color: var(--c-text-subtle);
+}
+
+.error {
+  font-size: var(--fs-xs);
+  color: var(--c-danger);
+}
+
+.optional {
+  font-weight: var(--fw-regular);
+  color: var(--c-text-subtle);
+  text-transform: none;
+  letter-spacing: 0;
+  margin-inline-start: var(--sp-1);
+}

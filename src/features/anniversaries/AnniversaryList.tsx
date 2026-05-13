@@ -1,7 +1,18 @@
-import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { Cake, Plus, Trash2, Gift } from 'lucide-react'
-import { useAuth } from '../../auth/AuthContext'
+import { useCallback, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import { Cake, Trash2, Gift } from 'lucide-react'
+import {
+  Page,
+  PageHeader,
+  PageTitle,
+  BackLink,
+  Section,
+  Badge,
+  Fab,
+  IconButton,
+  Button,
+} from '../../components/ui'
+import { useAuth } from '../../auth/useAuth'
 import {
   daysFromToday,
   nextOccurrence,
@@ -17,9 +28,20 @@ import './anniversaries.css'
 export default function AnniversaryList() {
   const { user } = useAuth()
   const isAdmin = user?.role === 'ADMIN'
+  const [searchParams, setSearchParams] = useSearchParams()
 
+  const dateParam = searchParams.get('date')
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<Anniversary | null>(null)
+
+  const clearOpenIntent = useCallback(() => {
+    if (!dateParam) return
+    const next = new URLSearchParams(searchParams)
+    next.delete('date')
+    setSearchParams(next, { replace: true })
+  }, [dateParam, searchParams, setSearchParams])
+
+  const formIsOpen = formOpen || !!dateParam
 
   const { data, isLoading, isError, error, refetch } = useAnniversaries()
   const { data: categories } = useAnniversaryCategories()
@@ -37,7 +59,7 @@ export default function AnniversaryList() {
   }, [data])
 
   const upcoming = useMemo(() => enriched.filter((e) => e.days >= 0 && e.days <= 30), [enriched])
-  const later    = useMemo(() => enriched.filter((e) => e.days > 30 || e.days < 0), [enriched])
+  const later = useMemo(() => enriched.filter((e) => e.days > 30 || e.days < 0), [enriched])
 
   const findCategory = (name: string) => categories?.find((c) => c.name === name)
 
@@ -55,20 +77,17 @@ export default function AnniversaryList() {
   }
 
   return (
-    <div className="anniv">
-      <header className="anniv__header">
-        <Link to="/data" className="anniv__back">← 데이터</Link>
-        <h1 className="anniv__title">
-          <Cake size={22} strokeWidth={2} aria-hidden="true" />
-          <span>기념일</span>
-        </h1>
-      </header>
+    <Page>
+      <PageHeader>
+        <BackLink to="/data">데이터</BackLink>
+        <PageTitle icon={<Cake size={22} strokeWidth={2} />}>기념일</PageTitle>
+      </PageHeader>
 
       {isLoading && <p className="anniv__status">불러오는 중…</p>}
       {isError && (
         <p className="anniv__status anniv__status--error">
           {error instanceof Error ? error.message : '데이터를 불러오지 못했습니다.'}{' '}
-          <button type="button" onClick={() => refetch()}>다시 시도</button>
+          <Button variant="outline" size="sm" onClick={() => refetch()}>다시 시도</Button>
         </p>
       )}
 
@@ -77,8 +96,7 @@ export default function AnniversaryList() {
       )}
 
       {upcoming.length > 0 && (
-        <section className="anniv__section">
-          <h2 className="anniv__section-title">다가오는 30일</h2>
+        <Section title="다가오는 30일">
           <ul className="anniv__list">
             {upcoming.map(({ a, occ, days }) => (
               <Row
@@ -94,12 +112,11 @@ export default function AnniversaryList() {
               />
             ))}
           </ul>
-        </section>
+        </Section>
       )}
 
       {later.length > 0 && (
-        <section className="anniv__section">
-          <h2 className="anniv__section-title">나머지</h2>
+        <Section title="나머지">
           <ul className="anniv__list">
             {later.map(({ a, occ, days }) => (
               <Row
@@ -114,29 +131,40 @@ export default function AnniversaryList() {
               />
             ))}
           </ul>
-        </section>
+        </Section>
       )}
 
-      <button
-        type="button"
-        className="anniv__fab"
-        aria-label="기념일 추가"
-        onClick={() => { setEditing(null); setFormOpen(true) }}
-      >
-        <Plus size={26} strokeWidth={2.5} aria-hidden="true" />
-      </button>
+      <Fab
+        label="기념일 추가"
+        onClick={() => {
+          setEditing(null)
+          setFormOpen(true)
+        }}
+      />
 
       <AnniversaryForm
-        open={formOpen}
+        open={formIsOpen}
         initial={editing}
-        onClose={() => { setFormOpen(false); setEditing(null) }}
+        initialDate={dateParam ?? undefined}
+        onClose={() => {
+          setFormOpen(false)
+          setEditing(null)
+          clearOpenIntent()
+        }}
       />
-    </div>
+    </Page>
   )
 }
 
 function Row({
-  a, occ, days, category, onEdit, onDelete, canDelete, highlight,
+  a,
+  occ,
+  days,
+  category,
+  onEdit,
+  onDelete,
+  canDelete,
+  highlight,
 }: {
   a: Anniversary
   occ: Date
@@ -157,28 +185,23 @@ function Row({
 
   const yrs = a.recurring ? yearsSince(a.date, occ) : null
 
-  const catStyle = category?.color
-    ? { background: hexAlpha(category.color, 0.15), color: category.color }
-    : undefined
-
   return (
     <li className={`anniv__row${highlight ? ' anniv__row--highlight' : ''}`}>
       <div className="anniv__row-main" onClick={onEdit}>
         <div className="anniv__row-top">
           <span className="anniv__name">{a.name}</span>
-          {yrs !== null && yrs > 0 && (
-            <span className="anniv__years">{yrs}주년</span>
-          )}
+          {yrs !== null && yrs > 0 && <span className="anniv__years">{yrs}주년</span>}
         </div>
         <div className="anniv__row-meta">
           {category && (
-            <span className="anniv__cat-badge" style={catStyle}>
-              {category.icon && <span>{category.icon}</span>}
-              <span>{category.name}</span>
-            </span>
+            <Badge color={category.color ?? undefined} icon={category.icon}>
+              {category.name}
+            </Badge>
           )}
           <span className="anniv__date">{dateLabel}</span>
-          <span className={`anniv__days${days <= 7 ? ' anniv__days--soon' : ''}${days === 0 ? ' anniv__days--today' : ''}`}>
+          <span
+            className={`anniv__days${days <= 7 ? ' anniv__days--soon' : ''}${days === 0 ? ' anniv__days--today' : ''}`}
+          >
             {dayLabel}
           </span>
         </div>
@@ -190,14 +213,9 @@ function Row({
         )}
       </div>
       {canDelete && (
-        <button
-          type="button"
-          className="anniv__del-btn"
-          onClick={onDelete}
-          aria-label="삭제"
-        >
-          <Trash2 size={16} strokeWidth={2} aria-hidden="true" />
-        </button>
+        <IconButton label="삭제" variant="danger" size="sm" onClick={onDelete}>
+          <Trash2 size={14} strokeWidth={2} />
+        </IconButton>
       )}
     </li>
   )
@@ -205,11 +223,4 @@ function Row({
 
 function koreanDay(d: Date): string {
   return ['일', '월', '화', '수', '목', '금', '토'][d.getDay()]
-}
-
-function hexAlpha(hex: string, a: number): string {
-  const m = hex.match(/^#?([\da-f]{6})$/i)
-  if (!m) return hex
-  const n = parseInt(m[1], 16)
-  return `rgba(${(n >> 16) & 0xff}, ${(n >> 8) & 0xff}, ${n & 0xff}, ${a})`
 }

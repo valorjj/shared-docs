@@ -1,0 +1,68 @@
+:root {
+  --c-bg: #f4efe5;
+  --c-surface: #ffffff;
+  --c-surface-tint: #faf6ed;
+  --c-overlay: rgba(0, 0, 0, 0.45);
+
+  --c-text: #1c1916;
+  --c-text-muted: #6b6660;
+  --c-text-subtle: #8a857c;
+  --c-text-placeholder: #b9b2a0;
+
+  --c-primary: #1b3a5c;
+  --c-primary-hover: #14304d;
+  --c-primary-soft: rgba(27, 58, 92, 0.08);
+  --c-primary-soft-strong: rgba(27, 58, 92, 0.14);
+
+  --c-danger: #b3261e;
+  --c-danger-soft: rgba(179, 38, 30, 0.08);
+  --c-danger-border: #f1a8a3;
+  --c-danger-bg: #fdecea;
+
+  --c-border: #e5e0d6;
+  --c-border-strong: #d9d3c5;
+  --c-border-dashed: #efe9dd;
+
+  --r-xs: 4px;
+  --r-sm: 6px;
+  --r-md: 8px;
+  --r-lg: 12px;
+  --r-pill: 999px;
+
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-7: 32px;
+  --sp-8: 40px;
+  --sp-9: 48px;
+
+  --font-sans: 'Noto Sans KR', system-ui, sans-serif;
+  --font-serif: 'Noto Serif KR', 'Noto Sans KR', serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --fs-xs: 0.72rem;
+  --fs-sm: 0.82rem;
+  --fs-base: 0.92rem;
+  --fs-md: 1rem;
+  --fs-lg: 1.1rem;
+  --fs-xl: 1.55rem;
+  --fs-2xl: 2rem;
+
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semi: 600;
+  --fw-bold: 700;
+
+  --shadow-sm: 0 1px 2px rgba(28, 25, 22, 0.04);
+  --shadow-md: 0 4px 14px rgba(28, 25, 22, 0.08);
+  --shadow-lg: 0 12px 32px rgba(28, 25, 22, 0.12);
+  --shadow-fab: 0 6px 18px rgba(0, 0, 0, 0.22);
+
+  --ring-focus: 0 0 0 2px var(--c-surface), 0 0 0 4px var(--c-primary);
+
+  --t-fast: 120ms ease;
+  --t-base: 180ms ease;
+}

@@ -1,21 +1,25 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useSyncExternalStore } from 'react'
 
 export function useMediaQuery(query: string): boolean {
-  const [matches, setMatches] = useState<boolean>(() => {
+  const subscribe = useCallback(
+    (notify: () => void) => {
+      if (typeof window === 'undefined') return () => {}
+      const m = window.matchMedia(query)
+      m.addEventListener('change', notify)
+      return () => m.removeEventListener('change', notify)
+    },
+    [query],
+  )
+
+  const getSnapshot = useCallback(() => {
     if (typeof window === 'undefined') return false
     return window.matchMedia(query).matches
-  })
-
-  useEffect(() => {
-    const m = window.matchMedia(query)
-    const handler = (e: MediaQueryListEvent) => setMatches(e.matches)
-    m.addEventListener('change', handler)
-    setMatches(m.matches)
-    return () => m.removeEventListener('change', handler)
   }, [query])
 
-  return matches
+  const getServerSnapshot = () => false
+
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
 }
 
 export const useIsDesktop = (): boolean => useMediaQuery('(min-width: 768px)')
-export const useIsMobile  = (): boolean => useMediaQuery('(max-width: 767px)')
+export const useIsMobile = (): boolean => useMediaQuery('(max-width: 767px)')

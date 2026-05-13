@@ -1,18 +1,22 @@
-import { useEffect, useMemo, useState, type CSSProperties } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   DataGrid,
   renderTextEditor,
   type Column,
+  type DataGridHandle,
   type RenderEditCellProps,
   type RowsChangeData,
 } from 'react-data-grid'
-import { Pencil, Plus, Trash2 } from 'lucide-react'
+import { Pencil, Plus, Trash2, X } from 'lucide-react'
 import 'react-data-grid/lib/styles.css'
 
-import { useAuth } from '../../auth/AuthContext'
+import { useAuth } from '../../auth/useAuth'
+import { Badge, Button, IconButton, Kbd } from '../../components/ui'
+import { formatMoney } from '../../lib/format'
 import {
+  SPLIT_META,
+  SPLIT_MODES,
   SUPPORTED_CURRENCIES,
-  formatMoney,
   todayString,
   useCreatePurchase,
   useDeletePurchase,
@@ -21,6 +25,7 @@ import {
   type Purchase,
   type PurchaseCategory,
   type PurchasePayload,
+  type SplitMode,
 } from './api'
 
 const DRAFT_ID = 'draft' as const
@@ -34,6 +39,7 @@ type GridRow = {
   currency: string
   category: string
   note: string
+  splitMode: SplitMode
   byName: string
   byPic: string | null
   byUserId: number | null
@@ -49,6 +55,7 @@ function makeDraft(defaultCategory: string): GridRow {
     currency: 'KRW',
     category: defaultCategory,
     note: '',
+    splitMode: 'SHARED',
     byName: '',
     byPic: null,
     byUserId: null,
@@ -65,6 +72,7 @@ function fromPurchase(p: Purchase): GridRow {
     currency: p.currency,
     category: p.category,
     note: p.note ?? '',
+    splitMode: p.splitMode,
     byName: p.createdBy.name,
     byPic: p.createdBy.pictureUrl,
     byUserId: p.createdBy.userId,
@@ -80,6 +88,7 @@ function toPayload(r: GridRow): PurchasePayload {
     currency: r.currency,
     category: r.category,
     note: r.note.trim() || null,
+    splitMode: r.splitMode,
   }
 }
 
@@ -90,36 +99,66 @@ function isDraftReady(r: GridRow): boolean {
 interface Props {
   rows: Purchase[]
   onEditDetails?: (row: Purchase) => void
+  highlightRowId?: number
 }
 
-export default function PurchaseGrid({ rows, onEditDetails }: Props) {
+export default function PurchaseGrid({ rows, onEditDetails, highlightRowId }: Props) {
   const { user } = useAuth()
   const isAdmin = user?.role === 'ADMIN'
   const { data: categories = [] } = usePurchaseCategories()
   const createMut = useCreatePurchase()
   const updateMut = useUpdatePurchase()
   const deleteMut = useDeletePurchase()
+  const gridRef = useRef<DataGridHandle>(null)
 
   const defaultCategory = categories.find((c) => c.active)?.name ?? categories[0]?.name ?? ''
+  const [adding, setAdding] = useState(false)
   const [draft, setDraft] = useState<GridRow>(() => makeDraft(defaultCategory))
 
-  useEffect(() => {
-    if (!draft.category && defaultCategory) {
-      setDraft((d) => ({ ...d, category: defaultCategory }))
-    }
-  }, [defaultCategory, draft.category])
-
   const dataRows = useMemo<GridRow[]>(
-    () => [draft, ...rows.map(fromPurchase)],
-    [draft, rows],
+    () => (adding ? [draft, ...rows.map(fromPurchase)] : rows.map(fromPurchase)),
+    [adding, draft, rows],
   )
 
-  const commitDraft = () => {
+  const startAdd = useCallback(() => {
+    setDraft(makeDraft(defaultCategory))
+    setAdding(true)
+  }, [defaultCategory])
+
+  const cancelAdd = useCallback(() => {
+    setAdding(false)
+    setDraft(makeDraft(defaultCategory))
+  }, [defaultCategory])
+
+  const commitDraft = useCallback(() => {
     if (!isDraftReady(draft) || createMut.isPending) return
     createMut.mutate(toPayload(draft), {
-      onSuccess: () => setDraft(makeDraft(defaultCategory)),
+      onSuccess: () => {
+        setDraft(makeDraft(defaultCategory))
+        setAdding(false)
+      },
     })
-  }
+  }, [createMut, defaultCategory, draft])
+
+  // After draft row mounts, jump focus to the first meaningful cell (item).
+  useEffect(() => {
+    if (!adding) return
+    const id = requestAnimationFrame(() => {
+      gridRef.current?.selectCell({ rowIdx: 0, idx: 1 }, { enableEditor: true })
+    })
+    return () => cancelAnimationFrame(id)
+  }, [adding])
+
+  // Scroll a highlighted row into view (called from the calendar via ?row= URL param).
+  useEffect(() => {
+    if (highlightRowId == null) return
+    const idx = dataRows.findIndex((r) => r.id === highlightRowId)
+    if (idx < 0) return
+    const id = requestAnimationFrame(() => {
+      gridRef.current?.scrollToCell({ rowIdx: idx, idx: 0 })
+    })
+    return () => cancelAnimationFrame(id)
+  }, [highlightRowId, dataRows])
 
   const columns = useMemo<Column<GridRow>[]>(() => {
     const catNames = categories.filter((c) => c.active).map((c) => c.name)
@@ -133,24 +172,38 @@ export default function PurchaseGrid({ rows, onEditDetails }: Props) {
       {
         key: 'item',
         name: '품목',
-        width: 180,
+        width: 200,
         renderEditCell: renderTextEditor,
+        renderCell: ({ row }) =>
+          row.id === DRAFT_ID && !row.item ? (
+            <span className="purchase__grid-placeholder">예: 장보기</span>
+          ) : (
+            row.item
+          ),
       },
       {
         key: 'store',
         name: '상점',
-        width: 120,
+        width: 140,
         renderEditCell: renderTextEditor,
+        renderCell: ({ row }) =>
+          row.id === DRAFT_ID && !row.store ? (
+            <span className="purchase__grid-placeholder">선택</span>
+          ) : (
+            row.store
+          ),
       },
       {
         key: 'amount',
         name: '금액',
-        width: 115,
+        width: 120,
         cellClass: 'rdg-cell--right',
         renderCell: ({ row }) =>
-          row.id === DRAFT_ID && row.amount === 0
-            ? <span className="purchase__grid-placeholder">—</span>
-            : formatMoney(row.amount, row.currency),
+          row.id === DRAFT_ID && row.amount === 0 ? (
+            <span className="purchase__grid-placeholder">0</span>
+          ) : (
+            formatMoney(row.amount, row.currency)
+          ),
         renderEditCell: amountEditor,
       },
       {
@@ -167,9 +220,21 @@ export default function PurchaseGrid({ rows, onEditDetails }: Props) {
         renderEditCell: (p) => selectEditor(p, catNames),
       },
       {
+        key: 'splitMode',
+        name: '나눔',
+        width: 90,
+        renderCell: ({ row }) => (
+          <span className="purchase__split-cell" title={SPLIT_META[row.splitMode].hint}>
+            <span aria-hidden="true">{SPLIT_META[row.splitMode].emoji}</span>
+            <span>{SPLIT_META[row.splitMode].label}</span>
+          </span>
+        ),
+        renderEditCell: (p) => selectEditor(p, SPLIT_MODES),
+      },
+      {
         key: 'byName',
         name: '누가',
-        width: 100,
+        width: 110,
         renderCell: ({ row }) => {
           if (row.id === DRAFT_ID) return <span className="purchase__grid-placeholder">—</span>
           return (
@@ -183,24 +248,25 @@ export default function PurchaseGrid({ rows, onEditDetails }: Props) {
       {
         key: '__actions',
         name: '',
-        width: 110,
+        width: 130,
         cellClass: 'rdg-cell--actions',
         renderCell: ({ row }) => {
           if (row.id === DRAFT_ID) {
             return (
-              <button
-                type="button"
-                className="purchase__grid-btn purchase__grid-btn--primary"
-                disabled={!isDraftReady(row) || createMut.isPending}
-                onClick={() => {
-                  createMut.mutate(toPayload(row), {
-                    onSuccess: () => setDraft(makeDraft(defaultCategory)),
-                  })
-                }}
-              >
-                <Plus size={14} strokeWidth={2.5} aria-hidden="true" />
-                <span>추가</span>
-              </button>
+              <span className="purchase__grid-actions">
+                <Button
+                  variant="primary"
+                  size="sm"
+                  leading={<Plus size={14} strokeWidth={2.5} />}
+                  disabled={!isDraftReady(row) || createMut.isPending}
+                  onClick={commitDraft}
+                >
+                  저장
+                </Button>
+                <IconButton label="취소" variant="ghost" size="sm" onClick={cancelAdd}>
+                  <X size={14} strokeWidth={2} />
+                </IconButton>
+              </span>
             )
           }
           const canMutate = row.byUserId === user?.userId || isAdmin
@@ -208,38 +274,37 @@ export default function PurchaseGrid({ rows, onEditDetails }: Props) {
           return (
             <span className="purchase__grid-actions">
               {onEditDetails && (
-                <button
-                  type="button"
-                  className="purchase__grid-btn purchase__grid-btn--ghost"
+                <IconButton
+                  label="메모 편집"
+                  variant="outline"
+                  size="sm"
                   onClick={() => {
                     const p = rows.find((x) => x.id === row.id)
                     if (p) onEditDetails(p)
                   }}
-                  aria-label="메모 편집"
-                  title="메모 편집"
                 >
-                  <Pencil size={14} strokeWidth={2} aria-hidden="true" />
-                </button>
+                  <Pencil size={14} strokeWidth={2} />
+                </IconButton>
               )}
-              <button
-                type="button"
-                className="purchase__grid-btn purchase__grid-btn--danger"
+              <IconButton
+                label="삭제"
+                variant="danger"
+                size="sm"
                 disabled={deleteMut.isPending}
                 onClick={() => {
                   if (confirm(`"${row.item}" 항목을 삭제할까요?`)) {
                     deleteMut.mutate(row.id as number)
                   }
                 }}
-                aria-label="삭제"
               >
-                <Trash2 size={14} strokeWidth={2} aria-hidden="true" />
-              </button>
+                <Trash2 size={14} strokeWidth={2} />
+              </IconButton>
             </span>
           )
         },
       },
     ]
-  }, [categories, createMut, deleteMut, defaultCategory, isAdmin, onEditDetails, rows, user?.userId])
+  }, [categories, createMut, deleteMut, isAdmin, onEditDetails, rows, user?.userId, commitDraft, cancelAdd])
 
   function handleRowsChange(newRows: GridRow[], { indexes }: RowsChangeData<GridRow>) {
     for (const i of indexes) {
@@ -256,7 +321,8 @@ export default function PurchaseGrid({ rows, onEditDetails }: Props) {
         before.store !== after.store ||
         before.amount !== after.amount ||
         before.currency !== after.currency ||
-        before.category !== after.category
+        before.category !== after.category ||
+        before.splitMode !== after.splitMode
       if (!changed) continue
       if (!after.item.trim() || after.amount <= 0) continue
       updateMut.mutate({ id: after.id as number, payload: toPayload(after) })
@@ -266,41 +332,75 @@ export default function PurchaseGrid({ rows, onEditDetails }: Props) {
   return (
     <div className="purchase__grid-wrap">
       <div className="purchase__grid-toolbar">
-        <button
-          type="button"
-          className="purchase__grid-btn purchase__grid-btn--primary"
-          disabled={!isDraftReady(draft) || createMut.isPending}
-          onClick={commitDraft}
-        >
-          <Plus size={14} strokeWidth={2.5} aria-hidden="true" />
-          <span>항목 추가</span>
-        </button>
-        <span className="purchase__grid-toolbar-hint">
-          상단 행을 채운 뒤 <kbd>⌘/Ctrl + Enter</kbd> 또는 추가 버튼
-        </span>
+        {adding ? (
+          <>
+            <Button
+              variant="primary"
+              size="sm"
+              leading={<Plus size={14} strokeWidth={2.5} />}
+              disabled={!isDraftReady(draft) || createMut.isPending}
+              onClick={commitDraft}
+            >
+              저장
+            </Button>
+            <Button variant="ghost" size="sm" onClick={cancelAdd}>
+              취소
+            </Button>
+            <span className="purchase__grid-toolbar-hint">
+              <Kbd>⌘/Ctrl + Enter</Kbd> 로 저장 · <Kbd>Esc</Kbd> 로 취소
+            </span>
+          </>
+        ) : (
+          <>
+            <Button
+              variant="primary"
+              size="sm"
+              leading={<Plus size={14} strokeWidth={2.5} />}
+              onClick={startAdd}
+            >
+              항목 추가
+            </Button>
+            <span className="purchase__grid-toolbar-hint">새 행을 추가합니다</span>
+          </>
+        )}
       </div>
 
       <DataGrid<GridRow>
+        ref={gridRef}
         className="rdg-light purchase__grid"
         columns={columns}
         rows={dataRows}
         rowKeyGetter={(r) => r.id}
+        rowClass={(r) => {
+          const parts: string[] = []
+          if (r.id === DRAFT_ID) parts.push('rdg-cell--draft')
+          if (highlightRowId != null && r.id === highlightRowId) parts.push('rdg-row--pulse')
+          return parts.length ? parts.join(' ') : undefined
+        }}
         onRowsChange={handleRowsChange}
         onCellKeyDown={({ row, mode }, event) => {
           if (mode !== 'SELECT') return
-          if (event.key !== 'Enter') return
-          if (!(event.ctrlKey || event.metaKey)) return
           if (row.id !== DRAFT_ID) return
-          event.preventGridDefault()
-          commitDraft()
+          if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+            event.preventGridDefault()
+            commitDraft()
+            return
+          }
+          if (event.key === 'Escape') {
+            event.preventGridDefault()
+            cancelAdd()
+          }
         }}
         defaultColumnOptions={{ resizable: true, sortable: false }}
         rowHeight={42}
         headerRowHeight={40}
       />
-      <p className="purchase__grid-hint">
-        셀 더블클릭(또는 Enter)으로 편집 · Tab 이동 · Ctrl+C/V 복사·붙여넣기
-      </p>
+      {!adding && (
+        <p className="purchase__grid-hint">
+          셀 더블클릭(또는 <Kbd>Enter</Kbd>)으로 편집 · <Kbd>Tab</Kbd> 이동 · <Kbd>Ctrl+C/V</Kbd>
+          복사·붙여넣기
+        </p>
+      )}
     </div>
   )
 }
@@ -350,7 +450,9 @@ function selectEditor(p: RenderEditCellProps<GridRow>, options: string[]) {
       onBlur={() => p.onClose(false, false)}
     >
       {options.map((o) => (
-        <option key={o} value={o}>{o}</option>
+        <option key={o} value={o}>
+          {o}
+        </option>
       ))}
     </select>
   )
@@ -358,21 +460,6 @@ function selectEditor(p: RenderEditCellProps<GridRow>, options: string[]) {
 
 function CategoryCell({ row, categories }: { row: GridRow; categories: PurchaseCategory[] }) {
   const c = categories.find((x) => x.name === row.category)
-  const style: CSSProperties | undefined = c?.color
-    ? { background: hexWithAlpha(c.color, 0.15), color: c.color }
-    : undefined
   if (!row.category) return <span className="purchase__grid-placeholder">—</span>
-  return (
-    <span className="purchase__cat-badge" style={style}>
-      {c?.icon ? <span>{c.icon}</span> : null}
-      <span>{row.category}</span>
-    </span>
-  )
-}
-
-function hexWithAlpha(hex: string, alpha: number): string {
-  const m = hex.match(/^#?([\da-f]{6})$/i)
-  if (!m) return hex
-  const n = parseInt(m[1], 16)
-  return `rgba(${(n >> 16) & 0xff}, ${(n >> 8) & 0xff}, ${n & 0xff}, ${alpha})`
+  return <Badge color={c?.color ?? undefined} icon={c?.icon}>{row.category}</Badge>
 }

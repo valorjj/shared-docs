@@ -1,6 +1,7 @@
 import { Outlet } from 'react-router-dom'
 import Forbidden from '../pages/Forbidden'
-import { useAuth, type Role } from './AuthContext'
+import { useAuth } from './useAuth'
+import type { Role } from './authContext'
 
 type Props = {
   role: Role

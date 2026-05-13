@@ -1,9 +1,25 @@
-import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { Wallet, Plus } from 'lucide-react'
+import { useCallback, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import { Wallet, Plus, RotateCcw } from 'lucide-react'
 import MobileTable, { type Column } from '../../components/common/MobileTable'
-import { useAuth } from '../../auth/AuthContext'
+import {
+  Page,
+  PageHeader,
+  PageTitle,
+  BackLink,
+  Card,
+  Stack,
+  Row,
+  Field,
+  Label,
+  Input,
+  Select,
+  Button,
+  Badge,
+} from '../../components/ui'
+import { useAuth } from '../../auth/useAuth'
 import { useIsDesktop } from '../../lib/useMediaQuery'
+import { formatShortDate } from '../../lib/format'
 import {
   currentMonthString,
   formatMoney,
@@ -15,22 +31,62 @@ import {
 } from './api'
 import PurchaseForm from './PurchaseForm'
 import PurchaseGrid from './PurchaseGrid'
+import { SettlementCard } from './SettlementCard'
+import { computeSettlement } from './settlement'
+import { useSettlements } from './settlementApi'
+import { CategoryChart } from './CategoryChart'
+import RecurringPurchasesModal from './RecurringPurchasesModal'
 import './purchases.css'
 
 export default function PurchaseList() {
   const { user } = useAuth()
   const isAdmin = user?.role === 'ADMIN'
   const isDesktop = useIsDesktop()
+  const [searchParams, setSearchParams] = useSearchParams()
 
-  const [month, setMonth] = useState<string>(currentMonthString())
+  const month = searchParams.get('month') ?? currentMonthString()
+  const dateParam = searchParams.get('date')
+  const editIdParam = searchParams.get('edit')
+  const rowIdParam = searchParams.get('row')
+  const highlightRowId = rowIdParam ? Number(rowIdParam) : undefined
+
   const [categoryFilter, setCategoryFilter] = useState<string>('ALL')
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<Purchase | null>(null)
+  const [recurringOpen, setRecurringOpen] = useState(false)
+
+  const setMonth = useCallback(
+    (m: string) => {
+      const next = new URLSearchParams(searchParams)
+      next.set('month', m)
+      setSearchParams(next, { replace: true })
+    },
+    [searchParams, setSearchParams],
+  )
+
+  const clearOpenIntent = useCallback(() => {
+    if (!dateParam && !editIdParam) return
+    const next = new URLSearchParams(searchParams)
+    next.delete('date')
+    next.delete('edit')
+    setSearchParams(next, { replace: true })
+  }, [dateParam, editIdParam, searchParams, setSearchParams])
 
   const range = useMemo(() => monthBounds(month), [month])
   const { data: rows, isLoading, isError, error, refetch } = usePurchases(range)
   const { data: categories } = usePurchaseCategories()
+  const { data: settlementRecords } = useSettlements(month)
   const deletePurchase = useDeletePurchase()
+
+  // Derived edit target from URL param ?edit=N, when the row is loaded.
+  const urlEditingTarget = useMemo(() => {
+    if (!editIdParam || !rows) return null
+    const id = Number(editIdParam)
+    return rows.find((r) => r.id === id) ?? null
+  }, [editIdParam, rows])
+
+  const formInitial = editing ?? urlEditingTarget
+  const formIsOpen = formOpen || !!dateParam || !!urlEditingTarget
 
   const filtered = useMemo(() => {
     if (!rows) return []
@@ -43,8 +99,18 @@ export default function PurchaseList() {
     for (const r of filtered) {
       map.set(r.currency, (map.get(r.currency) ?? 0) + r.amount)
     }
-    return Array.from(map.entries()).sort(([a], [b]) => (a === 'KRW' ? -1 : b === 'KRW' ? 1 : a.localeCompare(b)))
+    return Array.from(map.entries()).sort(([a], [b]) =>
+      a === 'KRW' ? -1 : b === 'KRW' ? 1 : a.localeCompare(b),
+    )
   }, [filtered])
+
+  const settlementRows = useMemo(() => {
+    if (!rows) return []
+    const me = user
+      ? { userId: user.userId, name: user.name, pictureUrl: user.pictureUrl }
+      : null
+    return computeSettlement(rows, settlementRecords ?? [], me)
+  }, [rows, settlementRecords, user])
 
   const handleRowClick = (row: Purchase) => {
     setEditing(row)
@@ -76,9 +142,7 @@ export default function PurchaseList() {
       header: '금액',
       mobile: 'primary',
       align: 'right',
-      render: (r) => (
-        <span className="purchase__amount">{formatMoney(r.amount, r.currency)}</span>
-      ),
+      render: (r) => <span className="purchase__amount">{formatMoney(r.amount, r.currency)}</span>,
     },
     {
       key: 'date',
@@ -90,7 +154,10 @@ export default function PurchaseList() {
       key: 'category',
       header: '카테고리',
       mobile: 'secondary',
-      render: (r) => <CategoryBadge name={r.category} categories={categories ?? []} />,
+      render: (r) => {
+        const c = categories?.find((x) => x.name === r.category)
+        return <Badge color={c?.color ?? undefined} icon={c?.icon}>{r.category}</Badge>
+      },
     },
     {
       key: 'store',
@@ -114,147 +181,161 @@ export default function PurchaseList() {
   ]
 
   return (
-    <div className="purchase">
-      <header className="purchase__header">
-        <Link to="/data" className="purchase__back">← 데이터</Link>
-        <h1 className="purchase__title">
-          <Wallet size={22} strokeWidth={2} aria-hidden="true" />
-          <span>구매 내역</span>
-        </h1>
-      </header>
-
-      <section className="purchase__controls">
-        <div className="purchase__month">
-          <label className="purchase__control-label">월</label>
-          <input
-            type="month"
-            className="purchase__month-input"
-            value={month}
-            onChange={(e) => setMonth(e.target.value || currentMonthString())}
-          />
-        </div>
-
-        <div className="purchase__category-filter">
-          <label className="purchase__control-label">카테고리</label>
-          <select
-            className="purchase__select"
-            value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
+    <Page>
+      <PageHeader>
+        <BackLink to="/data">데이터</BackLink>
+        <Row gap={3} justify="between" wrap>
+          <PageTitle icon={<Wallet size={22} strokeWidth={2} />}>구매 내역</PageTitle>
+          <Button
+            variant="outline"
+            size="sm"
+            leading={<RotateCcw size={14} strokeWidth={2} />}
+            onClick={() => setRecurringOpen(true)}
           >
-            <option value="ALL">전체</option>
-            {categories?.map((c) => (
-              <option key={c.id} value={c.name}>
-                {c.icon ? `${c.icon} ` : ''}{c.name}
-              </option>
-            ))}
-          </select>
-        </div>
+            반복 항목
+          </Button>
+        </Row>
+      </PageHeader>
 
-        <div className="purchase__totals">
-          {totalsByCurrency.length === 0 ? (
-            <span className="purchase__total-empty">합계 —</span>
-          ) : (
-            totalsByCurrency.map(([cur, sum]) => (
-              <span key={cur} className="purchase__total">
-                <span className="purchase__total-label">합계</span>
-                <span className="purchase__total-value">{formatMoney(sum, cur)}</span>
-              </span>
-            ))
-          )}
+      <Card className="purchase__filters" padding="md">
+        <Row gap={4} align="end" wrap>
+          <Field className="purchase__filter-col">
+            <Label htmlFor="purchase-month">월</Label>
+            <Input
+              id="purchase-month"
+              type="month"
+              value={month}
+              onChange={(e) => setMonth(e.target.value || currentMonthString())}
+            />
+          </Field>
+          <Field className="purchase__filter-col">
+            <Label htmlFor="purchase-category">카테고리</Label>
+            <Select
+              id="purchase-category"
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+            >
+              <option value="ALL">전체</option>
+              {categories?.map((c) => (
+                <option key={c.id} value={c.name}>
+                  {c.icon ? `${c.icon} ` : ''}
+                  {c.name}
+                </option>
+              ))}
+            </Select>
+          </Field>
+        </Row>
+
+        <div className="purchase__totals-row">
+          <span className="purchase__totals-label">이 달 합계</span>
+          <div className="purchase__totals-values">
+            {totalsByCurrency.length === 0 ? (
+              <span className="purchase__totals-empty">—</span>
+            ) : (
+              totalsByCurrency.map(([cur, sum]) => (
+                <span key={cur} className="purchase__totals-value">
+                  {formatMoney(sum, cur)}
+                </span>
+              ))
+            )}
+          </div>
         </div>
-      </section>
+      </Card>
+
+      <SettlementCard
+        rows={settlementRows}
+        records={settlementRecords ?? []}
+        yearMonth={month}
+        currentUserId={user?.userId}
+      />
+
+      {rows && rows.length > 0 && (
+        <CategoryChart
+          rows={rows}
+          categories={categories ?? []}
+          currentFilter={categoryFilter}
+          onFilterChange={setCategoryFilter}
+        />
+      )}
 
       {isLoading && <p className="purchase__status">불러오는 중…</p>}
       {isError && (
-        <p className="purchase__status purchase__status--error">
-          {error instanceof Error ? error.message : '데이터를 불러오지 못했습니다.'}{' '}
-          <button type="button" onClick={() => refetch()}>다시 시도</button>
-        </p>
+        <Stack gap={2} align="center" className="purchase__status purchase__status--error">
+          <span>{error instanceof Error ? error.message : '데이터를 불러오지 못했습니다.'}</span>
+          <Button variant="outline" size="sm" onClick={() => refetch()}>
+            다시 시도
+          </Button>
+        </Stack>
       )}
 
-      {rows && (isDesktop ? (
-        <PurchaseGrid
-          rows={filtered}
-          onEditDetails={(row) => { setEditing(row); setFormOpen(true) }}
-        />
-      ) : (
-        <MobileTable<Purchase>
-          columns={columns}
-          rows={filtered}
-          keyOf={(r) => r.id}
-          onRowClick={handleRowClick}
-          empty={
-            <div>
-              이 달에는 등록된 구매 내역이 없습니다.<br />
-              <span style={{ fontSize: '0.85em', color: '#8a857c' }}>오른쪽 아래 + 버튼으로 추가하세요.</span>
-            </div>
-          }
-          rowActions={(row) => {
-            const canDelete = row.createdBy.userId === user?.userId || isAdmin
-            return canDelete ? (
-              <button
-                type="button"
-                className="purchase__delete-btn"
-                onClick={() => handleDelete(row)}
-                disabled={deletePurchase.isPending}
-              >
-                삭제
-              </button>
-            ) : null
-          }}
-        />
-      ))}
+      {rows && (
+        isDesktop ? (
+          <PurchaseGrid
+            rows={filtered}
+            highlightRowId={highlightRowId}
+            onEditDetails={(row) => {
+              setEditing(row)
+              setFormOpen(true)
+            }}
+          />
+        ) : (
+          <MobileTable<Purchase>
+            columns={columns}
+            rows={filtered}
+            keyOf={(r) => r.id}
+            onRowClick={handleRowClick}
+            empty={
+              <div>
+                이 달에는 등록된 구매 내역이 없습니다.
+                <br />
+                <span style={{ fontSize: '0.85em', color: 'var(--c-text-subtle)' }}>
+                  오른쪽 아래 + 버튼으로 추가하세요.
+                </span>
+              </div>
+            }
+            rowActions={(row) => {
+              const canDelete = row.createdBy.userId === user?.userId || isAdmin
+              return canDelete ? (
+                <Button
+                  variant="danger"
+                  size="sm"
+                  onClick={() => handleDelete(row)}
+                  disabled={deletePurchase.isPending}
+                >
+                  삭제
+                </Button>
+              ) : null
+            }}
+          />
+        )
+      )}
 
       {!isDesktop && (
         <button
           type="button"
           className="purchase__fab"
           aria-label="구매 추가"
-          onClick={() => { setEditing(null); setFormOpen(true) }}
+          onClick={() => {
+            setEditing(null)
+            setFormOpen(true)
+          }}
         >
           <Plus size={26} strokeWidth={2.5} aria-hidden="true" />
         </button>
       )}
 
       <PurchaseForm
-        open={formOpen}
-        initial={editing}
-        onClose={() => { setFormOpen(false); setEditing(null) }}
+        open={formIsOpen}
+        initial={formInitial}
+        initialDate={dateParam ?? undefined}
+        onClose={() => {
+          setFormOpen(false)
+          setEditing(null)
+          clearOpenIntent()
+        }}
       />
-    </div>
+
+      <RecurringPurchasesModal open={recurringOpen} onClose={() => setRecurringOpen(false)} />
+    </Page>
   )
-}
-
-function formatShortDate(iso: string): string {
-  const [, m, d] = iso.split('-')
-  return `${Number(m)}/${Number(d)}`
-}
-
-function CategoryBadge({
-  name,
-  categories,
-}: {
-  name: string
-  categories: Array<{ name: string; icon: string | null; color: string | null }>
-}) {
-  const match = categories.find((c) => c.name === name)
-  const style = match?.color
-    ? { background: hexWithAlpha(match.color, 0.15), color: match.color }
-    : undefined
-  return (
-    <span className="purchase__cat-badge" style={style}>
-      {match?.icon && <span>{match.icon}</span>}
-      <span>{name}</span>
-    </span>
-  )
-}
-
-function hexWithAlpha(hex: string, alpha: number): string {
-  const m = hex.match(/^#?([\da-f]{6})$/i)
-  if (!m) return hex
-  const n = parseInt(m[1], 16)
-  const r = (n >> 16) & 0xff
-  const g = (n >> 8) & 0xff
-  const b = n & 0xff
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`
 }

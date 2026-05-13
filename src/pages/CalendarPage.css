@@ -1,114 +1,92 @@
-.cal-page {
-  max-width: 720px;
-  margin: 0 auto;
-  padding: 1.5rem 1.25rem 4rem;
-  font-family: 'Noto Sans KR', system-ui, sans-serif;
-  color: #1c1916;
-  background: #f4efe5;
-  min-height: 100dvh;
-}
-
-.cal-page__header {
-  text-align: center;
-  margin-bottom: 1.25rem;
-}
-
-.cal-page__title {
-  margin: 0 0 0.25rem;
-  font-family: 'Noto Serif KR', 'Noto Sans KR', serif;
-  font-size: 1.55rem;
-  font-weight: 700;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.55rem;
-  color: #1b3a5c;
-}
-
-.cal-page__title svg {
-  display: block;
-}
-
-.cal-page__title > span {
-  color: #1c1916;
-}
-
 .cal-page__sub {
   margin: 0;
-  color: #6b6660;
-  font-size: 0.92rem;
+  color: var(--c-text-muted);
+  font-size: var(--fs-base);
 }
 
-.cal-page__grid {
-  background: #fff;
-  border: 1px solid #e5e0d6;
-  border-radius: 14px;
-  padding: 0.75rem;
-  margin-bottom: 1.25rem;
+.cal-page__grid-card {
+  margin-bottom: var(--sp-4);
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-3);
 }
 
 /* react-day-picker overrides */
 .rdp-root {
-  --rdp-accent-color: #1b3a5c;
-  --rdp-accent-background-color: rgba(27, 58, 92, 0.1);
-  --rdp-day-height: 40px;
-  --rdp-day-width: 40px;
-  font-family: inherit;
+  --rdp-accent-color: var(--c-primary);
+  --rdp-accent-background-color: var(--c-primary-soft);
+  --rdp-day-height: 44px;
+  --rdp-day-width: 44px;
+  font-family: var(--font-sans);
 }
 
-.rdp-day--anniversary > button::after {
-  content: '';
-  position: absolute;
-  bottom: 4px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: #d97706;
-}
-
-.rdp-day--todo > button::after {
-  content: '';
-  position: absolute;
-  bottom: 4px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: #1b3a5c;
-}
-
-.rdp-day--anniversary.rdp-day--todo > button::after {
-  background: linear-gradient(90deg, #d97706 0 50%, #1b3a5c 50% 100%);
-  width: 10px;
-  height: 5px;
-  border-radius: 3px;
-}
-
-.rdp-day > button {
+.cal-day {
   position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: var(--fs-base);
+  color: inherit;
+  padding: 0;
 }
 
-.cal-page__events {
-  background: #fff;
-  border: 1px solid #e5e0d6;
-  border-radius: 14px;
-  padding: 1rem 1.1rem;
+.cal-day__num {
+  line-height: 1;
 }
 
-.cal-page__events-title {
-  margin: 0 0 0.7rem;
-  font-size: 1rem;
-  font-weight: 700;
+.cal-day__dots {
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex;
+  gap: 2px;
+  pointer-events: none;
+}
+
+.cal-day__dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+}
+
+.cal-page__legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--sp-1) var(--sp-3);
+  padding-top: var(--sp-2);
+  border-top: 1px dashed var(--c-border-dashed);
+  width: 100%;
+  font-size: var(--fs-xs);
+  color: var(--c-text-subtle);
+}
+
+.cal-page__legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.cal-page__legend-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
 }
 
 .cal-page__empty {
-  margin: 0.6rem 0;
-  color: #8a857c;
-  font-size: 0.9rem;
+  margin: 0.4rem 0;
+  color: var(--c-text-subtle);
+  font-size: var(--fs-sm);
 }
 
 .cal-page__list {
@@ -117,26 +95,36 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--sp-2);
 }
 
 .cal-page__event {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  padding: 0.6rem 0.75rem;
-  background: #faf6ed;
-  border-radius: 8px;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--c-surface-tint);
+  border-radius: var(--r-md);
+  border-left: 3px solid var(--c-primary);
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  transition: background var(--t-fast), transform var(--t-fast);
 }
 
-.cal-page__event--anniversary {
-  background: rgba(217, 119, 6, 0.08);
-  border-left: 3px solid #d97706;
+.cal-page__event:hover {
+  background: var(--c-bg);
 }
 
-.cal-page__event--todo {
-  background: rgba(27, 58, 92, 0.06);
-  border-left: 3px solid #1b3a5c;
+.cal-page__event:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--c-primary-soft);
+}
+
+.cal-page__event:active {
+  transform: translateY(0.5px);
 }
 
 .cal-page__event-icon {
@@ -148,25 +136,59 @@
   height: 24px;
 }
 
-.cal-page__event--anniversary .cal-page__event-icon { color: #d97706; }
-.cal-page__event--todo        .cal-page__event-icon { color: #1b3a5c; }
-
-.cal-page__event-icon svg {
-  display: block;
-}
-
 .cal-page__event-body {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
 }
 
 .cal-page__event-title {
-  font-weight: 600;
+  font-weight: var(--fw-semi);
+  color: var(--c-text);
   word-break: break-word;
 }
 
 .cal-page__event-meta {
-  font-size: 0.78rem;
-  color: #6b6660;
-  margin-top: 0.15rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-1) var(--sp-2);
+  font-size: var(--fs-xs);
+  color: var(--c-text-muted);
+}
+
+.cal-page__event-amount {
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--fw-semi);
+  color: var(--c-text);
+}
+
+.cal-page__event-tag {
+  display: inline-block;
+  padding: 0.05rem 0.45rem;
+  border-radius: var(--r-pill);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  font-size: var(--fs-xs);
+  color: var(--c-text-subtle);
+}
+
+.cal-page__actions {
+  margin-top: var(--sp-3);
+  padding-top: var(--sp-3);
+  border-top: 1px dashed var(--c-border-dashed);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+
+.cal-page__actions-label {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semi);
+  color: var(--c-text-subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }

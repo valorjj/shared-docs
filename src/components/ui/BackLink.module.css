@@ -1,0 +1,23 @@
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  align-self: flex-start;
+  color: var(--c-text-muted);
+  text-decoration: none;
+  font-size: var(--fs-sm);
+  padding: 4px 8px 4px 4px;
+  border-radius: var(--r-sm);
+  transition: color var(--t-fast), background var(--t-fast);
+  cursor: pointer;
+}
+
+.back:hover {
+  color: var(--c-text);
+  background: var(--c-surface-tint);
+}
+
+.back:focus-visible {
+  outline: none;
+  box-shadow: var(--ring-focus);
+}

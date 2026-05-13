@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from './client'
-import type { Role } from '../auth/AuthContext'
+import type { Role } from '../auth/authContext'
 
 export type AdminUser = {
   id: number

@@ -1,17 +1,46 @@
 import { useMemo, useState } from 'react'
-import { DayPicker } from 'react-day-picker'
+import { useNavigate } from 'react-router-dom'
+import { DayPicker, type DayButtonProps } from 'react-day-picker'
 import { ko } from 'react-day-picker/locale'
 import 'react-day-picker/style.css'
-import { Calendar as CalendarIcon, Cake, CheckSquare } from 'lucide-react'
+import {
+  Calendar as CalendarIcon,
+  Cake,
+  CheckSquare,
+  ShoppingBag,
+  ArrowLeftRight,
+} from 'lucide-react'
+import {
+  Page,
+  PageHeader,
+  PageTitle,
+  Card,
+  Section,
+  Badge,
+  Button,
+  Row,
+} from '../components/ui'
+import { formatMoney } from '../lib/format'
 import {
   isoOf,
   monthRange,
   useCalendarEvents,
   type CalendarEvent,
+  type CalendarEventType,
 } from '../features/calendar/api'
 import './CalendarPage.css'
 
+const EVENT_TYPES: CalendarEventType[] = ['anniversary', 'todo', 'purchase', 'settlement']
+
+const EVENT_META: Record<CalendarEventType, { label: string; color: string }> = {
+  anniversary: { label: '기념일', color: '#d97706' },
+  todo:        { label: '할 일',  color: '#1b3a5c' },
+  purchase:    { label: '구매',   color: '#16a34a' },
+  settlement:  { label: '정산',   color: '#9333ea' },
+}
+
 export default function CalendarPage() {
+  const navigate = useNavigate()
   const [month, setMonth] = useState<Date>(new Date())
   const [selected, setSelected] = useState<Date | undefined>(new Date())
 
@@ -33,33 +62,48 @@ export default function CalendarPage() {
   }, [events])
 
   const selectedEvents = selected ? eventsByDate.get(isoOf(selected)) ?? [] : []
+  const selectedIso = selected ? isoOf(selected) : ''
+  const selectedYearMonth = selected
+    ? `${selected.getFullYear()}-${String(selected.getMonth() + 1).padStart(2, '0')}`
+    : ''
 
-  const anniversaryDays = useMemo(
-    () =>
-      (events ?? [])
-        .filter((e) => e.type === 'anniversary')
-        .map((e) => parseDate(e.date)),
-    [events],
-  )
-  const todoDays = useMemo(
-    () =>
-      (events ?? [])
-        .filter((e) => e.type === 'todo')
-        .map((e) => parseDate(e.date)),
-    [events],
-  )
+  const goToday = () => {
+    const today = new Date()
+    setMonth(today)
+    setSelected(today)
+  }
+
+  const handleEventClick = (e: CalendarEvent) => {
+    const ym = e.date.slice(0, 7)
+    switch (e.type) {
+      case 'anniversary':
+        navigate('/data/anniversaries')
+        break
+      case 'todo':
+        navigate('/data/todos')
+        break
+      case 'purchase':
+        navigate(`/data/purchases?month=${ym}&row=${e.refId}`)
+        break
+      case 'settlement':
+        navigate(`/data/purchases?month=${ym}`)
+        break
+    }
+  }
 
   return (
-    <div className="cal-page">
-      <header className="cal-page__header">
-        <h1 className="cal-page__title">
-          <CalendarIcon size={22} strokeWidth={2} aria-hidden="true" />
-          <span>캘린더</span>
-        </h1>
-        <p className="cal-page__sub">기념일 · 마감일이 한눈에</p>
-      </header>
+    <Page>
+      <PageHeader>
+        <Row gap={3} justify="between" wrap>
+          <PageTitle icon={<CalendarIcon size={22} strokeWidth={2} />}>캘린더</PageTitle>
+          <Button variant="outline" size="sm" onClick={goToday}>
+            오늘
+          </Button>
+        </Row>
+        <p className="cal-page__sub">기념일 · 마감일 · 구매 · 정산이 한눈에</p>
+      </PageHeader>
 
-      <div className="cal-page__grid">
+      <Card className="cal-page__grid-card" padding="sm">
         <DayPicker
           mode="single"
           locale={ko}
@@ -68,54 +112,152 @@ export default function CalendarPage() {
           month={month}
           onMonthChange={setMonth}
           showOutsideDays
-          modifiers={{
-            anniversary: anniversaryDays,
-            todo: todoDays,
-          }}
-          modifiersClassNames={{
-            anniversary: 'rdp-day--anniversary',
-            todo: 'rdp-day--todo',
+          components={{
+            DayButton: (props: DayButtonProps) => (
+              <CalendarDayButton
+                {...props}
+                events={eventsByDate.get(isoOf(props.day.date)) ?? []}
+              />
+            ),
           }}
         />
-      </div>
+        <Legend />
+      </Card>
 
-      <section className="cal-page__events">
-        <h2 className="cal-page__events-title">
-          {selected
-            ? `${selected.getFullYear()}.${selected.getMonth() + 1}.${selected.getDate()} (${['일','월','화','수','목','금','토'][selected.getDay()]})`
-            : '날짜를 선택하세요'}
-        </h2>
+      <Section
+        title={
+          selected
+            ? `${selected.getFullYear()}.${String(selected.getMonth() + 1).padStart(2, '0')}.${String(selected.getDate()).padStart(2, '0')} (${koreanWeekday(selected)})`
+            : '날짜를 선택하세요'
+        }
+      >
+        <Card padding="md">
+          {selected && selectedEvents.length === 0 && (
+            <p className="cal-page__empty">이 날의 일정이 없습니다.</p>
+          )}
+          {selectedEvents.length > 0 && (
+            <ul className="cal-page__list">
+              {selectedEvents.map((e) => (
+                <EventRow
+                  key={`${e.type}-${e.refId}-${e.date}`}
+                  event={e}
+                  onClick={() => handleEventClick(e)}
+                />
+              ))}
+            </ul>
+          )}
+          {selected && (
+            <div className="cal-page__actions">
+              <span className="cal-page__actions-label">이 날에 추가:</span>
+              <Row gap={2} wrap>
+                <Button
+                  variant="soft"
+                  size="sm"
+                  leading={<ShoppingBag size={14} strokeWidth={2} />}
+                  onClick={() => navigate(`/data/purchases?date=${selectedIso}&month=${selectedYearMonth}`)}
+                >
+                  구매
+                </Button>
+                <Button
+                  variant="soft"
+                  size="sm"
+                  leading={<CheckSquare size={14} strokeWidth={2} />}
+                  onClick={() => navigate(`/data/todos?date=${selectedIso}`)}
+                >
+                  할 일
+                </Button>
+                <Button
+                  variant="soft"
+                  size="sm"
+                  leading={<Cake size={14} strokeWidth={2} />}
+                  onClick={() => navigate(`/data/anniversaries?date=${selectedIso}`)}
+                >
+                  기념일
+                </Button>
+              </Row>
+            </div>
+          )}
+        </Card>
+      </Section>
+    </Page>
+  )
+}
 
-        {selected && selectedEvents.length === 0 && (
-          <p className="cal-page__empty">이 날의 일정이 없습니다.</p>
-        )}
-
-        <ul className="cal-page__list">
-          {selectedEvents.map((e) => (
-            <li
-              key={`${e.type}-${e.refId}-${e.date}`}
-              className={`cal-page__event cal-page__event--${e.type}`}
-            >
-              <span className="cal-page__event-icon" aria-hidden="true">
-                {e.type === 'anniversary'
-                  ? <Cake size={18} strokeWidth={2} />
-                  : <CheckSquare size={18} strokeWidth={2} />}
-              </span>
-              <div className="cal-page__event-body">
-                <div className="cal-page__event-title">{e.title}</div>
-                {e.category && (
-                  <div className="cal-page__event-meta">{e.category}</div>
-                )}
-              </div>
-            </li>
+function CalendarDayButton({
+  events,
+  ...rest
+}: DayButtonProps & { events: CalendarEvent[] }) {
+  const dotTypes = new Set<CalendarEventType>()
+  for (const e of events) dotTypes.add(e.type)
+  return (
+    <button {...rest} className={`${rest.className ?? ''} cal-day`}>
+      <span className="cal-day__num">{rest.day.date.getDate()}</span>
+      {dotTypes.size > 0 && (
+        <span className="cal-day__dots" aria-hidden="true">
+          {EVENT_TYPES.filter((t) => dotTypes.has(t)).map((t) => (
+            <span
+              key={t}
+              className="cal-day__dot"
+              style={{ background: EVENT_META[t].color }}
+            />
           ))}
-        </ul>
-      </section>
+        </span>
+      )}
+    </button>
+  )
+}
+
+function Legend() {
+  return (
+    <div className="cal-page__legend">
+      {EVENT_TYPES.map((t) => (
+        <span key={t} className="cal-page__legend-item">
+          <span className="cal-page__legend-dot" style={{ background: EVENT_META[t].color }} />
+          <span>{EVENT_META[t].label}</span>
+        </span>
+      ))}
     </div>
   )
 }
 
-function parseDate(iso: string): Date {
-  const [y, m, d] = iso.split('-').map(Number)
-  return new Date(y, m - 1, d)
+function EventRow({ event, onClick }: { event: CalendarEvent; onClick: () => void }) {
+  const Icon =
+    event.type === 'anniversary' ? Cake :
+    event.type === 'todo' ? CheckSquare :
+    event.type === 'purchase' ? ShoppingBag :
+    ArrowLeftRight
+  const color = EVENT_META[event.type].color
+
+  return (
+    <li>
+      <button
+        type="button"
+        onClick={onClick}
+        className="cal-page__event"
+        style={{ borderLeftColor: color }}
+      >
+        <span className="cal-page__event-icon" style={{ color }} aria-hidden="true">
+          <Icon size={18} strokeWidth={2} />
+        </span>
+        <div className="cal-page__event-body">
+          <div className="cal-page__event-title">{event.title}</div>
+          <div className="cal-page__event-meta">
+            {event.category && <Badge>{event.category}</Badge>}
+            {event.amount != null && event.currency && (
+              <span className="cal-page__event-amount">
+                {formatMoney(event.amount, event.currency)}
+              </span>
+            )}
+            {event.recurring && <span className="cal-page__event-tag">매년</span>}
+            {event.type === 'todo' && <span className="cal-page__event-tag">마감일</span>}
+            {event.type === 'settlement' && <span className="cal-page__event-tag">정산</span>}
+          </div>
+        </div>
+      </button>
+    </li>
+  )
+}
+
+function koreanWeekday(d: Date): string {
+  return ['일', '월', '화', '수', '목', '금', '토'][d.getDay()]
 }

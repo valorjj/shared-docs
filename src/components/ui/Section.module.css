@@ -1,0 +1,18 @@
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.section + .section {
+  margin-top: var(--sp-5);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semi);
+  color: var(--c-text-subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}

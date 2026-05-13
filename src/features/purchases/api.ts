@@ -4,6 +4,15 @@ import { apiClient } from '../../api/client'
 export type Currency = 'KRW' | 'USD' | 'EUR' | 'JPY' | 'GBP' | 'CNY'
 export const SUPPORTED_CURRENCIES: Currency[] = ['KRW', 'USD', 'EUR', 'JPY', 'GBP', 'CNY']
 
+export type SplitMode = 'SHARED' | 'MINE' | 'THEIRS'
+export const SPLIT_MODES: SplitMode[] = ['SHARED', 'MINE', 'THEIRS']
+
+export const SPLIT_META: Record<SplitMode, { emoji: string; label: string; hint: string }> = {
+  SHARED: { emoji: '👫', label: '함께', hint: '둘이서 반반' },
+  MINE:   { emoji: '👤', label: '나',   hint: '내 것' },
+  THEIRS: { emoji: '🎁', label: '상대', hint: '상대 것' },
+}
+
 export type PurchaseAuthor = {
   userId: number
   name: string
@@ -19,6 +28,7 @@ export type Purchase = {
   amount: number            // may be int or decimal depending on currency
   currency: string
   note: string | null
+  splitMode: SplitMode
   createdBy: PurchaseAuthor
   createdAt: string
   updatedAt: string
@@ -41,6 +51,7 @@ export type PurchasePayload = {
   amount: number
   currency: string
   note?: string | null
+  splitMode: SplitMode
 }
 
 export const purchaseKeys = {
@@ -114,27 +125,4 @@ export function useDeletePurchase() {
   })
 }
 
-export function formatMoney(amount: number, currency: string, locale = 'ko-KR'): string {
-  try {
-    return new Intl.NumberFormat(locale, { style: 'currency', currency }).format(amount)
-  } catch {
-    return `${amount.toLocaleString(locale)} ${currency}`
-  }
-}
-
-export function monthBounds(yyyyMm: string): { from: string; to: string } {
-  const [y, m] = yyyyMm.split('-').map(Number)
-  const first = new Date(Date.UTC(y, m - 1, 1))
-  const last = new Date(Date.UTC(y, m, 0))
-  const fmt = (d: Date) => d.toISOString().slice(0, 10)
-  return { from: fmt(first), to: fmt(last) }
-}
-
-export function currentMonthString(): string {
-  const now = new Date()
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
-}
-
-export function todayString(): string {
-  return new Date().toISOString().slice(0, 10)
-}
+export { formatMoney, todayString, currentMonthString, monthBounds } from '../../lib/format'

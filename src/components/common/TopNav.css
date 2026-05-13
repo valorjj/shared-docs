@@ -1,0 +1,110 @@
+.top-nav {
+  position: sticky;
+  top: 0;
+  z-index: 70;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--c-border);
+  font-family: var(--font-sans);
+}
+
+.top-nav__inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 10px 24px;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-6);
+}
+
+.top-nav__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  text-decoration: none;
+  color: var(--c-text);
+  font-weight: var(--fw-semi);
+  font-size: var(--fs-md);
+  letter-spacing: -0.01em;
+}
+
+.top-nav__brand-mark {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.top-nav__items {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  margin-left: var(--sp-4);
+}
+
+.top-nav__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: var(--r-md);
+  text-decoration: none;
+  color: var(--c-text-muted);
+  font-size: var(--fs-base);
+  font-weight: var(--fw-medium);
+  transition: color var(--t-fast), background var(--t-fast);
+}
+
+.top-nav__item:hover {
+  color: var(--c-text);
+  background: var(--c-surface-tint);
+}
+
+.top-nav__item--active {
+  color: var(--c-primary);
+  background: var(--c-primary-soft);
+}
+
+.top-nav__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.top-nav__user {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  color: var(--c-text-muted);
+  font-size: var(--fs-sm);
+}
+
+.top-nav__avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--c-surface-tint);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: var(--fw-semi);
+  color: var(--c-text);
+}
+
+.top-nav__avatar--initial {
+  border: 1px solid var(--c-border);
+}
+
+.top-nav__user-name {
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 767px) {
+  .top-nav {
+    display: none;
+  }
+}

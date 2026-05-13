@@ -1,6 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { Database, Calendar } from 'lucide-react'
-import { useAuth } from '../auth/AuthContext'
+import { useAuth } from '../auth/useAuth'
 import './Hub.css'
 
 type GuideStatus = 'done' | 'wip' | 'todo'

@@ -1,7 +1,7 @@
 import { NavLink, useLocation } from 'react-router-dom'
 import { BookOpen, Database, Calendar, Settings, type LucideIcon } from 'lucide-react'
 import { useIsMobile } from '../../lib/useMediaQuery'
-import { useAuth } from '../../auth/AuthContext'
+import { useAuth } from '../../auth/useAuth'
 import './BottomNav.css'
 
 type NavItem = {

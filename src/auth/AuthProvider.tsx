@@ -1,7 +1,5 @@
 import {
-  createContext,
   useCallback,
-  useContext,
   useEffect,
   useMemo,
   useState,
@@ -9,16 +7,7 @@ import {
 } from 'react'
 import { jwtDecode } from 'jwt-decode'
 import { clearToken, getToken, setToken, TOKEN_STORAGE_KEY } from './tokenStorage'
-
-export type Role = 'USER' | 'ADMIN'
-
-export type AuthUser = {
-  userId: number
-  email: string
-  name: string
-  pictureUrl: string | null
-  role: Role
-}
+import { AuthContext, type AuthUser, type Role } from './authContext'
 
 type JwtClaims = {
   sub: string
@@ -48,14 +37,6 @@ function userFromToken(token: string | null): AuthUser | null {
   }
 }
 
-type AuthContextValue = {
-  user: AuthUser | null
-  loginWithToken: (token: string) => void
-  logout: () => void
-}
-
-const AuthContext = createContext<AuthContextValue | null>(null)
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(() => userFromToken(getToken()))
 
@@ -84,10 +65,4 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
-}
-
-export function useAuth(): AuthContextValue {
-  const ctx = useContext(AuthContext)
-  if (!ctx) throw new Error('useAuth must be used inside <AuthProvider>')
-  return ctx
 }

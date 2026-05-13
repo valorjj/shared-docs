@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { apiClient } from '../../api/client'
 
-export type CalendarEventType = 'anniversary' | 'todo'
+export type CalendarEventType = 'anniversary' | 'todo' | 'purchase' | 'settlement'
 
 export type CalendarEvent = {
   date: string                  // YYYY-MM-DD
@@ -13,6 +13,8 @@ export type CalendarEvent = {
   icon: string | null
   recurring: boolean | null
   done: boolean | null
+  amount: number | null
+  currency: string | null
 }
 
 export const calendarKeys = {
