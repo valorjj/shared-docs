@@ -15,7 +15,7 @@
 .inner {
   max-width: 720px;
   margin: 0 auto;
-  padding: 48px 56px 64px;
+  padding: 56px 72px 72px;
   display: flex;
   flex-direction: column;
   height: 100%;

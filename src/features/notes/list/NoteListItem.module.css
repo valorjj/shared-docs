@@ -6,7 +6,7 @@
   border: 0;
   border-bottom: 1px solid var(--c-border-dashed);
   border-left: 3px solid transparent;
-  padding: 14px 16px 14px 13px;
+  padding: 16px 18px 16px 15px;
   cursor: pointer;
   font-family: inherit;
   color: inherit;
@@ -54,7 +54,7 @@
 .preview {
   font-size: var(--fs-sm);
   color: var(--c-text-muted);
-  margin: 4px 0 6px;
+  margin: 6px 0 8px;
   line-height: 1.45;
   display: -webkit-box;
   -webkit-line-clamp: 2;
