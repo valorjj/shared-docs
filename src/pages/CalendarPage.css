@@ -95,7 +95,7 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--sp-2);
+  gap: var(--sp-1);
 }
 
 .cal-page__event {
@@ -103,19 +103,22 @@
   align-items: center;
   gap: var(--sp-2);
   padding: var(--sp-2) var(--sp-3);
-  background: var(--c-surface-tint);
-  border-radius: var(--r-md);
-  border-left: 3px solid var(--c-primary);
+  background: transparent;
+  border: 1px solid var(--c-border-dashed);
+  border-radius: var(--r-sm);
+  border-left-width: 2px;
+  border-left-color: var(--c-primary);
   width: 100%;
   text-align: left;
   font: inherit;
   color: inherit;
   cursor: pointer;
-  transition: background var(--t-fast), transform var(--t-fast);
+  transition: background var(--t-fast), border-color var(--t-fast);
 }
 
 .cal-page__event:hover {
-  background: var(--c-bg);
+  background: var(--c-surface-tint);
+  border-color: var(--c-border);
 }
 
 .cal-page__event:focus-visible {
@@ -187,8 +190,6 @@
 
 .cal-page__actions-label {
   font-size: var(--fs-xs);
-  font-weight: var(--fw-semi);
-  color: var(--c-text-subtle);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  font-weight: var(--fw-medium);
+  color: var(--c-text-muted);
 }

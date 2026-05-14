@@ -353,7 +353,7 @@ export default function PurchaseGrid({ rows, onEditDetails, highlightRowId }: Pr
         ) : (
           <>
             <Button
-              variant="primary"
+              variant="outline"
               size="sm"
               leading={<Plus size={14} strokeWidth={2.5} />}
               onClick={startAdd}

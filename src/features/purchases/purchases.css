@@ -93,13 +93,12 @@ body:has(.purchase-page) { /* hook left intentionally; tokens handle bg */ }
   object-fit: cover;
 }
 
-/* ── Grid (desktop spreadsheet) ── */
+/* ── Grid (desktop spreadsheet) — Bear hairlines, no card lift. ── */
 .purchase__grid-wrap {
   background: var(--c-surface);
   border: 1px solid var(--c-border);
-  border-radius: var(--r-lg);
+  border-radius: var(--r-md);
   overflow: hidden;
-  box-shadow: var(--shadow-sm);
   margin-top: var(--sp-4);
 }
 
@@ -109,16 +108,24 @@ body:has(.purchase-page) { /* hook left intentionally; tokens handle bg */ }
 
   --rdg-color: var(--c-text);
   --rdg-background-color: var(--c-surface);
-  --rdg-header-background-color: var(--c-surface-tint);
-  --rdg-header-draggable-background-color: var(--c-bg);
+  --rdg-header-background-color: var(--c-surface);
+  --rdg-header-draggable-background-color: var(--c-surface-tint);
   --rdg-row-hover-background-color: var(--c-surface-tint);
   --rdg-row-selected-background-color: var(--c-primary-soft);
   --rdg-row-selected-hover-background-color: var(--c-primary-soft-strong);
-  --rdg-border-color: var(--c-border);
+  --rdg-border-color: var(--c-border-dashed);
   --rdg-selection-color: var(--c-primary);
   --rdg-font-size: 0.9rem;
   font-family: var(--font-sans);
   border: none;
+}
+
+/* Make the header row a touch heavier so it still reads as a header
+   even though the bg is now the same as the body. */
+.purchase__grid .rdg-header-row {
+  border-bottom: 1px solid var(--c-border);
+  font-weight: var(--fw-semi);
+  color: var(--c-text);
 }
 
 .purchase__grid .rdg-cell--right {
@@ -181,8 +188,8 @@ body:has(.purchase-page) { /* hook left intentionally; tokens handle bg */ }
   align-items: center;
   gap: var(--sp-3);
   padding: var(--sp-2) var(--sp-3);
-  background: var(--c-surface-tint);
-  border-block-end: 1px solid var(--c-border);
+  background: var(--c-surface);
+  border-block-end: 1px dashed var(--c-border-dashed);
 }
 
 .purchase__grid-toolbar-hint {
