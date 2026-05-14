@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useEditor, EditorContent, type Editor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Image from '@tiptap/extension-image'
@@ -8,7 +8,15 @@ import { TaskList } from '@tiptap/extension-task-list'
 import { TaskItem } from '@tiptap/extension-task-item'
 import { Table, TableRow, TableCell, TableHeader } from '@tiptap/extension-table'
 import { absoluteFileUrl } from '../api'
+import { Tag } from './extensions/Tag'
+import {
+  SlashCommand,
+  type SlashKeyHandler,
+  type SlashState,
+} from './extensions/SlashCommand'
+import { buildSlashItems } from './slashItems'
 import NoteEditorBubbleMenu from './NoteEditorBubbleMenu'
+import SlashMenuPopup from './SlashMenuPopup'
 import styles from './NoteEditorBody.module.css'
 
 type Props = {
@@ -17,6 +25,7 @@ type Props = {
   onBodyChange: (html: string) => void
   onUploadImage: (file: File) => Promise<string>
   onUploadFile: (file: File) => Promise<{ url: string; filename: string; sizeBytes: number }>
+  onPickFile: () => void
   registerEditor: (editor: Editor | null) => void
 }
 
@@ -28,15 +37,21 @@ export default function NoteEditorBody({
   onBodyChange,
   onUploadImage,
   onUploadFile,
+  onPickFile,
   registerEditor,
 }: Props) {
   const lastNoteId = useRef(noteId)
+
+  // Slash menu state — driven from the Tiptap extension's callbacks.
+  const [slashState, setSlashState] = useState<SlashState | null>(null)
+  const slashKeyHandlerRef = useRef<SlashKeyHandler | null>(null)
+  const slashItems = useMemo(() => buildSlashItems(onPickFile), [onPickFile])
 
   const editor = useEditor({
     extensions: [
       StarterKit,
       Image.configure({ inline: false, allowBase64: false }),
-      Placeholder.configure({ placeholder: '내용을 입력하세요…' }),
+      Placeholder.configure({ placeholder: "내용을 입력하세요. '/' 를 누르면 메뉴가 열려요." }),
       Link.configure({ openOnClick: false, autolink: true, linkOnPaste: true }),
       TaskList,
       TaskItem.configure({ nested: true }),
@@ -44,6 +59,17 @@ export default function NoteEditorBody({
       TableRow,
       TableHeader,
       TableCell,
+      Tag,
+      // Ref is stored on the extension and only read inside ProseMirror
+      // keydown handlers — never during render.
+      // eslint-disable-next-line react-hooks/refs
+      SlashCommand.configure({
+        items: slashItems,
+        keyHandlerRef: slashKeyHandlerRef,
+        onOpen: setSlashState,
+        onUpdate: setSlashState,
+        onClose: () => setSlashState(null),
+      }),
     ],
     content: initialBody || '',
     editorProps: {
@@ -122,6 +148,9 @@ export default function NoteEditorBody({
     <div className={styles.wrapper}>
       <EditorContent editor={editor} />
       <NoteEditorBubbleMenu editor={editor} />
+      {slashState && (
+        <SlashMenuPopup state={slashState} keyHandlerRef={slashKeyHandlerRef} />
+      )}
     </div>
   )
 }

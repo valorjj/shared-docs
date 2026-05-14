@@ -85,7 +85,7 @@ export default function NoteEditor({ note, onDeleted }: Props) {
     return { url: att.url, filename: att.originalFilename, sizeBytes: att.sizeBytes }
   }
 
-  const onPickFile = () => fileInputRef.current?.click()
+  const onPickFile = useCallback(() => fileInputRef.current?.click(), [])
 
   const handlePickedFile = (file: File) => {
     void (async () => {
@@ -145,6 +145,7 @@ export default function NoteEditor({ note, onDeleted }: Props) {
             onBodyChange={scheduleBodySave}
             onUploadImage={onUploadImage}
             onUploadFile={onUploadFile}
+            onPickFile={onPickFile}
             registerEditor={setEditor}
           />
         </div>

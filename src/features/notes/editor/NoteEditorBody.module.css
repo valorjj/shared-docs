@@ -83,6 +83,16 @@
   text-underline-offset: 2px;
 }
 
+/* ── Hashtag mark ── */
+.editor :global(.memo-tag) {
+  color: var(--c-accent);
+  background: var(--c-accent-soft);
+  padding: 0 4px;
+  border-radius: var(--r-xs);
+  font-weight: var(--fw-medium);
+  white-space: nowrap;
+}
+
 .editor img {
   max-width: 100%;
   height: auto;
