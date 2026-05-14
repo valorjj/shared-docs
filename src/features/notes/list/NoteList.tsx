@@ -8,14 +8,29 @@ type Props = {
   notes: Note[]
   activeId: number | null
   loading: boolean
+  filterLabel: string
   onSelect: (id: number) => void
   onCreate: () => void
+  onOpenFilters: () => void
 }
 
-export default function NoteList({ notes, activeId, loading, onSelect, onCreate }: Props) {
+export default function NoteList({
+  notes,
+  activeId,
+  loading,
+  filterLabel,
+  onSelect,
+  onCreate,
+  onOpenFilters,
+}: Props) {
   return (
     <div className={styles.root}>
-      <NoteListHeader count={notes.length} onCreate={onCreate} />
+      <NoteListHeader
+        count={notes.length}
+        filterLabel={filterLabel}
+        onCreate={onCreate}
+        onOpenFilters={onOpenFilters}
+      />
       <div className={styles.scroll}>
         {loading && notes.length === 0 ? (
           <div className={styles.loading}>불러오는 중…</div>

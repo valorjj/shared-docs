@@ -5,9 +5,18 @@ import NoteEditor from '../editor/NoteEditor'
 import NoteEditorEmpty from '../editor/NoteEditorEmpty'
 import NoteList from '../list/NoteList'
 import Sidebar, { type SidebarFilter } from '../sidebar/Sidebar'
+import SidebarSheet from '../sidebar/SidebarSheet'
 import { buildTagCounts, noteHasTag } from '../shared/extractTags'
 import { useIsMobile } from '../../../lib/useMediaQuery'
 import styles from './NoteWorkspace.module.css'
+
+function describeFilter(f: SidebarFilter): string {
+  switch (f.kind) {
+    case 'all':    return '모든 메모'
+    case 'pinned': return '고정됨'
+    case 'tag':    return f.value
+  }
+}
 
 export default function NoteWorkspace() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -15,6 +24,7 @@ export default function NoteWorkspace() {
   const createNote = useCreateNote()
   const isMobile = useIsMobile()
   const [filter, setFilter] = useState<SidebarFilter>({ kind: 'all' })
+  const [filtersSheetOpen, setFiltersSheetOpen] = useState(false)
 
   const noteParam = searchParams.get('note')
   const activeId = noteParam ? Number(noteParam) : null
@@ -72,8 +82,10 @@ export default function NoteWorkspace() {
             notes={filtered}
             activeId={activeId}
             loading={notesQuery.isLoading}
+            filterLabel={describeFilter(filter)}
             onSelect={selectNote}
             onCreate={handleCreate}
+            onOpenFilters={() => setFiltersSheetOpen(true)}
           />
         </div>
       )}
@@ -86,6 +98,15 @@ export default function NoteWorkspace() {
           )}
         </div>
       )}
+
+      <SidebarSheet
+        open={filtersSheetOpen}
+        onOpenChange={setFiltersSheetOpen}
+        filter={filter}
+        onFilterChange={setFilter}
+        counts={{ all: allNotes.length, pinned: pinnedCount }}
+        tags={tags}
+      />
     </div>
   )
 }
