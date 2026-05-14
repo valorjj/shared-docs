@@ -12,7 +12,7 @@ type NavItem = {
 }
 
 const ITEMS: NavItem[] = [
-  { to: '/',         Icon: BookOpen, label: '가이드' },
+  { to: '/',         Icon: BookOpen, label: '메모' },
   { to: '/data',     Icon: Database, label: '데이터' },
   { to: '/calendar', Icon: Calendar, label: '캘린더' },
   { to: '/admin',    Icon: Settings, label: '관리', adminOnly: true },

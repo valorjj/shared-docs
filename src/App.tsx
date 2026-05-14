@@ -1,6 +1,5 @@
 import { Suspense, lazy } from 'react'
 import { Routes, Route } from 'react-router-dom'
-import Hub from './pages/Hub'
 import Login from './pages/Login'
 import AuthCallback from './pages/AuthCallback'
 import DataHub from './pages/DataHub'
@@ -9,6 +8,7 @@ import RequireAuth from './auth/RequireAuth'
 import RequireRole from './auth/RequireRole'
 import MobileShell from './components/common/MobileShell'
 
+const Hub              = lazy(() => import('./pages/Hub'))
 const PurchaseList     = lazy(() => import('./features/purchases/PurchaseList'))
 const TodoList         = lazy(() => import('./features/todos/TodoList'))
 const AnniversaryList  = lazy(() => import('./features/anniversaries/AnniversaryList'))
