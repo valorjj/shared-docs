@@ -23,16 +23,22 @@ export default function SlashMenuPopup({ state, keyHandlerRef }: Props) {
   const safeSelected =
     state.items.length === 0 ? 0 : Math.min(selected, state.items.length - 1)
 
-  // Position above/below the slash trigger. Apply via direct DOM style
-  // so we don't take a render trip per move.
+  // Position the popup, clamping into the viewport on all sides so it
+  // doesn't clip on narrow phones. Apply via direct DOM style so we
+  // don't take a render trip per move.
   useLayoutEffect(() => {
     const el = containerRef.current
     const rect = state.clientRect?.()
     if (!el || !rect) return
+    const PAD = 8
     const popupHeight = el.offsetHeight || 200
-    const placeAbove = rect.bottom + popupHeight + 8 > window.innerHeight
-    el.style.top = `${placeAbove ? rect.top - popupHeight - 6 : rect.bottom + 6}px`
-    el.style.left = `${rect.left}px`
+    const popupWidth = el.offsetWidth || 240
+    const placeAbove = rect.bottom + popupHeight + PAD > window.innerHeight
+    const top = placeAbove ? rect.top - popupHeight - 6 : rect.bottom + 6
+    const maxLeft = window.innerWidth - popupWidth - PAD
+    const left = Math.max(PAD, Math.min(rect.left, maxLeft))
+    el.style.top = `${Math.max(PAD, top)}px`
+    el.style.left = `${left}px`
     el.style.visibility = 'visible'
   }, [state, safeSelected])
 
