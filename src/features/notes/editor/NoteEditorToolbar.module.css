@@ -49,3 +49,8 @@
   margin: 0 4px;
   flex-shrink: 0;
 }
+
+@media (max-width: 767px) {
+  .bar { padding: 4px 6px; gap: 1px; }
+  .btn { width: 40px; height: 40px; }
+}

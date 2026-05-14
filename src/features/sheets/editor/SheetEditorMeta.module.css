@@ -53,3 +53,8 @@
   background: var(--c-surface-tint);
   color: var(--c-text);
 }
+
+@media (max-width: 767px) {
+  .pinned { width: 44px; height: 44px; }
+  .kebab  { width: 44px; height: 44px; }
+}

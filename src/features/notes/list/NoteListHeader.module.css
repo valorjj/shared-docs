@@ -86,6 +86,13 @@
   }
 }
 
+/* Bump the add button + filter chip to comfortable touch targets on phones. */
+@media (max-width: 767px) {
+  .add    { width: 44px; height: 44px; }
+  .filter { height: 36px; padding: 0 12px; }
+  .filter .filterLabel { max-width: 140px; }
+}
+
 /* Desktop: title hugs the left, filter chip is hidden. */
 @media (min-width: 901px) {
   .title {
