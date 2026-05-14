@@ -1,0 +1,27 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--c-surface);
+  border-right: 1px solid var(--c-border);
+  min-width: 0;
+}
+
+.scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.loading {
+  padding: 32px 20px;
+  text-align: center;
+  color: var(--c-text-placeholder);
+  font-size: var(--fs-sm);
+}

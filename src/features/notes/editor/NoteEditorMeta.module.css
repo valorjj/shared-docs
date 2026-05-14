@@ -1,0 +1,57 @@
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0 12px;
+  font-size: var(--fs-xs);
+  color: var(--c-text-subtle);
+}
+
+.left {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.author {
+  color: var(--c-text-muted);
+}
+
+.sep {
+  color: var(--c-text-placeholder);
+}
+
+.time {
+  font-variant-numeric: tabular-nums;
+}
+
+.saving {
+  color: var(--c-text-placeholder);
+  font-style: italic;
+}
+
+.right {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.delete {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--r-sm);
+  background: transparent;
+  border: 0;
+  color: var(--c-text-placeholder);
+  cursor: pointer;
+  transition: color var(--t-fast), background var(--t-fast);
+}
+
+.delete:hover {
+  background: var(--c-danger-soft);
+  color: var(--c-danger);
+}

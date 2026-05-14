@@ -1,0 +1,37 @@
+.root {
+  display: flex;
+  height: calc(100svh - 53px); /* TopNav height ≈ 53px on desktop */
+  background: var(--c-surface);
+  font-family: var(--font-sans);
+  overflow: hidden;
+}
+
+.list {
+  width: 320px;
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+.editor {
+  flex: 1;
+  min-width: 0;
+}
+
+@media (max-width: 900px) {
+  .list {
+    width: 280px;
+  }
+}
+
+@media (max-width: 767px) {
+  .root {
+    height: calc(100svh - 56px); /* BottomNav-only mobile shell */
+  }
+  .list {
+    width: 100%;
+    flex: 1;
+  }
+  .editor {
+    width: 100%;
+  }
+}

@@ -1,0 +1,26 @@
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--r-sm);
+  background: transparent;
+  border: 0;
+  color: var(--c-text-placeholder);
+  cursor: pointer;
+  transition: color var(--t-fast), background var(--t-fast);
+}
+
+.btn:hover {
+  background: var(--c-surface-tint);
+  color: var(--c-text-muted);
+}
+
+.active {
+  color: var(--c-primary);
+}
+
+.active:hover {
+  color: var(--c-primary-hover);
+}
