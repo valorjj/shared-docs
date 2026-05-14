@@ -37,7 +37,16 @@
   gap: 4px;
 }
 
-.delete {
+.pinned {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  color: var(--c-accent);
+}
+
+.kebab {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -51,7 +60,8 @@
   transition: color var(--t-fast), background var(--t-fast);
 }
 
-.delete:hover {
-  background: var(--c-danger-soft);
-  color: var(--c-danger);
+.kebab:hover,
+.kebab[data-state="open"] {
+  background: var(--c-surface-tint);
+  color: var(--c-text);
 }

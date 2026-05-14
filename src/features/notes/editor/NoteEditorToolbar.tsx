@@ -7,8 +7,10 @@ import {
   Heading2,
   List,
   ListOrdered,
+  ListTodo,
   Quote,
   Code,
+  Table as TableIcon,
   Link as LinkIcon,
   Paperclip,
 } from 'lucide-react'
@@ -65,10 +67,14 @@ export default function NoteEditorToolbar({ editor, onPickFile }: Props) {
         editor.chain().focus().toggleBulletList().run(), List)}
       {btn(editor.isActive('orderedList'), '번호 매기기', () =>
         editor.chain().focus().toggleOrderedList().run(), ListOrdered)}
+      {btn(editor.isActive('taskList'), '체크리스트', () =>
+        editor.chain().focus().toggleTaskList().run(), ListTodo)}
       {btn(editor.isActive('blockquote'), '인용', () =>
         editor.chain().focus().toggleBlockquote().run(), Quote)}
       {btn(editor.isActive('codeBlock'), '코드', () =>
         editor.chain().focus().toggleCodeBlock().run(), Code)}
+      {btn(editor.isActive('table'), '표', () =>
+        editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run(), TableIcon)}
       <span className={styles.sep} aria-hidden="true" />
       {btn(editor.isActive('link'), '링크', promptLink, LinkIcon)}
       {btn(false, '파일 첨부', onPickFile, Paperclip)}

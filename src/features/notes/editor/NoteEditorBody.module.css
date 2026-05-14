@@ -90,6 +90,111 @@
   display: block;
 }
 
+/* ── Task lists ── */
+.editor ul[data-type="taskList"] {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.editor ul[data-type="taskList"] li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 2px 0;
+}
+
+.editor ul[data-type="taskList"] li > label {
+  flex: 0 0 auto;
+  padding-top: 5px;
+  user-select: none;
+}
+
+.editor ul[data-type="taskList"] li > label > input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border: 1.5px solid var(--c-border-strong);
+  border-radius: var(--r-xs);
+  background: var(--c-surface);
+  cursor: pointer;
+  display: inline-block;
+  position: relative;
+  transition: background var(--t-fast), border-color var(--t-fast);
+}
+
+.editor ul[data-type="taskList"] li > label > input[type="checkbox"]:hover {
+  border-color: var(--c-text-placeholder);
+}
+
+.editor ul[data-type="taskList"] li > label > input[type="checkbox"]:checked {
+  background: var(--c-accent);
+  border-color: var(--c-accent);
+}
+
+.editor ul[data-type="taskList"] li > label > input[type="checkbox"]:checked::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 5px;
+  height: 9px;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.editor ul[data-type="taskList"] li > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.editor ul[data-type="taskList"] li[data-checked="true"] > div > p {
+  color: var(--c-text-placeholder);
+  text-decoration: line-through;
+}
+
+/* ── Tables ── */
+.editor table {
+  border-collapse: collapse;
+  table-layout: fixed;
+  width: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+.editor table td,
+.editor table th {
+  min-width: 60px;
+  border: 1px solid var(--c-border);
+  padding: 6px 8px;
+  vertical-align: top;
+  position: relative;
+}
+
+.editor table th {
+  background: var(--c-surface-tint);
+  font-weight: var(--fw-semi);
+  text-align: left;
+}
+
+.editor table p {
+  margin: 0;
+}
+
+.editor :global(.tableWrapper) {
+  overflow-x: auto;
+}
+
+.editor :global(.selectedCell:after) {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--c-accent-soft);
+  pointer-events: none;
+}
+
 .editor :global(.ProseMirror-focused) {
   outline: none;
 }

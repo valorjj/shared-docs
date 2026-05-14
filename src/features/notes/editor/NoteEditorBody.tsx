@@ -4,7 +4,11 @@ import StarterKit from '@tiptap/starter-kit'
 import Image from '@tiptap/extension-image'
 import Placeholder from '@tiptap/extension-placeholder'
 import Link from '@tiptap/extension-link'
+import { TaskList } from '@tiptap/extension-task-list'
+import { TaskItem } from '@tiptap/extension-task-item'
+import { Table, TableRow, TableCell, TableHeader } from '@tiptap/extension-table'
 import { absoluteFileUrl } from '../api'
+import NoteEditorBubbleMenu from './NoteEditorBubbleMenu'
 import styles from './NoteEditorBody.module.css'
 
 type Props = {
@@ -34,6 +38,12 @@ export default function NoteEditorBody({
       Image.configure({ inline: false, allowBase64: false }),
       Placeholder.configure({ placeholder: '내용을 입력하세요…' }),
       Link.configure({ openOnClick: false, autolink: true, linkOnPaste: true }),
+      TaskList,
+      TaskItem.configure({ nested: true }),
+      Table.configure({ resizable: false }),
+      TableRow,
+      TableHeader,
+      TableCell,
     ],
     content: initialBody || '',
     editorProps: {
@@ -108,5 +118,10 @@ export default function NoteEditorBody({
     }
   }, [noteId, initialBody, editor])
 
-  return <EditorContent editor={editor} className={styles.wrapper} />
+  return (
+    <div className={styles.wrapper}>
+      <EditorContent editor={editor} />
+      <NoteEditorBubbleMenu editor={editor} />
+    </div>
+  )
 }

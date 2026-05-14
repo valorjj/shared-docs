@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { Trash2 } from 'lucide-react'
+import { MoreHorizontal, Pin, PinOff, Trash2 } from 'lucide-react'
 import ConfirmDialog from '../../../components/ui/ConfirmDialog'
-import PinButton from '../../notes/shared/PinButton'
+import { Menu, MenuItem, MenuSeparator } from '../../../components/ui/Menu'
 import { formatRelativeTime } from '../../notes/shared/formatRelativeTime'
 import type { SheetFull } from '../types'
 import styles from './SheetEditorMeta.module.css'
@@ -30,16 +30,38 @@ export default function SheetEditorMeta({ sheet, saving, onTogglePin, onDelete }
         )}
       </div>
       <div className={styles.right}>
-        <PinButton pinned={sheet.pinned} onToggle={onTogglePin} />
-        <button
-          type="button"
-          className={styles.delete}
-          onClick={() => setConfirming(true)}
-          aria-label="시트 삭제"
-          title="시트 삭제"
+        {sheet.pinned && (
+          <span className={styles.pinned} title="고정됨" aria-label="고정됨">
+            <Pin size={14} strokeWidth={2.25} />
+          </span>
+        )}
+        <Menu
+          trigger={
+            <button
+              type="button"
+              className={styles.kebab}
+              aria-label="시트 옵션"
+              title="옵션"
+            >
+              <MoreHorizontal size={16} strokeWidth={1.75} />
+            </button>
+          }
         >
-          <Trash2 size={16} strokeWidth={1.75} />
-        </button>
+          <MenuItem
+            onSelect={onTogglePin}
+            icon={sheet.pinned ? <PinOff size={14} strokeWidth={1.75} /> : <Pin size={14} strokeWidth={1.75} />}
+          >
+            {sheet.pinned ? '고정 해제' : '시트 고정'}
+          </MenuItem>
+          <MenuSeparator />
+          <MenuItem
+            destructive
+            onSelect={() => setConfirming(true)}
+            icon={<Trash2 size={14} strokeWidth={1.75} />}
+          >
+            삭제
+          </MenuItem>
+        </Menu>
       </div>
 
       <ConfirmDialog
