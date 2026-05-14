@@ -1,7 +1,9 @@
 import { Link, NavLink, useLocation } from 'react-router-dom'
-import { BookOpen, Database, Calendar, Settings, Table2, type LucideIcon } from 'lucide-react'
+import { BookOpen, Database, Calendar, Search, Settings, Table2, type LucideIcon } from 'lucide-react'
 import { useIsMobile } from '../../lib/useMediaQuery'
 import { useAuth } from '../../auth/useAuth'
+import { useSearchPalette } from '../../features/search/searchContext'
+import { Kbd } from '../ui'
 import './TopNav.css'
 
 type NavItem = {
@@ -25,11 +27,13 @@ export default function TopNav() {
   const isMobile = useIsMobile()
   const { user } = useAuth()
   const location = useLocation()
+  const search = useSearchPalette()
 
   if (isMobile) return null
   if (HIDDEN_PREFIXES.some((p) => location.pathname.startsWith(p))) return null
 
   const items = ITEMS.filter((it) => !it.adminOnly || user?.role === 'ADMIN')
+  const cmdLabel = navigator.platform.toLowerCase().includes('mac') ? '⌘' : 'Ctrl'
 
   return (
     <header className="top-nav" aria-label="주 탐색">
@@ -58,6 +62,20 @@ export default function TopNav() {
             </NavLink>
           ))}
         </nav>
+
+        <button
+          type="button"
+          className="top-nav__search"
+          onClick={() => search.setOpen(true)}
+          aria-label="검색"
+          title="검색"
+        >
+          <Search size={15} strokeWidth={2} aria-hidden="true" />
+          <span className="top-nav__search-label">검색</span>
+          <span className="top-nav__search-kbd" aria-hidden="true">
+            <Kbd>{cmdLabel}</Kbd><Kbd>K</Kbd>
+          </span>
+        </button>
 
         {user && (
           <div className="top-nav__user" title={user.name}>

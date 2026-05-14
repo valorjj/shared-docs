@@ -1,4 +1,5 @@
 import { Outlet, useLocation } from 'react-router-dom'
+import { SearchPaletteProvider } from '../../features/search/SearchPaletteProvider'
 import BottomNav from './BottomNav'
 import TopNav from './TopNav'
 import './MobileShell.css'
@@ -10,10 +11,12 @@ export default function MobileShell() {
   const hasBottomNav = !NO_PAD_PREFIXES.some((p) => location.pathname.startsWith(p))
 
   return (
-    <div className={`mobile-shell${hasBottomNav ? ' mobile-shell--has-nav' : ''}`}>
-      <TopNav />
-      <Outlet />
-      <BottomNav />
-    </div>
+    <SearchPaletteProvider>
+      <div className={`mobile-shell${hasBottomNav ? ' mobile-shell--has-nav' : ''}`}>
+        <TopNav />
+        <Outlet />
+        <BottomNav />
+      </div>
+    </SearchPaletteProvider>
   )
 }

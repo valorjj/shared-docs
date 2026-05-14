@@ -43,6 +43,10 @@ to two Google accounts via an OAuth + JWT pipeline; everything else
   page (purchases scroll to the exact row). On mobile the filter list
   lives in a slide-up sheet opened from the page-header chip.
 - **관리** — admin page for the email allowlist + user roles.
+- **⌘K** — global search palette across memo (title + body) and sheet
+  (title) results. Opens via `⌘K` / `Ctrl+K`, via the search chip in
+  the desktop TopNav, or via the 검색 item in the mobile BottomNav.
+  Keyboard-navigable; Enter opens the result, Esc closes.
 
 iPhone-aware: the workspace collapses to single pane, mobile back
 buttons drop you out of the editor, a slide-up sheet exposes the

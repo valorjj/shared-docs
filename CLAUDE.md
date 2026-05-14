@@ -1,6 +1,6 @@
 shared-docs — 프로젝트 지침서
 > Claude Code와 함께 이어가기 위한 컨텍스트 및 작업 가이드
-> 최근 업데이트: 2026-05-14 (Data/Calendar 사이드바 + #tag 입력 수정 + 미감 다듬기 후)
+> 최근 업데이트: 2026-05-14 (⌘K 검색 팔레트 추가 후)
 
 ***프로젝트 개요
 진과 채연 두 사람을 위한 비공개 웹앱.
@@ -106,6 +106,12 @@ src/
 │   │   │   ├── SheetEditorEmpty.tsx
 │   │   │   └── SheetEditorMobileBar.tsx
 │   │   └── shared/sheetData.ts     ← JSON 파스/직렬화 + 기본값 + nextColumnKey/Label
+│   ├── search/                     ← ★ ⌘K 검색 팔레트 (전역)
+│   │   ├── SearchPaletteProvider.tsx ← Radix Dialog 마운트 + ⌘K/Ctrl+K 글로벌 단축키
+│   │   ├── SearchPalette.tsx       ← 입력 + 결과 리스트 + 키보드 네비
+│   │   ├── searchContext.ts        ← useSearchPalette() 컨텍스트
+│   │   ├── useSearchResults.ts     ← useNotes + useSheets 캐시 데이터 필터링
+│   │   └── stripHtml.ts            ← Tiptap HTML → 평문 (검색용)
 │   ├── purchases/                  ← 💰 구매 내역 (기존)
 │   │   ├── api.ts                  ← Purchase + SplitMode + 카테고리 + 통화
 │   │   ├── PurchaseList.tsx        ← 페이지 (월/카테고리 필터, ?date ?month ?edit ?row)
@@ -278,14 +284,22 @@ com.shareddocs.backend/
 ├── user/ admin/ auth/ config/
 ```
 
+***⌘K 검색 팔레트 (`src/features/search/`)
+- `SearchPaletteProvider`가 `MobileShell` 안쪽에 마운트되어 ⌘K / Ctrl+K 글로벌 키 리스너 등록.
+- 트리거 두 곳: 데스크톱은 `TopNav`의 검색 칩(`Search` 아이콘 + `Kbd ⌘K` 힌트), 모바일은 `BottomNav`의 검색 버튼(NavLink 아닌 `<button>`이라 다른 페이지로 이동하지 않고 팔레트만 엶).
+- 검색 소스: `useNotes()` + `useSheets()` 캐시 데이터. 노트는 제목 + 본문(Tiptap HTML → DOMParser로 평문화) 매칭, 시트는 제목만(목록 API에 셀 데이터 없음 — 서버 사이드 풀텍스트는 v2 검토).
+- 랭킹: 제목 매치 → 본문 매치, pinned 가산, `updatedAt desc`로 동률 해소. 최대 24개.
+- 키보드 네비 ↑/↓, Enter 선택, Esc 닫기. 활성 인덱스는 `safeActive = Math.min(active, max)`로 렌더 중 derive (set-state-in-effect 회피).
+- 결과 클릭 시 `/?note=N` 또는 `/sheets?sheet=N`으로 라우팅.
+
 ***아직 안 한 것 (다음 작업 우선순위)
-🚧 1. **⌘K 검색 팔레트** — Radix Dialog 재사용. 노트+시트 동시 검색.
-🚧 2. **첨부 폴리시** — 노트 안에 첨부 갤러리 뷰 + 파일명/사이즈 + 개별 삭제. 이미지 라이트박스.
-🚧 3. **유용한 링크 컬렉션** (`/data/links`) — OpenGraph 프리뷰.
-🚧 4. **레시피 컬렉션** (`/data/recipes`) — `@dnd-kit` 필요.
-🚧 5. **카테고리 관리 UI** — 각 피처의 "관리" 탭. 백엔드 API는 admin-only로 존재; 현재 curl만 가능.
-🚧 6. **전역 헤더 + 아바타 드롭다운 + 로그아웃** — 현재 메모/시트 케밥 패턴과 통일 검토.
-🚧 7. **노트/시트 사이드바를 `AppSidebar`로 통합** — 현재는 자체 `Sidebar` 보유. 같은 시각 규칙이지만 코드 중복.
+🚧 1. **첨부 폴리시** — 노트 안에 첨부 갤러리 뷰 + 파일명/사이즈 + 개별 삭제. 이미지 라이트박스.
+🚧 2. **유용한 링크 컬렉션** (`/data/links`) — OpenGraph 프리뷰.
+🚧 3. **레시피 컬렉션** (`/data/recipes`) — `@dnd-kit` 필요.
+🚧 4. **카테고리 관리 UI** — 각 피처의 "관리" 탭. 백엔드 API는 admin-only로 존재; 현재 curl만 가능.
+🚧 5. **전역 헤더 + 아바타 드롭다운 + 로그아웃** — 현재 메모/시트 케밥 패턴과 통일 검토.
+🚧 6. **노트/시트 사이드바를 `AppSidebar`로 통합** — 현재는 자체 `Sidebar` 보유. 같은 시각 규칙이지만 코드 중복.
+🚧 7. **시트 셀 검색 서버 사이드** — 현재 ⌘K 팔레트는 시트는 제목만 검색. 셀 데이터까지 검색하려면 백엔드 풀텍스트 또는 전 시트 데이터 캐시 필요.
 
 ***메모 (Claude용)
 - `npm run dev` → localhost:5173. 백엔드를 로컬에서 띄울 땐 `POST /api/auth/dev-login`으로 Google 없이 JWT.

@@ -1,7 +1,8 @@
 import { NavLink, useLocation } from 'react-router-dom'
-import { BookOpen, Database, Calendar, Settings, Table2, type LucideIcon } from 'lucide-react'
+import { BookOpen, Database, Calendar, Search, Settings, Table2, type LucideIcon } from 'lucide-react'
 import { useIsMobile } from '../../lib/useMediaQuery'
 import { useAuth } from '../../auth/useAuth'
+import { useSearchPalette } from '../../features/search/searchContext'
 import './BottomNav.css'
 
 type NavItem = {
@@ -25,6 +26,7 @@ export default function BottomNav() {
   const isMobile = useIsMobile()
   const { user } = useAuth()
   const location = useLocation()
+  const search = useSearchPalette()
 
   if (!isMobile) return null
   if (HIDDEN_PREFIXES.some((p) => location.pathname.startsWith(p))) return null
@@ -48,6 +50,17 @@ export default function BottomNav() {
           <span className="bottom-nav__label">{it.label}</span>
         </NavLink>
       ))}
+      <button
+        type="button"
+        className="bottom-nav__item bottom-nav__item--button"
+        onClick={() => search.setOpen(true)}
+        aria-label="검색 열기"
+      >
+        <span className="bottom-nav__icon" aria-hidden="true">
+          <Search size={22} strokeWidth={2} />
+        </span>
+        <span className="bottom-nav__label">검색</span>
+      </button>
     </nav>
   )
 }

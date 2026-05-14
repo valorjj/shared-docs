@@ -10,9 +10,9 @@
   background: rgba(255, 255, 255, 0.94);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  border-top: 1px solid #e5e0d6;
+  border-top: 1px solid var(--c-border);
   padding-bottom: env(safe-area-inset-bottom, 0);
-  font-family: 'Noto Sans KR', system-ui, sans-serif;
+  font-family: var(--font-sans);
 }
 
 .bottom-nav__item {
@@ -24,19 +24,27 @@
   height: 56px;
   padding: 6px 4px;
   text-decoration: none;
-  color: #6b6660;
+  color: var(--c-text-muted);
   font-size: 11px;
-  font-weight: 500;
+  font-weight: var(--fw-medium);
   -webkit-tap-highlight-color: transparent;
-  transition: color 0.12s;
+  transition: color var(--t-fast);
 }
 
 .bottom-nav__item:active {
-  background: #faf6ed;
+  background: var(--c-surface-tint);
 }
 
 .bottom-nav__item--active {
-  color: #1b3a5c;
+  color: var(--c-primary);
+}
+
+/* The 검색 trigger is a <button>, not a <NavLink>; reset native button chrome. */
+.bottom-nav__item--button {
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  font-family: inherit;
 }
 
 .bottom-nav__icon {
