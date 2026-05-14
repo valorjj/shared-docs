@@ -24,19 +24,24 @@ to two Google accounts via an OAuth + JWT pipeline; everything else
   per-card kebab for row delete, a dashed `+ 행 추가` at the bottom,
   and a **열 관리** slide-up sheet for column rename / delete / add.
   Debounced autosave of the whole grid as one JSON payload.
-- **데이터** — typed mini-apps for tracking things together:
-  - 구매 내역 (purchases) — multi-currency, inline-edit grid on desktop,
-    per-row split mode (SHARED · MINE · THEIRS), per-currency
-    settlement card with one-click 정산 완료 + history, KRW donut chart
-    by category, recurring expenses with monthly auto-generation
-  - 할 일 (shared todos) — tabs filter, anyone toggles done
-  - 기념일 (anniversaries) — annual recurrence, N주년 badges,
-    upcoming-30-days section
-- **캘린더** — single calendar view that aggregates dated rows across
-  four sources: anniversaries, due-today todos, purchases, and
-  settlement records. Built on `react-day-picker` with a custom day
-  renderer that shows colored dots per event type. Clickable events
-  jump back to their source page (purchases scroll to the exact row).
+- **데이터** (`/data`) — Bear-style sidebar workspace for the typed
+  mini-apps. Left rail lists each tracker (구매 내역 / 할 일 / 기념일,
+  with 유용한 링크 / 레시피 as "준비 중"); main pane shows the active
+  subroute via React Router nested routes. On `/data` with no
+  subroute, a clean picker list mirrors the same options.
+  - 구매 내역 — multi-currency, inline-edit grid on desktop, per-row
+    split mode (SHARED · MINE · THEIRS), per-currency settlement card
+    with one-click 정산 완료 + history, KRW donut chart by category,
+    recurring expenses with monthly auto-generation
+  - 할 일 — tabs filter, anyone toggles done
+  - 기념일 — annual recurrence, N주년 badges, upcoming-30-days section
+- **캘린더** (`/calendar`) — Bear-style sidebar workspace too. Left
+  rail = filter list of the four event sources (기념일 · 할 일 · 구매 ·
+  정산) with live counts and toggle visibility; main pane shows the
+  `react-day-picker` grid with colored dots per *visible* source and
+  the day-detail card. Clickable events jump back to their source
+  page (purchases scroll to the exact row). On mobile the filter list
+  lives in a slide-up sheet opened from the page-header chip.
 - **관리** — admin page for the email allowlist + user roles.
 
 iPhone-aware: the workspace collapses to single pane, mobile back
@@ -60,10 +65,12 @@ and the iOS keyboard reflows the layout via
 - **react-data-grid v7** for the sheet editor and the purchase grid
 - **react-day-picker v10** with a custom `DayButton` for the calendar
 - **Radix Primitives** (selective): `@radix-ui/react-dialog` for
-  modals and the mobile tags drawer; `@radix-ui/react-dropdown-menu`
-  for the kebab `…` menu on notes and sheets. Wrapped in
-  `components/ui/ConfirmDialog.tsx` and `components/ui/Menu.tsx` —
-  no Tailwind, no shadcn-style mass import.
+  modals, the mobile tags drawer, and the calendar's mobile filter
+  sheet; `@radix-ui/react-dropdown-menu` for the kebab `…` menu on
+  notes and sheets. Wrapped in `components/ui/ConfirmDialog.tsx`,
+  `components/ui/Menu.tsx`, and the shared `components/common/
+  AppSidebar` + `AppSidebarSheet`. No Tailwind, no shadcn-style mass
+  import.
 - **jwt-decode** to read claims from the issued JWT
 - **Plain CSS Modules** per component; tokens-based design system
   in `src/components/ui/`. No Tailwind, no CSS-in-JS runtime.

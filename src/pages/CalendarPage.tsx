@@ -4,16 +4,19 @@ import { DayPicker, type DayButtonProps } from 'react-day-picker'
 import { ko } from 'react-day-picker/locale'
 import 'react-day-picker/style.css'
 import {
-  Calendar as CalendarIcon,
   Cake,
   CheckSquare,
   ShoppingBag,
   ArrowLeftRight,
+  Filter,
 } from 'lucide-react'
 import {
-  Page,
-  PageHeader,
-  PageTitle,
+  AppSidebar,
+  AppSidebarItem,
+  AppSidebarSection,
+} from '../components/common/AppSidebar'
+import { AppSidebarSheet } from '../components/common/AppSidebarSheet'
+import {
   Card,
   Section,
   Badge,
@@ -21,6 +24,7 @@ import {
   Row,
 } from '../components/ui'
 import { formatMoney } from '../lib/format'
+import { useIsMobile } from '../lib/useMediaQuery'
 import {
   isoOf,
   monthRange,
@@ -28,21 +32,31 @@ import {
   type CalendarEvent,
   type CalendarEventType,
 } from '../features/calendar/api'
+import styles from './CalendarPage.module.css'
 import './CalendarPage.css'
 
 const EVENT_TYPES: CalendarEventType[] = ['anniversary', 'todo', 'purchase', 'settlement']
 
-const EVENT_META: Record<CalendarEventType, { label: string; color: string }> = {
-  anniversary: { label: '기념일', color: '#d97706' },
-  todo:        { label: '할 일',  color: '#1b3a5c' },
-  purchase:    { label: '구매',   color: '#16a34a' },
-  settlement:  { label: '정산',   color: '#9333ea' },
+type SourceMeta = {
+  label: string
+  color: string
+  Icon: typeof Cake
+}
+
+const SOURCE_META: Record<CalendarEventType, SourceMeta> = {
+  anniversary: { label: '기념일', color: '#d97706', Icon: Cake },
+  todo:        { label: '할 일',  color: '#1b3a5c', Icon: CheckSquare },
+  purchase:    { label: '구매',   color: '#16a34a', Icon: ShoppingBag },
+  settlement:  { label: '정산',   color: '#9333ea', Icon: ArrowLeftRight },
 }
 
 export default function CalendarPage() {
   const navigate = useNavigate()
+  const isMobile = useIsMobile()
   const [month, setMonth] = useState<Date>(new Date())
   const [selected, setSelected] = useState<Date | undefined>(new Date())
+  const [enabled, setEnabled] = useState<Set<CalendarEventType>>(() => new Set(EVENT_TYPES))
+  const [filtersSheetOpen, setFiltersSheetOpen] = useState(false)
 
   const range = useMemo(
     () => monthRange(month.getFullYear(), month.getMonth()),
@@ -51,15 +65,28 @@ export default function CalendarPage() {
 
   const { data: events } = useCalendarEvents(range.from, range.to)
 
+  const sourceCounts = useMemo(() => {
+    const counts: Record<CalendarEventType, number> = {
+      anniversary: 0, todo: 0, purchase: 0, settlement: 0,
+    }
+    for (const e of events ?? []) counts[e.type]++
+    return counts
+  }, [events])
+
+  const visibleEvents = useMemo(
+    () => (events ?? []).filter((e) => enabled.has(e.type)),
+    [events, enabled],
+  )
+
   const eventsByDate = useMemo(() => {
     const map = new Map<string, CalendarEvent[]>()
-    for (const e of events ?? []) {
+    for (const e of visibleEvents) {
       const arr = map.get(e.date) ?? []
       arr.push(e)
       map.set(e.date, arr)
     }
     return map
-  }, [events])
+  }, [visibleEvents])
 
   const selectedEvents = selected ? eventsByDate.get(isoOf(selected)) ?? [] : []
   const selectedIso = selected ? isoOf(selected) : ''
@@ -71,6 +98,15 @@ export default function CalendarPage() {
     const today = new Date()
     setMonth(today)
     setSelected(today)
+  }
+
+  const toggleSource = (t: CalendarEventType) => {
+    setEnabled((prev) => {
+      const next = new Set(prev)
+      if (next.has(t)) next.delete(t)
+      else next.add(t)
+      return next
+    })
   }
 
   const handleEventClick = (e: CalendarEvent) => {
@@ -91,95 +127,169 @@ export default function CalendarPage() {
     }
   }
 
+  const filterCount = enabled.size
+  const filterLabel = filterCount === EVENT_TYPES.length
+    ? '모든 일정'
+    : `${filterCount}개 종류`
+
   return (
-    <Page>
-      <PageHeader>
-        <Row gap={3} justify="between" wrap>
-          <PageTitle icon={<CalendarIcon size={22} strokeWidth={2} />}>캘린더</PageTitle>
-          <Button variant="outline" size="sm" onClick={goToday}>
-            오늘
-          </Button>
-        </Row>
-        <p className="cal-page__sub">기념일 · 마감일 · 구매 · 정산이 한눈에</p>
-      </PageHeader>
+    <div className={styles.root}>
+      <AppSidebar brand="캘린더" label="캘린더 필터">
+        <AppSidebarSection label="일정 종류">
+          <SourceFilters
+            enabled={enabled}
+            counts={sourceCounts}
+            onToggle={toggleSource}
+          />
+        </AppSidebarSection>
+      </AppSidebar>
 
-      <Card className="cal-page__grid-card" padding="sm">
-        <DayPicker
-          mode="single"
-          locale={ko}
-          selected={selected}
-          onSelect={setSelected}
-          month={month}
-          onMonthChange={setMonth}
-          showOutsideDays
-          components={{
-            DayButton: (props: DayButtonProps) => (
-              <CalendarDayButton
-                {...props}
-                events={eventsByDate.get(isoOf(props.day.date)) ?? []}
-              />
-            ),
-          }}
-        />
-        <Legend />
-      </Card>
+      <main className={styles.main}>
+        <header className={styles.header}>
+          <button
+            type="button"
+            className={styles.mobileFilter}
+            onClick={() => setFiltersSheetOpen(true)}
+            aria-label="일정 필터"
+          >
+            <Filter size={14} strokeWidth={1.75} />
+            <span>{filterLabel}</span>
+          </button>
+          <h1 className={styles.title}>캘린더</h1>
+          <Button variant="outline" size="sm" onClick={goToday}>오늘</Button>
+        </header>
+        <p className={styles.sub}>기념일 · 마감일 · 구매 · 정산이 한눈에</p>
 
-      <Section
-        title={
-          selected
-            ? `${selected.getFullYear()}.${String(selected.getMonth() + 1).padStart(2, '0')}.${String(selected.getDate()).padStart(2, '0')} (${koreanWeekday(selected)})`
-            : '날짜를 선택하세요'
-        }
-      >
-        <Card padding="md">
-          {selected && selectedEvents.length === 0 && (
-            <p className="cal-page__empty">이 날의 일정이 없습니다.</p>
-          )}
-          {selectedEvents.length > 0 && (
-            <ul className="cal-page__list">
-              {selectedEvents.map((e) => (
-                <EventRow
-                  key={`${e.type}-${e.refId}-${e.date}`}
-                  event={e}
-                  onClick={() => handleEventClick(e)}
+        <Card className="cal-page__grid-card" padding="sm">
+          <DayPicker
+            mode="single"
+            locale={ko}
+            selected={selected}
+            onSelect={setSelected}
+            month={month}
+            onMonthChange={setMonth}
+            showOutsideDays
+            components={{
+              DayButton: (props: DayButtonProps) => (
+                <CalendarDayButton
+                  {...props}
+                  events={eventsByDate.get(isoOf(props.day.date)) ?? []}
                 />
-              ))}
-            </ul>
-          )}
-          {selected && (
-            <div className="cal-page__actions">
-              <span className="cal-page__actions-label">이 날에 추가:</span>
-              <Row gap={2} wrap>
-                <Button
-                  variant="soft"
-                  size="sm"
-                  leading={<ShoppingBag size={14} strokeWidth={2} />}
-                  onClick={() => navigate(`/data/purchases?date=${selectedIso}&month=${selectedYearMonth}`)}
-                >
-                  구매
-                </Button>
-                <Button
-                  variant="soft"
-                  size="sm"
-                  leading={<CheckSquare size={14} strokeWidth={2} />}
-                  onClick={() => navigate(`/data/todos?date=${selectedIso}`)}
-                >
-                  할 일
-                </Button>
-                <Button
-                  variant="soft"
-                  size="sm"
-                  leading={<Cake size={14} strokeWidth={2} />}
-                  onClick={() => navigate(`/data/anniversaries?date=${selectedIso}`)}
-                >
-                  기념일
-                </Button>
-              </Row>
-            </div>
-          )}
+              ),
+            }}
+          />
         </Card>
-      </Section>
-    </Page>
+
+        <Section
+          title={
+            selected
+              ? `${selected.getFullYear()}.${String(selected.getMonth() + 1).padStart(2, '0')}.${String(selected.getDate()).padStart(2, '0')} (${koreanWeekday(selected)})`
+              : '날짜를 선택하세요'
+          }
+        >
+          <Card padding="md">
+            {selected && selectedEvents.length === 0 && (
+              <p className="cal-page__empty">이 날의 일정이 없습니다.</p>
+            )}
+            {selectedEvents.length > 0 && (
+              <ul className="cal-page__list">
+                {selectedEvents.map((e) => (
+                  <EventRow
+                    key={`${e.type}-${e.refId}-${e.date}`}
+                    event={e}
+                    onClick={() => handleEventClick(e)}
+                  />
+                ))}
+              </ul>
+            )}
+            {selected && (
+              <div className="cal-page__actions">
+                <span className="cal-page__actions-label">이 날에 추가:</span>
+                <Row gap={2} wrap>
+                  <Button
+                    variant="soft"
+                    size="sm"
+                    leading={<ShoppingBag size={14} strokeWidth={2} />}
+                    onClick={() => navigate(`/data/purchases?date=${selectedIso}&month=${selectedYearMonth}`)}
+                  >
+                    구매
+                  </Button>
+                  <Button
+                    variant="soft"
+                    size="sm"
+                    leading={<CheckSquare size={14} strokeWidth={2} />}
+                    onClick={() => navigate(`/data/todos?date=${selectedIso}`)}
+                  >
+                    할 일
+                  </Button>
+                  <Button
+                    variant="soft"
+                    size="sm"
+                    leading={<Cake size={14} strokeWidth={2} />}
+                    onClick={() => navigate(`/data/anniversaries?date=${selectedIso}`)}
+                  >
+                    기념일
+                  </Button>
+                </Row>
+              </div>
+            )}
+          </Card>
+        </Section>
+      </main>
+
+      {isMobile && (
+        <AppSidebarSheet
+          open={filtersSheetOpen}
+          onOpenChange={setFiltersSheetOpen}
+          title="일정 필터"
+        >
+          <AppSidebarSection label="일정 종류">
+            <SourceFilters
+              enabled={enabled}
+              counts={sourceCounts}
+              onToggle={toggleSource}
+            />
+          </AppSidebarSection>
+        </AppSidebarSheet>
+      )}
+    </div>
+  )
+}
+
+function SourceFilters({
+  enabled,
+  counts,
+  onToggle,
+}: {
+  enabled: Set<CalendarEventType>
+  counts: Record<CalendarEventType, number>
+  onToggle: (t: CalendarEventType) => void
+}) {
+  return (
+    <>
+      {EVENT_TYPES.map((t) => {
+        const meta = SOURCE_META[t]
+        const isOn = enabled.has(t)
+        return (
+          <AppSidebarItem
+            key={t}
+            Icon={meta.Icon}
+            label={meta.label}
+            count={counts[t]}
+            active={isOn}
+            onClick={() => onToggle(t)}
+            iconProps={{ color: isOn ? meta.color : 'var(--c-text-placeholder)' }}
+            trailing={
+              <span
+                className={styles.sourceDot}
+                aria-hidden="true"
+                style={{ background: isOn ? meta.color : 'transparent', borderColor: meta.color }}
+              />
+            }
+          />
+        )
+      })}
+    </>
   )
 }
 
@@ -198,7 +308,7 @@ function CalendarDayButton({
             <span
               key={t}
               className="cal-day__dot"
-              style={{ background: EVENT_META[t].color }}
+              style={{ background: SOURCE_META[t].color }}
             />
           ))}
         </span>
@@ -207,26 +317,10 @@ function CalendarDayButton({
   )
 }
 
-function Legend() {
-  return (
-    <div className="cal-page__legend">
-      {EVENT_TYPES.map((t) => (
-        <span key={t} className="cal-page__legend-item">
-          <span className="cal-page__legend-dot" style={{ background: EVENT_META[t].color }} />
-          <span>{EVENT_META[t].label}</span>
-        </span>
-      ))}
-    </div>
-  )
-}
-
 function EventRow({ event, onClick }: { event: CalendarEvent; onClick: () => void }) {
-  const Icon =
-    event.type === 'anniversary' ? Cake :
-    event.type === 'todo' ? CheckSquare :
-    event.type === 'purchase' ? ShoppingBag :
-    ArrowLeftRight
-  const color = EVENT_META[event.type].color
+  const meta = SOURCE_META[event.type]
+  const Icon = meta.Icon
+  const color = meta.color
 
   return (
     <li>

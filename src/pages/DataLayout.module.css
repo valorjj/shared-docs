@@ -1,0 +1,149 @@
+.root {
+  display: flex;
+  min-height: calc(100svh - 53px);
+  background: var(--c-surface);
+  font-family: var(--font-sans);
+}
+
+.main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebarBadge {
+  font-size: 10px;
+  font-weight: var(--fw-medium);
+  color: var(--c-text-placeholder);
+  background: var(--c-surface-tint);
+  border: 1px solid var(--c-border);
+  padding: 1px 6px;
+  border-radius: var(--r-pill);
+  letter-spacing: 0.02em;
+}
+
+/* --- /data mobile-index landing (also shown on desktop /data as a clean welcome). --- */
+.indexWrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 32px 24px 48px;
+  max-width: 720px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.indexHeader {
+  margin-bottom: 20px;
+}
+
+.indexTitle {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-semi);
+  color: var(--c-text);
+}
+
+.indexSub {
+  margin: 4px 0 0;
+  font-size: var(--fs-sm);
+  color: var(--c-text-muted);
+}
+
+.indexList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.indexItem {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 14px 16px;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--c-border-dashed);
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  color: var(--c-text);
+  transition: background var(--t-fast);
+}
+
+.indexItem:last-child {
+  border-bottom: 0;
+}
+
+.indexItem:hover:not(:disabled) {
+  background: var(--c-surface-tint);
+}
+
+.indexItem:active:not(:disabled) {
+  background: var(--c-surface-tint);
+}
+
+.indexItemDisabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.indexIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--r-sm);
+  background: var(--c-surface-tint);
+  color: var(--c-text-muted);
+  flex-shrink: 0;
+}
+
+.indexBody {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.indexLabel {
+  font-size: var(--fs-md);
+  font-weight: var(--fw-semi);
+  color: var(--c-text);
+}
+
+.indexDesc {
+  font-size: var(--fs-xs);
+  color: var(--c-text-muted);
+}
+
+.indexBadge {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  color: var(--c-text-placeholder);
+  background: var(--c-surface-tint);
+  border: 1px solid var(--c-border);
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+  flex-shrink: 0;
+}
+
+@media (max-width: 767px) {
+  .root {
+    min-height: calc(100svh - 56px - env(safe-area-inset-bottom, 0px));
+  }
+  .indexWrap {
+    padding: 20px 12px calc(32px + env(safe-area-inset-bottom, 0px));
+  }
+  .indexItem {
+    padding: 16px 12px;
+  }
+}

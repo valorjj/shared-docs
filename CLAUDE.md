@@ -50,6 +50,8 @@ src/
 │   │   ├── Menu.tsx                ← Radix DropdownMenu 래퍼 + MenuItem + MenuSeparator
 │   │   └── index.ts
 │   └── common/                     ← 반응형 레이아웃 프리미티브
+│       ├── AppSidebar.tsx          ← Bear-풍 사이드바 셸 (brand/section/item) — Data + Calendar에서 사용
+│       ├── AppSidebarSheet.tsx     ← 모바일 슬라이드업 시트 (Radix Dialog) — AppSidebar의 모바일 대응
 │       ├── MobileTable.tsx         ← 모바일=카드, 데스크톱=테이블 (구매 등 데이터 피처에서 사용)
 │       ├── MobileShell.tsx         ← TopNav + Outlet + BottomNav 래퍼
 │       ├── TopNav.tsx              ← 데스크톱 헤더 (메모/시트/데이터/캘린더/관리)
@@ -123,8 +125,8 @@ src/
 ├── pages/
 │   ├── Hub.tsx                     ← 메인 / — NoteWorkspace 렌더 (React.lazy)
 │   ├── SheetsPage.tsx              ← /sheets — SheetWorkspace 렌더
-│   ├── DataHub.tsx                 ← /data 인덱스
-│   ├── CalendarPage.tsx
+│   ├── DataLayout.tsx              ← /data 레이아웃 (AppSidebar + Outlet, /data 인덱스 = 모바일 친화 picker)
+│   ├── CalendarPage.tsx            ← /calendar — AppSidebar로 이벤트 종류 필터링
 │   ├── Admin.tsx / Login.tsx / AuthCallback.tsx / Forbidden.tsx / NotFound.tsx
 └── App.tsx                         ← 라우팅 + Suspense
 ```
@@ -135,11 +137,11 @@ src/
 | `/login`, `/auth/callback` | Login / AuthCallback | public | eager |
 | `/` | Hub (NoteWorkspace) | authed | **lazy** |
 | `/sheets` | SheetsPage (SheetWorkspace) | authed | **lazy** |
-| `/data` | DataHub | authed | eager |
-| `/data/purchases` | PurchaseList | authed | **lazy** |
-| `/data/todos` | TodoList | authed | **lazy** |
-| `/data/anniversaries` | AnniversaryList | authed | **lazy** |
-| `/calendar` | CalendarPage | authed | **lazy** |
+| `/data` | DataLayout (사이드바 + Outlet) | authed | eager |
+| `/data/purchases` | PurchaseList (nested in DataLayout) | authed | **lazy** |
+| `/data/todos` | TodoList (nested in DataLayout) | authed | **lazy** |
+| `/data/anniversaries` | AnniversaryList (nested in DataLayout) | authed | **lazy** |
+| `/calendar` | CalendarPage (AppSidebar 필터) | authed | **lazy** |
 | `/admin` | Admin | ADMIN only | **lazy** |
 | `*` | NotFound | — | eager |
 
@@ -155,13 +157,14 @@ src/
 - 토큰: `--c-primary` (navy, 액션/링크), `--c-accent` (Bear-red #e8434a, **희소하게** — 선택 레일·핀·해시태그), `--c-text/muted/subtle/placeholder`, `--c-bg` (웜 크림), `--c-surface` (흰), `--c-surface-tint`, `--c-border/strong/dashed`, `--sp-1..9`, `--r-xs/sm/md/lg/pill`, `--shadow-sm/md/lg/fab`, `--t-fast/base`.
 - 폰트: 본문 `Noto Sans KR`, 큰 제목 `Noto Serif KR`. 둘 다 `var(--font-sans/serif)`로.
 - Radix 프리미티브는 **선택적으로** 채택 — `ConfirmDialog`(=Dialog)와 `Menu`(=DropdownMenu)가 현재 두 도입처. 헤드리스만 가져와 CSS Modules로 입힘. Tailwind는 도입하지 않음.
+- **사이드바**는 `components/common/AppSidebar`로 통일 — `<AppSidebar brand>` + `<AppSidebarSection label>` + `<AppSidebarItem Icon label count active onClick>`. 모바일 미러는 `<AppSidebarSheet>` (Radix Dialog 슬라이드업). 메모/시트는 자체 `Sidebar`를 유지하지만 시각적 규칙은 동일.
 
 ***메모 (`/`) 핵심
 - **3-pane on desktop / 1-pane on mobile** — URL이 진실의 소스.
 - Tiptap v3 + StarterKit + Image + Link + Placeholder + TaskList + Table + 커스텀 **Tag** mark + 커스텀 **SlashCommand** 확장.
 - **autosave**: 본문은 키 입력 후 600ms 디바운스 → PATCH `/api/notes/:id { body }`. 제목은 blur에 저장. 노트 전환/언마운트 시 flush.
 - **첨부**: 이미지 붙여넣기/드롭/툴바 클립 → `POST /api/notes/:id/attachments` (multipart) → 응답 URL을 `<img>`로 삽입. 비이미지 파일은 `📎 파일명` 링크로 삽입.
-- **태그**: 본문에 `#travel`/`#여행` 입력 후 공백 → 인라인 mark로 자동 변환 (Bear-red pill). `shared/extractTags.ts`가 모든 노트의 HTML을 파스해 사이드바 태그 섹션을 만들고 카운트 표시 → 클릭 시 필터.
+- **태그**: 본문에 `#travel`/`#여행` 입력 후 **공백을 누르면** 인라인 mark로 변환 (Bear-red pill). 트리거는 trailing whitespace — `$`-anchored 규칙으로 매 키스트로크마다 발화시키면 문자가 사라지는 회귀가 있었음 (`Tag.ts`의 코멘트 참조). `shared/extractTags.ts`가 모든 노트의 HTML을 파스해 사이드바 태그 섹션을 만들고 카운트 표시 → 클릭 시 필터.
 - **slash menu**: `/` → 헤딩/리스트/체크리스트/인용/코드/표/파일첨부 명령 메뉴. 키보드 네비 (Up/Down/Enter/Tab/Esc), 뷰포트 클램프, 포털 렌더.
 - **bubble menu**: 텍스트 선택 시 뜨는 다크 풍선 (B/I/S/code/link). **터치 디바이스에선 숨김** — iOS 네이티브 선택 메뉴와 충돌하기 때문 (`useIsTouch`).
 - **케밥 메뉴**: 메타 strip의 `…` → Radix DropdownMenu → 고정/해제 + 삭제 (ConfirmDialog).
@@ -278,6 +281,7 @@ com.shareddocs.backend/
 🚧 4. **레시피 컬렉션** (`/data/recipes`) — `@dnd-kit` 필요.
 🚧 5. **카테고리 관리 UI** — 각 피처의 "관리" 탭. 백엔드 API는 admin-only로 존재; 현재 curl만 가능.
 🚧 6. **전역 헤더 + 아바타 드롭다운 + 로그아웃** — 현재 메모/시트 케밥 패턴과 통일 검토.
+🚧 7. **노트/시트 사이드바를 `AppSidebar`로 통합** — 현재는 자체 `Sidebar` 보유. 같은 시각 규칙이지만 코드 중복.
 
 ***메모 (Claude용)
 - `npm run dev` → localhost:5173. 백엔드를 로컬에서 띄울 땐 `POST /api/auth/dev-login`으로 Google 없이 JWT.

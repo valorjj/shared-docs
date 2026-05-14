@@ -2,7 +2,7 @@ import { Suspense, lazy } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import Login from './pages/Login'
 import AuthCallback from './pages/AuthCallback'
-import DataHub from './pages/DataHub'
+import DataLayout from './pages/DataLayout'
 import NotFound from './pages/NotFound'
 import RequireAuth from './auth/RequireAuth'
 import RequireRole from './auth/RequireRole'
@@ -45,10 +45,11 @@ function App() {
           <Route element={<MobileShell />}>
             <Route path="/" element={<Hub />} />
             <Route path="/sheets" element={<SheetsPage />} />
-            <Route path="/data" element={<DataHub />} />
-            <Route path="/data/purchases" element={<PurchaseList />} />
-            <Route path="/data/todos" element={<TodoList />} />
-            <Route path="/data/anniversaries" element={<AnniversaryList />} />
+            <Route path="/data" element={<DataLayout />}>
+              <Route path="purchases" element={<PurchaseList />} />
+              <Route path="todos" element={<TodoList />} />
+              <Route path="anniversaries" element={<AnniversaryList />} />
+            </Route>
             <Route path="/calendar" element={<CalendarPage />} />
 
             <Route element={<RequireRole role="ADMIN" />}>
