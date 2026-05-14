@@ -1,6 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom'
-import { Database, Calendar } from 'lucide-react'
-import { useAuth } from '../auth/useAuth'
+import { useNavigate } from 'react-router-dom'
 import './Hub.css'
 
 type GuideStatus = 'done' | 'wip' | 'todo'
@@ -14,7 +12,6 @@ interface Guide {
   path: string
   status: GuideStatus
   tags: string[]
-  color: string
 }
 
 const guides: Guide[] = [
@@ -27,7 +24,6 @@ const guides: Guide[] = [
     path: '/honeymoon',
     status: 'done',
     tags: ['여행', '유럽'],
-    color: 'navy',
   },
   {
     id: 'cleaning',
@@ -38,7 +34,6 @@ const guides: Guide[] = [
     path: '/cleaning',
     status: 'done',
     tags: ['입주청소', '인테리어'],
-    color: 'teal',
   },
   {
     id: 'interior',
@@ -49,7 +44,6 @@ const guides: Guide[] = [
     path: '/interior',
     status: 'todo',
     tags: ['리모델링', '체크리스트'],
-    color: 'teal',
   },
   {
     id: 'loan',
@@ -60,7 +54,6 @@ const guides: Guide[] = [
     path: '/loan',
     status: 'todo',
     tags: ['대출', '부동산'],
-    color: 'green',
   },
   {
     id: 'stock',
@@ -71,7 +64,6 @@ const guides: Guide[] = [
     path: '/stock',
     status: 'done',
     tags: ['투자', 'ETF', '부부 절세'],
-    color: 'orange',
   },
 ]
 
@@ -83,7 +75,6 @@ const statusLabel: Record<GuideStatus, string> = {
 
 export default function Hub() {
   const navigate = useNavigate()
-  const { user } = useAuth()
 
   const handleClick = (guide: Guide) => {
     if (guide.status === 'todo') return
@@ -92,63 +83,62 @@ export default function Hub() {
 
   return (
     <div className="hub">
-      <header className="hub__header">
-        {user?.role === 'ADMIN' && (
-          <Link to="/admin" className="hub__admin-link">관리</Link>
-        )}
-        <h1 className="hub__title">우리의 가이드북</h1>
-        <p className="hub__subtitle">필요한 정보를 한눈에 정리했어요</p>
-      </header>
+      <div className="hub__container">
+        <header className="hub__header">
+          <h1 className="hub__title">우리의 가이드북</h1>
+          <p className="hub__subtitle">필요한 정보를 한눈에 정리했어요</p>
+        </header>
 
-      <nav className="hub__quick-nav" aria-label="섹션 바로가기">
-        <Link to="/data" className="hub__quick-link">
-          <span className="hub__quick-icon" aria-hidden="true">
-            <Database size={22} strokeWidth={2} />
-          </span>
-          <span>
-            <span className="hub__quick-label">데이터</span>
-            <span className="hub__quick-sub">구매 · 할 일 · 기념일</span>
-          </span>
-        </Link>
-        <Link to="/calendar" className="hub__quick-link">
-          <span className="hub__quick-icon" aria-hidden="true">
-            <Calendar size={22} strokeWidth={2} />
-          </span>
-          <span>
-            <span className="hub__quick-label">캘린더</span>
-            <span className="hub__quick-sub">기념일 · 마감일을 한눈에</span>
-          </span>
-        </Link>
-      </nav>
+        <div className="hub__section-label">
+          <span>가이드</span>
+          <span className="hub__section-count">{guides.length}</span>
+        </div>
 
-      <main className="hub__grid">
-        {guides.map((guide) => (
-          <article
-            key={guide.id}
-            className={`card card--${guide.color} ${guide.status === 'todo' ? 'card--disabled' : ''}`}
-            onClick={() => handleClick(guide)}
-          >
-            <div className="card__emoji">{guide.emoji}</div>
-            <span className={`card__badge card__badge--${guide.status}`}>
-              {statusLabel[guide.status]}
-            </span>
-            <h2 className="card__title">{guide.title}</h2>
-            <p className="card__subtitle">{guide.subtitle}</p>
-            <p className="card__desc">{guide.description}</p>
-            <div className="card__tags">
-              {guide.tags.map((tag) => (
-                <span key={tag} className="card__tag">
-                  {tag}
+        <ul className="hub__list">
+          {guides.map((guide) => {
+            const disabled = guide.status === 'todo'
+            return (
+              <li
+                key={guide.id}
+                className={`hub__row${disabled ? ' hub__row--disabled' : ''}`}
+                onClick={() => handleClick(guide)}
+                onKeyDown={(e) => {
+                  if (disabled) return
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    handleClick(guide)
+                  }
+                }}
+                role="button"
+                tabIndex={disabled ? -1 : 0}
+                aria-disabled={disabled || undefined}
+              >
+                <span className="hub__row-emoji" aria-hidden="true">
+                  {guide.emoji}
                 </span>
-              ))}
-            </div>
-          </article>
-        ))}
-      </main>
-
-      <footer className="hub__footer">
-        <p>&copy; 2026 &mdash; with ❤️</p>
-      </footer>
+                <div className="hub__row-body">
+                  <div className="hub__row-head">
+                    <h2 className="hub__row-title">{guide.title}</h2>
+                    <span className={`hub__status hub__status--${guide.status}`}>
+                      <span className="hub__status-dot" aria-hidden="true" />
+                      {statusLabel[guide.status]}
+                    </span>
+                  </div>
+                  <p className="hub__row-sub">{guide.subtitle}</p>
+                  <p className="hub__row-desc">{guide.description}</p>
+                  <div className="hub__row-tags">
+                    {guide.tags.map((tag) => (
+                      <span key={tag} className="hub__tag">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </li>
+            )
+          })}
+        </ul>
+      </div>
     </div>
   )
 }
