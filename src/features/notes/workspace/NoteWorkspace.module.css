@@ -25,7 +25,8 @@
 
 @media (max-width: 767px) {
   .root {
-    height: calc(100svh - 56px); /* BottomNav-only mobile shell */
+    /* BottomNav 56px + iPhone home-indicator safe area */
+    height: calc(100svh - 56px - env(safe-area-inset-bottom, 0px));
   }
   .list {
     width: 100%;

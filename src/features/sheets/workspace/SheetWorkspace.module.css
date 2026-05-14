@@ -31,7 +31,8 @@
 }
 
 @media (max-width: 767px) {
-  .root { height: calc(100svh - 56px); }
+  /* BottomNav 56px + iPhone home-indicator safe area */
+  .root { height: calc(100svh - 56px - env(safe-area-inset-bottom, 0px)); }
   .list { width: 100%; flex: 1; }
   .editor { width: 100%; }
 }
