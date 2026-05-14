@@ -39,6 +39,16 @@
   color: var(--c-text-placeholder);
 }
 
+/* Desktop default: show desktop buttons, hide mobile-only ones. */
+.desktopOnly { display: inline-flex; }
+.mobileOnly  { display: none; }
+
+@media (max-width: 767px) {
+  .desktopOnly { display: none; }
+  .mobileOnly  { display: inline-flex; height: 36px; padding: 0 12px; }
+  /* Row-add lives inside the card list; column-add lives inside the column sheet. */
+}
+
 @media (max-width: 640px) {
   .hint { display: none; }
 }

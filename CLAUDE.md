@@ -94,11 +94,13 @@ src/
 │   │   ├── workspace/SheetWorkspace.tsx ← 2-pane (리스트 + 그리드)
 │   │   ├── list/                   ← Notes와 같은 패턴 (Header/Item/Empty/List)
 │   │   ├── editor/
-│   │   │   ├── SheetEditor.tsx     ← 오케스트레이터 (debounced JSON autosave)
+│   │   │   ├── SheetEditor.tsx     ← 오케스트레이터 (debounced JSON autosave + useIsMobile 스왑)
 │   │   │   ├── SheetEditorTitle.tsx
 │   │   │   ├── SheetEditorMeta.tsx ← 노트와 동일한 케밥 패턴
-│   │   │   ├── SheetEditorToolbar.tsx ← + 행 / + 열
-│   │   │   ├── SheetEditorGrid.tsx ← react-data-grid v7 래퍼 + 헤더 dblclick 이름 변경
+│   │   │   ├── SheetEditorToolbar.tsx ← 데스크톱: + 행 / + 열 · 모바일: 열 관리
+│   │   │   ├── SheetEditorGrid.tsx ← 데스크톱: react-data-grid v7 래퍼 + 헤더 dblclick 이름 변경
+│   │   │   ├── SheetEditorCardList.tsx ← 모바일: 카드-퍼-로우 (각 행 = 카드, 각 열 = 라벨된 input)
+│   │   │   ├── SheetColumnSheet.tsx ← 모바일: 슬라이드업 시트 (열 추가/이름변경/삭제)
 │   │   │   ├── SheetEditorEmpty.tsx
 │   │   │   └── SheetEditorMobileBar.tsx
 │   │   └── shared/sheetData.ts     ← JSON 파스/직렬화 + 기본값 + nextColumnKey/Label
@@ -167,9 +169,10 @@ src/
 ***시트 (`/sheets`) 핵심
 - **2-pane** (리스트 + 그리드). 모바일은 같은 단일-팬 드릴인 패턴.
 - 데이터는 **불투명 JSON LONGTEXT 블롭** (`{ columns: [{key, name, width?}], rows: [{key: value}] }`). 스키마 진화 없음 — 프런트가 모든 형태 변화를 흡수.
-- **react-data-grid v7** 그리드, 셀 더블클릭 편집. 열 이름은 헤더 더블클릭 → `window.prompt`. 열 삭제는 헤더 호버 시 `×` 버튼.
+- **데스크톱**: react-data-grid v7 그리드, 셀 더블클릭 편집. 열 이름은 헤더 더블클릭 → `window.prompt`. 열 삭제는 헤더 호버 시 `×` 버튼. (`SheetEditorGrid`)
+- **모바일**: 카드-퍼-로우 뷰 (`SheetEditorCardList`) — 각 행이 카드, 각 열이 라벨된 input. 카드 헤더에 `#N` 행 번호 + 케밥(삭제). 하단에 `+ 행 추가` 점선 버튼. 열 추가/이름변경/삭제는 툴바의 **열 관리** → 슬라이드업 시트 (`SheetColumnSheet`).
+- 데스크톱/모바일 스왑은 `SheetEditor`에서 `useIsMobile()`로. 둘 다 동일한 `localData / handleDataChange` 흐름을 공유 → 자동 저장 로직은 한 곳.
 - **autosave**: 변경 후 800ms 디바운스. 전체 data JSON 통째로 PATCH.
-- 모바일 그리드 자체는 아직 데스크톱-급 UX — 카드-퍼-로우 모바일 뷰는 미구현 (다음 작업).
 
 ***엔티티 & 권한 규칙
 | 엔티티 | 위치 | 권한 |
@@ -269,13 +272,12 @@ com.shareddocs.backend/
 ```
 
 ***아직 안 한 것 (다음 작업 우선순위)
-🚧 1. **시트 모바일 카드-퍼-로우 뷰** — 현재 그리드는 데스크톱-급 UX. `MobileTable` 패턴 재사용 검토.
-🚧 2. **⌘K 검색 팔레트** — Radix Dialog 재사용. 노트+시트 동시 검색.
-🚧 3. **첨부 폴리시** — 노트 안에 첨부 갤러리 뷰 + 파일명/사이즈 + 개별 삭제. 이미지 라이트박스.
-🚧 4. **유용한 링크 컬렉션** (`/data/links`) — OpenGraph 프리뷰.
-🚧 5. **레시피 컬렉션** (`/data/recipes`) — `@dnd-kit` 필요.
-🚧 6. **카테고리 관리 UI** — 각 피처의 "관리" 탭. 백엔드 API는 admin-only로 존재; 현재 curl만 가능.
-🚧 7. **전역 헤더 + 아바타 드롭다운 + 로그아웃** — 현재 메모/시트 케밥 패턴과 통일 검토.
+🚧 1. **⌘K 검색 팔레트** — Radix Dialog 재사용. 노트+시트 동시 검색.
+🚧 2. **첨부 폴리시** — 노트 안에 첨부 갤러리 뷰 + 파일명/사이즈 + 개별 삭제. 이미지 라이트박스.
+🚧 3. **유용한 링크 컬렉션** (`/data/links`) — OpenGraph 프리뷰.
+🚧 4. **레시피 컬렉션** (`/data/recipes`) — `@dnd-kit` 필요.
+🚧 5. **카테고리 관리 UI** — 각 피처의 "관리" 탭. 백엔드 API는 admin-only로 존재; 현재 curl만 가능.
+🚧 6. **전역 헤더 + 아바타 드롭다운 + 로그아웃** — 현재 메모/시트 케밥 패턴과 통일 검토.
 
 ***메모 (Claude용)
 - `npm run dev` → localhost:5173. 백엔드를 로컬에서 띄울 땐 `POST /api/auth/dev-login`으로 Google 없이 JWT.

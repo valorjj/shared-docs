@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useIsMobile } from '../../../lib/useMediaQuery'
 import { useDeleteSheet, useUpdateSheet } from '../api'
 import {
   isEqualData,
@@ -9,6 +10,8 @@ import {
   stringifySheetData,
 } from '../shared/sheetData'
 import type { SheetData, SheetFull } from '../types'
+import SheetColumnSheet from './SheetColumnSheet'
+import SheetEditorCardList from './SheetEditorCardList'
 import SheetEditorGrid from './SheetEditorGrid'
 import SheetEditorMeta from './SheetEditorMeta'
 import SheetEditorMobileBar from './SheetEditorMobileBar'
@@ -31,11 +34,13 @@ const AUTOSAVE_MS = 800
 export default function SheetEditor({ sheet, onDeleted, onBack }: Props) {
   const updateSheet = useUpdateSheet()
   const deleteSheet = useDeleteSheet()
+  const isMobile = useIsMobile()
 
   const [localData, setLocalData] = useState<SheetData>(() => parseSheetData(sheet.data))
   const dirty = useRef(false)
   const autosaveTimer = useRef<number | null>(null)
   const [savingHint, setSavingHint] = useState(false)
+  const [columnSheetOpen, setColumnSheetOpen] = useState(false)
 
   const flush = useCallback(() => {
     if (!dirty.current) return
@@ -107,9 +112,23 @@ export default function SheetEditor({ sheet, onDeleted, onBack }: Props) {
           onTogglePin={handleTogglePin}
           onDelete={handleDelete}
         />
-        <SheetEditorToolbar onAddRow={handleAddRow} onAddColumn={handleAddColumn} />
+        <SheetEditorToolbar
+          onAddRow={handleAddRow}
+          onAddColumn={handleAddColumn}
+          onOpenColumnSheet={() => setColumnSheetOpen(true)}
+        />
       </div>
-      <SheetEditorGrid data={localData} onChange={handleDataChange} />
+      {isMobile ? (
+        <SheetEditorCardList data={localData} onChange={handleDataChange} />
+      ) : (
+        <SheetEditorGrid data={localData} onChange={handleDataChange} />
+      )}
+      <SheetColumnSheet
+        open={columnSheetOpen}
+        onOpenChange={setColumnSheetOpen}
+        data={localData}
+        onChange={handleDataChange}
+      />
     </div>
   )
 }

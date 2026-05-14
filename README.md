@@ -17,10 +17,13 @@ to two Google accounts via an OAuth + JWT pipeline; everything else
   slash command palette, `#hashtag` parsing surfaced in the sidebar
   with counts and click-to-filter. Paste / drag / clip-button image
   and file uploads. Pin and per-note autosave on every keystroke.
-- **시트** (`/sheets`) — lightweight spreadsheet. Two-pane workspace,
-  react-data-grid editor. Column rename via header double-click,
-  delete via hover ×, `+ 행` / `+ 열` toolbar, debounced autosave of
-  the whole grid as one JSON payload.
+- **시트** (`/sheets`) — lightweight spreadsheet. Two-pane workspace.
+  On desktop a react-data-grid (column rename via header double-click,
+  delete via hover ×, `+ 행` / `+ 열` toolbar). On mobile the same
+  data renders as a **card-per-row** view with labeled inputs, a
+  per-card kebab for row delete, a dashed `+ 행 추가` at the bottom,
+  and a **열 관리** slide-up sheet for column rename / delete / add.
+  Debounced autosave of the whole grid as one JSON payload.
 - **데이터** — typed mini-apps for tracking things together:
   - 구매 내역 (purchases) — multi-currency, inline-edit grid on desktop,
     per-row split mode (SHARED · MINE · THEIRS), per-currency
