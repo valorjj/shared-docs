@@ -34,7 +34,9 @@ export default function TopNav() {
     <header className="top-nav" aria-label="주 탐색">
       <div className="top-nav__inner">
         <Link to="/" className="top-nav__brand" aria-label="홈으로">
-          <span className="top-nav__brand-mark">📘</span>
+          <span className="top-nav__brand-mark" aria-hidden="true">
+            <BookOpen size={18} strokeWidth={2} />
+          </span>
           <span className="top-nav__brand-text">우리의 가이드북</span>
         </Link>
 
