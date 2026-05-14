@@ -60,6 +60,7 @@ export default function SheetWorkspace() {
               key={activeSheetQuery.data.id}
               sheet={activeSheetQuery.data}
               onDeleted={clearSheet}
+              onBack={clearSheet}
             />
           ) : activeId !== null && activeSheetQuery.isLoading ? (
             <div className={styles.loading}>불러오는 중…</div>

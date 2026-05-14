@@ -11,6 +11,7 @@ import {
 import type { SheetData, SheetFull } from '../types'
 import SheetEditorGrid from './SheetEditorGrid'
 import SheetEditorMeta from './SheetEditorMeta'
+import SheetEditorMobileBar from './SheetEditorMobileBar'
 import SheetEditorTitle from './SheetEditorTitle'
 import SheetEditorToolbar from './SheetEditorToolbar'
 import styles from './SheetEditor.module.css'
@@ -18,6 +19,7 @@ import styles from './SheetEditor.module.css'
 type Props = {
   sheet: SheetFull
   onDeleted: () => void
+  onBack: () => void
 }
 
 const AUTOSAVE_MS = 800
@@ -26,7 +28,7 @@ const AUTOSAVE_MS = 800
  * Parent re-keys this component on sheet change, so lazy `useState` reads
  * the initial data once. No syncing effect needed.
  */
-export default function SheetEditor({ sheet, onDeleted }: Props) {
+export default function SheetEditor({ sheet, onDeleted, onBack }: Props) {
   const updateSheet = useUpdateSheet()
   const deleteSheet = useDeleteSheet()
 
@@ -96,6 +98,7 @@ export default function SheetEditor({ sheet, onDeleted }: Props) {
 
   return (
     <div className={styles.root}>
+      <SheetEditorMobileBar onBack={onBack} />
       <div className={styles.headerArea}>
         <SheetEditorTitle key={sheet.id} initialValue={sheet.title} onCommit={handleTitleCommit} />
         <SheetEditorMeta

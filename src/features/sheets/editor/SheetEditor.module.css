@@ -17,6 +17,7 @@
   .root { padding: 24px 20px; }
 }
 
-@media (max-width: 640px) {
-  .root { padding: 20px 12px; }
+@media (max-width: 767px) {
+  .root { padding: 0; }
+  .headerArea { padding: 16px 12px 0; }
 }

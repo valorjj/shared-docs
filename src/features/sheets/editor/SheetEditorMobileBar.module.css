@@ -1,0 +1,35 @@
+.bar {
+  display: none;
+  align-items: center;
+  padding: 4px 6px;
+  border-bottom: 1px solid var(--c-border);
+  background: var(--c-surface);
+  position: sticky;
+  top: 0;
+  z-index: 6;
+}
+
+@media (max-width: 767px) {
+  .bar {
+    display: flex;
+  }
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  height: 44px;
+  padding: 0 6px 0 2px;
+  background: transparent;
+  border: 0;
+  color: var(--c-primary);
+  font-family: inherit;
+  font-size: var(--fs-base);
+  font-weight: var(--fw-medium);
+  cursor: pointer;
+}
+
+.back:active {
+  opacity: 0.6;
+}
