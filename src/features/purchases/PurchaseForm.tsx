@@ -127,10 +127,7 @@ function PurchaseFormInner({
                 선택…
               </option>
               {categories?.map((c) => (
-                <option key={c.id} value={c.name}>
-                  {c.icon ? `${c.icon} ` : ''}
-                  {c.name}
-                </option>
+                <option key={c.id} value={c.name}>{c.name}</option>
               ))}
             </Select>
           </Field>

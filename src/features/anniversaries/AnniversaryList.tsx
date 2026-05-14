@@ -79,7 +79,7 @@ export default function AnniversaryList() {
   return (
     <Page>
       <PageHeader>
-        <BackLink to="/data">데이터</BackLink>
+        <BackLink to="/data" mobileOnly>데이터</BackLink>
         <PageTitle icon={<Cake size={22} strokeWidth={2} />}>기념일</PageTitle>
       </PageHeader>
 
@@ -194,9 +194,7 @@ function Row({
         </div>
         <div className="anniv__row-meta">
           {category && (
-            <Badge color={category.color ?? undefined} icon={category.icon}>
-              {category.name}
-            </Badge>
+            <Badge color={category.color ?? undefined}>{category.name}</Badge>
           )}
           <span className="anniv__date">{dateLabel}</span>
           <span

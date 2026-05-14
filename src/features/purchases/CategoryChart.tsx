@@ -15,7 +15,6 @@ type Slice = {
   value: number
   pct: number
   color: string
-  icon: string | null
 }
 
 type Props = {
@@ -41,7 +40,6 @@ export function CategoryChart({ rows, categories, currentFilter, onFilterChange 
           value,
           pct: sum > 0 ? value / sum : 0,
           color: meta?.color ?? FALLBACK_COLOR,
-          icon: meta?.icon ?? null,
         }
       })
       .sort((a, b) => b.value - a.value)
@@ -123,7 +121,6 @@ export function CategoryChart({ rows, categories, currentFilter, onFilterChange 
                   onClick={() => onFilterChange(active ? 'ALL' : s.name)}
                 >
                   <span className="cat-chart__legend-swatch" style={{ background: s.color }} />
-                  {s.icon && <span aria-hidden="true">{s.icon}</span>}
                   <span className="cat-chart__legend-name">{s.name}</span>
                   <span className="cat-chart__legend-pct">{Math.round(s.pct * 100)}%</span>
                   <span className="cat-chart__legend-amount">{formatMoney(s.value, 'KRW')}</span>

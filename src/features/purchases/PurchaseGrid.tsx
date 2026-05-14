@@ -461,5 +461,5 @@ function selectEditor(p: RenderEditCellProps<GridRow>, options: string[]) {
 function CategoryCell({ row, categories }: { row: GridRow; categories: PurchaseCategory[] }) {
   const c = categories.find((x) => x.name === row.category)
   if (!row.category) return <span className="purchase__grid-placeholder">—</span>
-  return <Badge color={c?.color ?? undefined} icon={c?.icon}>{row.category}</Badge>
+  return <Badge color={c?.color ?? undefined}>{row.category}</Badge>
 }

@@ -21,3 +21,7 @@
   outline: none;
   box-shadow: var(--ring-focus);
 }
+
+@media (min-width: 901px) {
+  .mobileOnly { display: none; }
+}

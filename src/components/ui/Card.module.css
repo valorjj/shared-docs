@@ -1,8 +1,9 @@
+/* Bear aesthetic: hairlines only, no card lift. The token --shadow-sm
+   stays in tokens.css for FAB / floating elements that still want it. */
 .card {
   background: var(--c-surface);
   border: 1px solid var(--c-border);
-  border-radius: var(--r-lg);
-  box-shadow: var(--shadow-sm);
+  border-radius: var(--r-md);
 }
 
 .pad-sm { padding: var(--sp-3) var(--sp-4); }

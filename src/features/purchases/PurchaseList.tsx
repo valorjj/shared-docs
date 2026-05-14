@@ -156,7 +156,7 @@ export default function PurchaseList() {
       mobile: 'secondary',
       render: (r) => {
         const c = categories?.find((x) => x.name === r.category)
-        return <Badge color={c?.color ?? undefined} icon={c?.icon}>{r.category}</Badge>
+        return <Badge color={c?.color ?? undefined}>{r.category}</Badge>
       },
     },
     {
@@ -183,7 +183,7 @@ export default function PurchaseList() {
   return (
     <Page>
       <PageHeader>
-        <BackLink to="/data">데이터</BackLink>
+        <BackLink to="/data" mobileOnly>데이터</BackLink>
         <Row gap={3} justify="between" wrap>
           <PageTitle icon={<Wallet size={22} strokeWidth={2} />}>구매 내역</PageTitle>
           <Button
@@ -217,10 +217,7 @@ export default function PurchaseList() {
             >
               <option value="ALL">전체</option>
               {categories?.map((c) => (
-                <option key={c.id} value={c.name}>
-                  {c.icon ? `${c.icon} ` : ''}
-                  {c.name}
-                </option>
+                <option key={c.id} value={c.name}>{c.name}</option>
               ))}
             </Select>
           </Field>
