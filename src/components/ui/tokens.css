@@ -1,13 +1,15 @@
 :root {
-  --c-bg: #f4efe5;
+  /* Neutral light chrome. Same lightness relationships as before
+     (surface > surface-tint > bg) but without the warm-cream hue. */
+  --c-bg: #f4f4f4;
   --c-surface: #ffffff;
-  --c-surface-tint: #faf6ed;
+  --c-surface-tint: #fafafa;
   --c-overlay: rgba(0, 0, 0, 0.45);
 
   --c-text: #1c1916;
-  --c-text-muted: #6b6660;
-  --c-text-subtle: #8a857c;
-  --c-text-placeholder: #b9b2a0;
+  --c-text-muted: #6b6b6b;
+  --c-text-subtle: #8a8a8a;
+  --c-text-placeholder: #b3b3b3;
 
   --c-primary: #1b3a5c;
   --c-primary-hover: #14304d;
@@ -25,9 +27,9 @@
   --c-danger-border: #f1a8a3;
   --c-danger-bg: #fdecea;
 
-  --c-border: #e5e0d6;
-  --c-border-strong: #d9d3c5;
-  --c-border-dashed: #efe9dd;
+  --c-border: #e6e6e6;
+  --c-border-strong: #d4d4d4;
+  --c-border-dashed: #ededed;
 
   --r-xs: 4px;
   --r-sm: 6px;
