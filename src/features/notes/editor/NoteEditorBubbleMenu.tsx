@@ -1,6 +1,7 @@
 import { BubbleMenu } from '@tiptap/react/menus'
 import type { Editor } from '@tiptap/react'
 import { Bold, Italic, Strikethrough, Code, Link as LinkIcon } from 'lucide-react'
+import { useIsTouch } from '../../../lib/useMediaQuery'
 import styles from './NoteEditorBubbleMenu.module.css'
 
 type Props = {
@@ -8,7 +9,10 @@ type Props = {
 }
 
 export default function NoteEditorBubbleMenu({ editor }: Props) {
-  if (!editor) return null
+  const isTouch = useIsTouch()
+  // iOS already shows its own selection menu (Copy / Look Up / 공유…) on text
+  // selection — ours fights with it. Hide on touch-primary devices.
+  if (!editor || isTouch) return null
 
   const promptLink = () => {
     const previous = editor.getAttributes('link').href as string | undefined

@@ -23,3 +23,5 @@ export function useMediaQuery(query: string): boolean {
 
 export const useIsDesktop = (): boolean => useMediaQuery('(min-width: 768px)')
 export const useIsMobile = (): boolean => useMediaQuery('(max-width: 767px)')
+/** True on touch-primary devices (iPhone, iPad in touch mode, etc.). */
+export const useIsTouch = (): boolean => useMediaQuery('(hover: none) and (pointer: coarse)')
