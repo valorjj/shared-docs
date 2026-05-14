@@ -9,6 +9,7 @@ import {
 import type { Note } from '../types'
 import NoteEditorBody from './NoteEditorBody'
 import NoteEditorMeta from './NoteEditorMeta'
+import NoteEditorMobileBar from './NoteEditorMobileBar'
 import NoteEditorTitle from './NoteEditorTitle'
 import NoteEditorToolbar from './NoteEditorToolbar'
 import styles from './NoteEditor.module.css'
@@ -16,11 +17,12 @@ import styles from './NoteEditor.module.css'
 type Props = {
   note: Note
   onDeleted: () => void
+  onBack: () => void
 }
 
 const AUTOSAVE_MS = 600
 
-export default function NoteEditor({ note, onDeleted }: Props) {
+export default function NoteEditor({ note, onDeleted, onBack }: Props) {
   const updateNote = useUpdateNote()
   const deleteNote = useDeleteNote()
   const uploadAttachment = useUploadAttachment()
@@ -118,6 +120,7 @@ export default function NoteEditor({ note, onDeleted }: Props) {
 
   return (
     <div className={styles.root}>
+      <NoteEditorMobileBar onBack={onBack} />
       <NoteEditorToolbar editor={editor} onPickFile={onPickFile} />
       <input
         ref={fileInputRef}

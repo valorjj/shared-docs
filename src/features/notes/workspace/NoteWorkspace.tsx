@@ -80,7 +80,7 @@ export default function NoteWorkspace() {
       {showEditor && (
         <div className={styles.editor}>
           {activeNote ? (
-            <NoteEditor note={activeNote} onDeleted={clearNote} />
+            <NoteEditor note={activeNote} onDeleted={clearNote} onBack={clearNote} />
           ) : (
             <NoteEditorEmpty />
           )}
