@@ -29,157 +29,44 @@
   margin: 0;
 }
 
-/* ── Breadcrumb ── */
-.hub__crumbs {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  margin-bottom: 24px;
-  padding-bottom: 14px;
-  border-bottom: 1px solid var(--c-border);
-}
-
-.hub__crumb {
-  border: 0;
-  background: transparent;
-  font-family: inherit;
-  font-size: var(--fs-sm);
-  font-weight: var(--fw-medium);
-  color: var(--c-text-muted);
-  padding: 4px 8px;
-  border-radius: var(--r-sm);
-  cursor: pointer;
-  transition: color var(--t-fast), background var(--t-fast);
-}
-
-.hub__crumb:hover:not(:disabled):not(.hub__crumb--current) {
-  color: var(--c-text);
-  background: var(--c-surface-tint);
-}
-
-.hub__crumb--current {
-  color: var(--c-text);
-  cursor: default;
-}
-
-.hub__crumb-sep {
-  color: var(--c-text-placeholder);
-}
-
-/* ── Grid ── */
-.hub__grid {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 12px;
-}
-
-/* ── Tile ── */
-.hub__tile {
-  width: 100%;
+/* ── Empty state ── */
+.hub__empty {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
-  padding: 24px 16px 18px;
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: var(--r-md);
-  cursor: pointer;
-  font-family: inherit;
-  color: inherit;
-  text-align: center;
-  transition: background var(--t-fast), border-color var(--t-fast),
-              transform var(--t-fast);
-}
-
-.hub__tile:hover:not(:disabled),
-.hub__tile:focus-visible:not(:disabled) {
+  gap: 8px;
+  padding: 80px 24px;
+  border: 1px dashed var(--c-border-strong);
+  border-radius: var(--r-lg);
   background: var(--c-surface-tint);
-  border-color: var(--c-border);
-  outline: none;
+  color: var(--c-text-muted);
+  text-align: center;
 }
 
-.hub__tile:focus-visible {
-  box-shadow: var(--ring-focus);
-}
-
-.hub__tile:active:not(:disabled) {
-  transform: scale(0.98);
-}
-
-.hub__tile--disabled {
-  cursor: default;
-  opacity: 0.5;
-}
-
-.hub__tile-icon {
+.hub__empty-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 64px;
-  height: 64px;
-  border-radius: var(--r-lg);
-  background: var(--c-surface);
-  border: 1px solid var(--c-border);
-  color: var(--c-text);
+  color: var(--c-text-muted);
   margin-bottom: 4px;
 }
 
-.hub__tile--folder .hub__tile-icon {
-  background: var(--c-primary-soft);
-  border-color: transparent;
-  color: var(--c-primary);
-}
-
-.hub__tile-icon svg {
-  display: block;
-}
-
-.hub__tile-title {
-  font-size: var(--fs-base);
+.hub__empty-title {
+  font-size: var(--fs-md);
   font-weight: var(--fw-semi);
   color: var(--c-text);
-  line-height: 1.3;
-  word-break: keep-all;
-  overflow-wrap: break-word;
-  max-width: 100%;
+  margin: 0;
 }
 
-.hub__tile-meta {
-  font-size: var(--fs-xs);
-  color: var(--c-text-subtle);
-  font-variant-numeric: tabular-nums;
-}
-
-.hub__tile-status {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-size: var(--fs-xs);
-  color: var(--c-text-subtle);
-}
-
-.hub__tile-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: currentColor;
-  display: inline-block;
-}
-
-.hub__tile-status--done   { color: #2d6a4f; }
-.hub__tile-status--wip    { color: #b45309; }
-.hub__tile-status--todo   { color: var(--c-text-placeholder); }
-
-.hub__empty {
-  grid-column: 1 / -1;
-  text-align: center;
-  color: var(--c-text-placeholder);
+.hub__empty-sub {
   font-size: var(--fs-sm);
-  padding: 48px 0;
+  color: var(--c-text-subtle);
+  margin: 0;
 }
 
 @media (max-width: 640px) {
@@ -192,19 +79,7 @@
   .hub__header {
     margin-bottom: 24px;
   }
-  .hub__grid {
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-    gap: 8px;
-  }
-  .hub__tile {
-    padding: 18px 10px 14px;
-  }
-  .hub__tile-icon {
-    width: 52px;
-    height: 52px;
-  }
-  .hub__tile-icon svg {
-    width: 28px;
-    height: 28px;
+  .hub__empty {
+    padding: 56px 20px;
   }
 }
