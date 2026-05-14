@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import { Trash2 } from 'lucide-react'
+import ConfirmDialog from '../../../components/ui/ConfirmDialog'
 import PinButton from '../shared/PinButton'
 import { formatRelativeTime } from '../shared/formatRelativeTime'
 import type { Note } from '../types'
@@ -12,6 +14,8 @@ type Props = {
 }
 
 export default function NoteEditorMeta({ note, saving, onTogglePin, onDelete }: Props) {
+  const [confirming, setConfirming] = useState(false)
+
   return (
     <div className={styles.bar}>
       <div className={styles.left}>
@@ -30,15 +34,24 @@ export default function NoteEditorMeta({ note, saving, onTogglePin, onDelete }: 
         <button
           type="button"
           className={styles.delete}
-          onClick={() => {
-            if (window.confirm('이 메모를 삭제할까요?')) onDelete()
-          }}
+          onClick={() => setConfirming(true)}
           aria-label="메모 삭제"
           title="메모 삭제"
         >
           <Trash2 size={16} strokeWidth={1.75} />
         </button>
       </div>
+
+      <ConfirmDialog
+        open={confirming}
+        onOpenChange={setConfirming}
+        title="메모를 삭제할까요?"
+        description="이 메모와 첨부 파일을 영구히 지웁니다. 되돌릴 수 없어요."
+        confirmLabel="삭제"
+        cancelLabel="취소"
+        destructive
+        onConfirm={onDelete}
+      />
     </div>
   )
 }

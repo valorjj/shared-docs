@@ -14,6 +14,12 @@
   --c-primary-soft: rgba(27, 58, 92, 0.08);
   --c-primary-soft-strong: rgba(27, 58, 92, 0.14);
 
+  /* Bear-red accent. Use *sparsely* — selection rail, pinned glyph, active sidebar item. */
+  --c-accent: #e8434a;
+  --c-accent-hover: #cf3940;
+  --c-accent-soft: rgba(232, 67, 74, 0.08);
+  --c-accent-soft-strong: rgba(232, 67, 74, 0.14);
+
   --c-danger: #b3261e;
   --c-danger-soft: rgba(179, 38, 30, 0.08);
   --c-danger-border: #f1a8a3;

@@ -53,13 +53,13 @@
 }
 
 .sectionActive {
-  background: var(--c-primary-soft);
-  color: var(--c-primary);
+  background: var(--c-accent-soft);
+  color: var(--c-accent);
 }
 
 .sectionActive:hover:not(:disabled) {
-  background: var(--c-primary-soft);
-  color: var(--c-primary);
+  background: var(--c-accent-soft);
+  color: var(--c-accent);
 }
 
 .sectionIcon {

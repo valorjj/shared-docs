@@ -18,12 +18,12 @@
 }
 
 .active {
-  background: var(--c-primary-soft);
-  border-left-color: var(--c-primary);
+  background: var(--c-accent-soft);
+  border-left-color: var(--c-accent);
 }
 
 .active:hover {
-  background: var(--c-primary-soft);
+  background: var(--c-accent-soft);
 }
 
 .head {
@@ -48,7 +48,7 @@
 .pin {
   display: inline-flex;
   align-items: center;
-  color: var(--c-primary);
+  color: var(--c-accent);
   flex-shrink: 0;
 }
 

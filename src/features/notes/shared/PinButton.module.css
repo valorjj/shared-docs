@@ -18,9 +18,9 @@
 }
 
 .active {
-  color: var(--c-primary);
+  color: var(--c-accent);
 }
 
 .active:hover {
-  color: var(--c-primary-hover);
+  color: var(--c-accent-hover);
 }
