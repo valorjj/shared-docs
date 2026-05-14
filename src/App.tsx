@@ -9,6 +9,7 @@ import RequireRole from './auth/RequireRole'
 import MobileShell from './components/common/MobileShell'
 
 const Hub              = lazy(() => import('./pages/Hub'))
+const SheetsPage       = lazy(() => import('./pages/SheetsPage'))
 const PurchaseList     = lazy(() => import('./features/purchases/PurchaseList'))
 const TodoList         = lazy(() => import('./features/todos/TodoList'))
 const AnniversaryList  = lazy(() => import('./features/anniversaries/AnniversaryList'))
@@ -43,6 +44,7 @@ function App() {
         <Route element={<RequireAuth />}>
           <Route element={<MobileShell />}>
             <Route path="/" element={<Hub />} />
+            <Route path="/sheets" element={<SheetsPage />} />
             <Route path="/data" element={<DataHub />} />
             <Route path="/data/purchases" element={<PurchaseList />} />
             <Route path="/data/todos" element={<TodoList />} />

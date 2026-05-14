@@ -1,0 +1,43 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 56px 20px;
+  color: var(--c-text-muted);
+  text-align: center;
+}
+
+.icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--c-surface-tint);
+  border: 1px solid var(--c-border);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.title {
+  font-size: var(--fs-sm);
+  margin: 0;
+}
+
+.cta {
+  margin-top: 4px;
+  background: transparent;
+  border: 1px solid var(--c-border-strong);
+  color: var(--c-text);
+  padding: 6px 14px;
+  border-radius: var(--r-pill);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  cursor: pointer;
+  transition: background var(--t-fast), border-color var(--t-fast);
+}
+
+.cta:hover {
+  background: var(--c-surface-tint);
+  border-color: var(--c-text-placeholder);
+}

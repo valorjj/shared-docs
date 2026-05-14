@@ -1,5 +1,5 @@
 import { Link, NavLink, useLocation } from 'react-router-dom'
-import { BookOpen, Database, Calendar, Settings, type LucideIcon } from 'lucide-react'
+import { BookOpen, Database, Calendar, Settings, Table2, type LucideIcon } from 'lucide-react'
 import { useIsMobile } from '../../lib/useMediaQuery'
 import { useAuth } from '../../auth/useAuth'
 import './TopNav.css'
@@ -13,6 +13,7 @@ type NavItem = {
 
 const ITEMS: NavItem[] = [
   { to: '/',         Icon: BookOpen, label: '메모' },
+  { to: '/sheets',   Icon: Table2,   label: '시트' },
   { to: '/data',     Icon: Database, label: '데이터' },
   { to: '/calendar', Icon: Calendar, label: '캘린더' },
   { to: '/admin',    Icon: Settings, label: '관리', adminOnly: true },

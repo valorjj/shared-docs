@@ -1,0 +1,22 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--c-surface);
+  min-width: 0;
+  padding: 32px 40px 32px;
+  gap: 0;
+}
+
+.headerArea {
+  display: flex;
+  flex-direction: column;
+}
+
+@media (max-width: 900px) {
+  .root { padding: 24px 20px; }
+}
+
+@media (max-width: 640px) {
+  .root { padding: 20px 12px; }
+}
