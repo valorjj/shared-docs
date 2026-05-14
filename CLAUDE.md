@@ -1,6 +1,6 @@
 shared-docs — 프로젝트 지침서
 > Claude Code와 함께 이어가기 위한 컨텍스트 및 작업 가이드
-> 최근 업데이트: 2026-05-14 (메모/시트 + Bear 미감 + iPhone 폴리시 후)
+> 최근 업데이트: 2026-05-14 (Data/Calendar 사이드바 + #tag 입력 수정 + 미감 다듬기 후)
 
 ***프로젝트 개요
 진과 채연 두 사람을 위한 비공개 웹앱.
@@ -202,7 +202,7 @@ src/
 1. **백엔드**: `com.shareddocs.backend.<feature>/` 패키지에 Entity, Repository, Service, Controller, Dto. (옵션) Category + CategoryBootstrapper.
 2. **프론트**: `src/features/<feature>/` 폴더에 `api.ts` + `types.ts` + 단일-책임 컴포넌트 트리. **컴포넌트마다 자체 `.module.css`** — 마이크로 UI 튜닝이 한 파일에서 끝나야 함.
 3. 폼은 `Modal` + `Field/Input/Select/Textarea/Button` 조합. **wrapper + keyed inner 패턴** (set-state-in-effect 방지).
-4. 리스트 페이지는 `Page/PageHeader/PageTitle/BackLink` 또는 자체 List/Header/Item 구조. FAB은 `Fab`.
+4. 리스트 페이지는 `Page/PageHeader/PageTitle/BackLink` 또는 자체 List/Header/Item 구조. FAB은 `Fab`. **데이터 서브페이지면 `<BackLink to="/data" mobileOnly>` 사용** — 데스크톱에서 사이드바와 중복되지 않게.
 5. 라우트를 `src/App.tsx`에 추가하고 **`React.lazy`로 분할**.
 6. 모바일: 단일-팬 드릴인 + 백 버튼 + 안전 영역 인셋.
 
@@ -218,9 +218,13 @@ src/
 ***스타일 규칙
 - 모든 텍스트는 한국어.
 - 폰트: Noto Sans KR (본문), Noto Serif KR (큰 제목/타이틀).
-- **컬러는 `tokens.css` 변수만** — 하드코딩 hex 금지 (예외: 캘린더의 4가지 이벤트 dot 색 — `EVENT_META`).
-- **이모지를 chrome으로 쓰지 않음** — Lucide 아이콘. 사용자가 작성한 본문은 자유.
-- 그림자/카드 lift 없음. Hairline 보더만. Hover는 `--c-surface-tint` 배경 톤.
+- **컬러는 `tokens.css` 변수만** — 하드코딩 hex 금지 (예외: 캘린더의 4가지 이벤트 dot 색 — `SOURCE_META`).
+- **이모지를 chrome으로 쓰지 않음** — Lucide 아이콘 전용. 사용자가 작성한 본문(노트 body, 댓글)에서는 자유.
+  - **카테고리 `icon` 필드 caveat**: DB의 `Purchase/Todo/Anniversary Category.icon`은 OS 이모지 문자열(🍔/🚌/🏠/…)을 담고 있지만 — 관리자가 큐레이션한 *콘텐츠*이더라도 — chrome(Select option, `<Badge>`, 차트 범례)에 그리지 않는다. 필드는 유지하되 UI는 무시. (메모리 `feedback_icons.md` 참조)
+- **그림자/카드 lift 없음. Hairline 보더만.** 이 규칙은 `Card.module.css`에서 강제 — `.card`에는 `box-shadow`가 없고 `border-radius`는 `--r-md`. Hover는 `--c-surface-tint` 배경 톤 변화로만.
+  - 예외: `Modal`, `ConfirmDialog`, `Menu` (Radix Portal로 떠있는 표면)와 `Fab` (떠있는 FAB)은 `--shadow-md/lg/fab`를 유지 — "lift"가 아닌 "floating"이라 OK.
+- **버튼 위계**: `primary`(solid navy)는 **실제로 데이터가 변하는 commit 액션 한 곳에만**. 페이지 진입용/탐색용 액션("+ 항목 추가", "오늘", "반복 항목")은 `outline`. 보조 액션은 `ghost`/`soft`. 결과적으로 한 화면에서 navy 버튼은 0~1개.
+- **BackLink**는 사이드바가 같은 정보를 노출하는 데스크톱(≥901px)에서는 시각 노이즈가 됨 — `<BackLink to="/data" mobileOnly>` 처럼 `mobileOnly` 프롭으로 데스크톱에서 숨김. 데이터 서브페이지 3개가 이 패턴 사용.
 - 모바일 우선: 최소 44×44 터치 타깃, BottomNav 56 + safe-area.
 - 클래스 명명: 새 컴포넌트는 CSS Modules로 스코프됨. 기존 feature CSS는 BEM-스러운 클래스 유지.
 

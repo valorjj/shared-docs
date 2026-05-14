@@ -153,7 +153,9 @@ and roadmap:
 
 - `AUTH_BLUEPRINT.md` — Google OAuth, JWT, allowlist, admin model
 - `SCALING_BLUEPRINT.md` — feature roadmap + implementation log (latest
-  entries cover the memo + sheet + Bear-aesthetic + iPhone pass)
+  entries cover the memo + sheet workspaces, Bear sidebar for
+  `/data` and `/calendar`, the `#tag` input-rule fix, and the
+  chrome refinement pass)
 
 ## Conventions
 
@@ -162,9 +164,20 @@ and roadmap:
 - **Aesthetic**: Bear is the reference. Hairlines, no shadows, generous
   spacing, monochrome warm palette with `--c-accent` (Bear-red) used
   *sparsely* — selection rail, pinned glyph, active sidebar item,
-  hashtag pills.
+  hashtag pills. The rule is codified at the design-system level:
+  `Card.module.css` has no `box-shadow`, `Badge` has no `icon` prop,
+  and only the `Fab` / Radix-floating surfaces (Menu, Modal,
+  ConfirmDialog) carry shadows because they are *floating*, not
+  *lifted*.
+- **Buttons**: `variant="primary"` (solid navy) is reserved for actions
+  that actually mutate data (e.g. the inline-add "저장" on the
+  purchase grid). Navigation / enter-mode actions are `outline`,
+  secondaries are `ghost` / `soft`. Most screens have zero or one
+  navy button.
 - **Icons**: Lucide only in chrome. Emojis are fine in user-authored
-  content (note bodies, comments) but never as UI icons.
+  content (note bodies, comments) but never as UI icons. The
+  `Category.icon` field in the backend still stores an emoji string,
+  but the frontend deliberately ignores it everywhere.
 - **Components**: many small single-purpose files, each with its own
   `.module.css`. A "list item" is one file, not a section of a 600-line
   component. Micro-tuning lands in one place.
