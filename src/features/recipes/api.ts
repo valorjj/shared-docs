@@ -1,5 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '../../api/client'
+import {
+  MAX_IMAGE_BYTES,
+  MAX_IMAGE_LABEL,
+  absoluteFileUrl,
+} from '../../lib/files'
 import type {
   CreateRecipePayload,
   Recipe,
@@ -7,12 +12,9 @@ import type {
   UpdateRecipePayload,
 } from './types'
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8090'
-
-/** Same cap as the note attachment gate — keeps a friendly client-side
- *  rejection before the request leaves the browser. */
-export const MAX_RECIPE_IMAGE_BYTES = 5 * 1024 * 1024
-const MAX_LABEL = '5MB'
+// Re-export so RecipeEditor (and any future caller) keeps importing
+// from this feature's api.ts. The single source of truth is src/lib/files.ts.
+export { absoluteFileUrl }
 
 export type UploadedFile = {
   url: string
@@ -21,15 +23,9 @@ export type UploadedFile = {
   sizeBytes: number
 }
 
-/** Compose an absolute URL from a stored-file path like `/files/abc.jpg`. */
-export function absoluteFileUrl(pathOrUrl: string): string {
-  if (/^https?:\/\//i.test(pathOrUrl)) return pathOrUrl
-  return `${API_BASE}${pathOrUrl}`
-}
-
 async function uploadFileReq(file: File): Promise<UploadedFile> {
-  if (file.type.startsWith('image/') && file.size > MAX_RECIPE_IMAGE_BYTES) {
-    throw new Error(`이미지는 ${MAX_LABEL} 이하만 업로드할 수 있어요.`)
+  if (file.type.startsWith('image/') && file.size > MAX_IMAGE_BYTES) {
+    throw new Error(`이미지는 ${MAX_IMAGE_LABEL} 이하만 업로드할 수 있어요.`)
   }
   const form = new FormData()
   form.append('file', file)

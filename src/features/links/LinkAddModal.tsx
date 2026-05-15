@@ -19,6 +19,7 @@ import {
   type CreateUsefulLinkPayload,
   type UsefulLinkPreview,
 } from './api'
+import { hostnameOf } from './url'
 import styles from './LinkAddModal.module.css'
 
 type Props = {
@@ -224,10 +225,3 @@ function PreviewCard({
   )
 }
 
-function hostnameOf(url: string): string {
-  try {
-    return new URL(url).hostname.replace(/^www\./, '')
-  } catch {
-    return url
-  }
-}

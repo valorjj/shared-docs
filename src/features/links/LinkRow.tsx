@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import { Menu, MenuItem, MenuSeparator } from '../../components/ui/Menu'
 import type { UsefulLink } from './api'
+import { hostnameOf } from './url'
 import styles from './LinkRow.module.css'
 
 type Props = {
@@ -102,10 +103,3 @@ export default function LinkRow({
   )
 }
 
-function hostnameOf(url: string): string {
-  try {
-    return new URL(url).hostname.replace(/^www\./, '')
-  } catch {
-    return url
-  }
-}

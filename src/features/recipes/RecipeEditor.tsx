@@ -33,7 +33,6 @@ import {
   Field,
   Input,
   Label,
-  Select,
   Stack,
   Textarea,
 } from '../../components/ui'
@@ -392,7 +391,11 @@ function RecipeEditorInner({ recipe }: { recipe: Recipe }) {
         <div className={styles.metaRow}>
           <Menu
             trigger={
-              <button type="button" className={styles.metaPill}>
+              <button
+                type="button"
+                className={styles.metaPill}
+                aria-label={`카테고리: ${category}. 변경하려면 누르세요.`}
+              >
                 <ChefHat size={12} strokeWidth={2} aria-hidden="true" />
                 {category}
               </button>
@@ -575,20 +578,6 @@ function RecipeEditorInner({ recipe }: { recipe: Recipe }) {
             />
           </Field>
 
-          {/* Hidden access to the category Select for screen readers — we
-              swap the dropdown for a pill+menu above. */}
-          <Field className={styles.srOnly}>
-            <Label htmlFor="recipe-category-fallback">카테고리</Label>
-            <Select
-              id="recipe-category-fallback"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-            >
-              {categories?.map((c) => (
-                <option key={c.id} value={c.name}>{c.name}</option>
-              ))}
-            </Select>
-          </Field>
         </Stack>
       </div>
 

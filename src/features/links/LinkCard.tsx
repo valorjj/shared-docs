@@ -11,6 +11,7 @@ import {
 import { Menu, MenuItem, MenuSeparator } from '../../components/ui/Menu'
 import { formatRelativeTime } from '../notes/shared/formatRelativeTime'
 import type { UsefulLink } from './api'
+import { hostnameOf } from './url'
 import styles from './LinkCard.module.css'
 
 type Props = {
@@ -136,10 +137,3 @@ export default function LinkCard({
   )
 }
 
-function hostnameOf(url: string): string {
-  try {
-    return new URL(url).hostname.replace(/^www\./, '')
-  } catch {
-    return url
-  }
-}

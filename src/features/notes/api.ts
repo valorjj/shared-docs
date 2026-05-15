@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '../../api/client'
+import { MAX_IMAGE_BYTES, MAX_IMAGE_LABEL, absoluteFileUrl } from '../../lib/files'
 import type {
   Attachment,
   CreateNotePayload,
@@ -8,13 +9,10 @@ import type {
   UpdateNotePayload,
 } from './types'
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8090'
-
-/** Client-side per-image upload cap. Server has its own multipart limit
- *  in application.yml as a backstop; this exists for friendly UX so the
- *  request never leaves the browser when an image is too large. */
-export const MAX_IMAGE_BYTES = 5 * 1024 * 1024 // 5 MB
-const MAX_IMAGE_LABEL = '5MB'
+// Re-export the shared file helpers so existing callers (NoteEditor,
+// NoteEditorBody, NoteAttachmentRow, …) keep importing from this api.ts
+// without churn. New code should import directly from src/lib/files.ts.
+export { MAX_IMAGE_BYTES, absoluteFileUrl }
 
 export const noteKeys = {
   list: () => ['notes', 'list'] as const,
@@ -24,12 +22,6 @@ export const noteKeys = {
   tombstone: (id: number) => ['notes', 'tombstone', id] as const,
   referrers: (id: number) => ['notes', 'referrers', id] as const,
   trash: () => ['notes', 'trash'] as const,
-}
-
-/** Backend serves file URLs as relative paths (`/files/...`). Compose to absolute. */
-export function absoluteFileUrl(relativeOrAbsolute: string): string {
-  if (/^https?:\/\//i.test(relativeOrAbsolute)) return relativeOrAbsolute
-  return `${API_BASE}${relativeOrAbsolute}`
 }
 
 async function fetchNotes(): Promise<Note[]> {
