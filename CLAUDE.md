@@ -1,6 +1,6 @@
 shared-docs — 프로젝트 지침서
 > Claude Code와 함께 이어가기 위한 컨텍스트 및 작업 가이드
-> 최근 업데이트: 2026-05-15 (카테고리 관리 UI 추가 후)
+> 최근 업데이트: 2026-05-15 (메모 사이드바를 공유 AppSidebar로 통합 후)
 
 ***프로젝트 개요
 진과 채연 두 사람을 위한 비공개 웹앱.
@@ -64,9 +64,7 @@ src/
 │   │   ├── workspace/
 │   │   │   └── NoteWorkspace.tsx   ← 3-pane 셸 (사이드바 + 리스트 + 에디터)
 │   │   ├── sidebar/
-│   │   │   ├── Sidebar.tsx         ← 데스크톱 사이드바 (모든 메모/고정됨/태그)
-│   │   │   ├── SidebarSection.tsx
-│   │   │   └── SidebarSheet.tsx    ← 모바일 슬라이드업 시트 (필터 드로어)
+│   │   │   └── NoteSidebarBody.tsx ← 공유 AppSidebar + AppSidebarSheet에 들어가는 콘텐츠 (모든 메모/고정됨/휴지통/태그)
 │   │   ├── list/
 │   │   │   ├── NoteList.tsx
 │   │   │   ├── NoteListHeader.tsx  ← 메모 N · + 새 메모 · 모바일 필터 chip (createDisabled 옵션)
@@ -209,7 +207,7 @@ src/
 - 토큰: `--c-primary` (navy, 액션/링크), `--c-accent` (Bear-red #e8434a, **희소하게** — 선택 레일·핀·해시태그), `--c-text/muted/subtle/placeholder`, `--c-bg` (웜 크림), `--c-surface` (흰), `--c-surface-tint`, `--c-border/strong/dashed`, `--sp-1..9`, `--r-xs/sm/md/lg/pill`, `--shadow-sm/md/lg/fab`, `--t-fast/base`.
 - 폰트: 본문 `Noto Sans KR`, 큰 제목 `Noto Serif KR`. 둘 다 `var(--font-sans/serif)`로.
 - Radix 프리미티브는 **선택적으로** 채택 — `ConfirmDialog`(=Dialog)와 `Menu`(=DropdownMenu)가 현재 두 도입처. 헤드리스만 가져와 CSS Modules로 입힘. Tailwind는 도입하지 않음.
-- **사이드바**는 `components/common/AppSidebar`로 통일 — `<AppSidebar brand>` + `<AppSidebarSection label>` + `<AppSidebarItem Icon label count active onClick>`. 모바일 미러는 `<AppSidebarSheet>` (Radix Dialog 슬라이드업). 메모/시트는 자체 `Sidebar`를 유지하지만 시각적 규칙은 동일.
+- **사이드바**는 `components/common/AppSidebar`로 통일 — `<AppSidebar brand>` + `<AppSidebarSection label>` + `<AppSidebarItem Icon label count active onClick>`. 모바일 미러는 `<AppSidebarSheet>` (Radix Dialog 슬라이드업). 데이터 / 캘린더 / 메모 전부 이 프리미티브 사용. 메모는 `NoteSidebarBody`라는 콘텐츠 컴포넌트로 데스크톱(AppSidebar)과 모바일(AppSidebarSheet) 양쪽에 같은 콘텐츠 주입.
 
 ***메모 (`/`) 핵심
 - **3-pane on desktop / 1-pane on mobile** — URL이 진실의 소스.
@@ -354,11 +352,10 @@ com.shareddocs.backend/
 - 결과 클릭 시 `/?note=N` 또는 `/sheets?sheet=N`으로 라우팅.
 
 ***아직 안 한 것 (다음 작업 우선순위)
-🚧 1. **노트/시트 사이드바를 `AppSidebar`로 통합** — 현재는 자체 `Sidebar` 보유. 같은 시각 규칙이지만 코드 중복.
-🚧 2. **시트 셀 검색 서버 사이드** — 현재 ⌘K 팔레트는 시트는 제목만 검색.
-🚧 3. **설정 서버 동기화** — 현재 localStorage 기반. 디바이스 간 동기화하려면 `user_settings` 테이블 필요.
-🚧 4. **첨부와 본문 inline 참조 동기화** — 현재 첨부 삭제는 본문 `<img>`/링크를 건드리지 않음 (사용자가 수동 정리).
-🚧 5. **데이터 스냅샷 v2 — 시트 셀 / 메모 블록 스냅샷** — 현재 v1은 `/data` 4종만. 시트 셀 값 또는 메모 블록 transclusion은 후속.
+🚧 1. **시트 셀 검색 서버 사이드** — 현재 ⌘K 팔레트는 시트는 제목만 검색.
+🚧 2. **설정 서버 동기화** — 현재 localStorage 기반. 디바이스 간 동기화하려면 `user_settings` 테이블 필요.
+🚧 3. **첨부와 본문 inline 참조 동기화** — 현재 첨부 삭제는 본문 `<img>`/링크를 건드리지 않음 (사용자가 수동 정리).
+🚧 4. **데이터 스냅샷 v2 — 시트 셀 / 메모 블록 스냅샷** — 현재 v1은 `/data` 4종만. 시트 셀 값 또는 메모 블록 transclusion은 후속.
 
 ***메모 (Claude용)
 - `npm run dev` → localhost:5173. 백엔드를 로컬에서 띄울 땐 `POST /api/auth/dev-login`으로 Google 없이 JWT.

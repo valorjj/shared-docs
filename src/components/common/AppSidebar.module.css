@@ -3,21 +3,26 @@
   flex-direction: column;
   width: 220px;
   flex-shrink: 0;
-  background: var(--c-bg);
-  border-right: 1px solid var(--c-border);
-  padding: 12px 8px;
-  gap: 12px;
+  /* Sunken tint anchors the rail vs both the page bg (--c-bg, lighter)
+     and the editor / list pane (--c-surface, white). Bear does the
+     same with its note-list rail. */
+  background: var(--c-surface-sunken);
+  border-right: 1px solid var(--c-border-strong);
+  padding: 14px 8px 12px;
+  gap: 4px;
   font-family: var(--font-sans);
 }
 
 .brand {
-  padding: 6px 12px 4px;
+  padding: 0 12px 10px;
   font-family: var(--font-serif);
   font-size: 15px;
   font-weight: var(--fw-semi);
-  color: var(--c-text-muted);
+  color: var(--c-text);
   letter-spacing: var(--tracking-display);
   line-height: var(--lh-snug);
+  border-bottom: 1px solid var(--c-border);
+  margin-bottom: 4px;
 }
 
 .nav {
@@ -28,14 +33,17 @@
 
 .sectionLabel {
   font-size: var(--fs-xs);
-  color: var(--c-text-placeholder);
+  color: var(--c-text-subtle);
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  padding: 4px 12px 2px;
-  margin-top: 4px;
+  font-weight: var(--fw-medium);
+  padding: 10px 12px 4px;
+  margin-top: 6px;
+  border-top: 1px solid var(--c-border-dashed);
 }
 
 .item {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -43,7 +51,7 @@
   text-align: left;
   border: 0;
   background: transparent;
-  padding: 6px 10px;
+  padding: 7px 10px;
   border-radius: var(--r-sm);
   color: var(--c-text-muted);
   font-family: inherit;
@@ -54,6 +62,7 @@
 }
 
 .item:hover:not(:disabled) {
+  /* Background was sunken, so hover lifts to surface for visible feedback. */
   background: var(--c-surface-tint);
   color: var(--c-text);
 }
@@ -63,13 +72,27 @@
   opacity: 0.5;
 }
 
+/* Bear-red accent stripe on the left + tinted bg for the active row.
+   The 3px ::before stripe sits inside the rail's left padding so the
+   row corner stays clean. */
 .itemActive {
   background: var(--c-accent-soft);
   color: var(--c-accent);
 }
 
+.itemActive::before {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: 4px;
+  bottom: 4px;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--c-accent);
+}
+
 .itemActive:hover:not(:disabled) {
-  background: var(--c-accent-soft);
+  background: var(--c-accent-soft-strong);
   color: var(--c-accent);
 }
 

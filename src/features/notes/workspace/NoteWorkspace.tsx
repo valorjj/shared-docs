@@ -7,12 +7,13 @@ import {
   useRestoreNote,
   useTrashNotes,
 } from '../api'
+import { AppSidebar } from '../../../components/common/AppSidebar'
+import { AppSidebarSheet } from '../../../components/common/AppSidebarSheet'
 import NoteEditor from '../editor/NoteEditor'
 import NoteEditorEmpty from '../editor/NoteEditorEmpty'
 import NoteList from '../list/NoteList'
 import TrashList from '../list/TrashList'
-import Sidebar, { type SidebarFilter } from '../sidebar/Sidebar'
-import SidebarSheet from '../sidebar/SidebarSheet'
+import NoteSidebarBody, { type SidebarFilter } from '../sidebar/NoteSidebarBody'
 import { buildTagCounts, noteHasTag } from '../shared/extractTags'
 import { useIsMobile } from '../../../lib/useMediaQuery'
 import styles from './NoteWorkspace.module.css'
@@ -95,14 +96,24 @@ export default function NoteWorkspace() {
     trash: trashNotes.length,
   }
 
+  // Mobile sheet closes the picker after a filter is picked — the
+  // workspace's filter state is what drives the list, so we wrap
+  // setFilter to also dismiss the sheet.
+  const setFilterFromSheet = (f: SidebarFilter) => {
+    setFilter(f)
+    setFiltersSheetOpen(false)
+  }
+
   return (
     <div className={styles.root}>
-      <Sidebar
-        filter={filter}
-        onFilterChange={setFilter}
-        counts={counts}
-        tags={tags}
-      />
+      <AppSidebar brand="메모" label="메모 보관함">
+        <NoteSidebarBody
+          filter={filter}
+          onFilterChange={setFilter}
+          counts={counts}
+          tags={tags}
+        />
+      </AppSidebar>
       {showList && (
         <div className={styles.list}>
           {isTrash ? (
@@ -138,14 +149,18 @@ export default function NoteWorkspace() {
         </div>
       )}
 
-      <SidebarSheet
+      <AppSidebarSheet
         open={filtersSheetOpen}
         onOpenChange={setFiltersSheetOpen}
-        filter={filter}
-        onFilterChange={setFilter}
-        counts={counts}
-        tags={tags}
-      />
+        title="필터"
+      >
+        <NoteSidebarBody
+          filter={filter}
+          onFilterChange={setFilterFromSheet}
+          counts={counts}
+          tags={tags}
+        />
+      </AppSidebarSheet>
     </div>
   )
 }
