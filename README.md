@@ -40,8 +40,8 @@ to two Google accounts via an OAuth + JWT pipeline; everything else
   and a **열 관리** slide-up sheet for column rename / delete / add.
   Debounced autosave of the whole grid as one JSON payload.
 - **데이터** (`/data`) — Bear-style sidebar workspace for the typed
-  mini-apps. Left rail lists each tracker (구매 내역 / 할 일 / 기념일,
-  with 유용한 링크 / 레시피 as "준비 중"); main pane shows the active
+  mini-apps. Left rail lists each tracker (구매 내역 / 할 일 / 기념일 /
+  유용한 링크, with 레시피 as "준비 중"); main pane shows the active
   subroute via React Router nested routes. On `/data` with no
   subroute, a clean picker list mirrors the same options.
   - 구매 내역 — multi-currency, inline-edit grid on desktop, per-row
@@ -50,6 +50,12 @@ to two Google accounts via an OAuth + JWT pipeline; everything else
     recurring expenses with monthly auto-generation
   - 할 일 — tabs filter, anyone toggles done
   - 기념일 — annual recurrence, N주년 badges, upcoming-30-days section
+  - 유용한 링크 — paste a URL, backend auto-fetches OpenGraph (title /
+    description / hero image / favicon / site name); polished card
+    grid + compact list view with localStorage-persisted toggle;
+    per-link 메모 field, pin, 6 seeded categories (개발 / 디자인 / 글 /
+    영상 / 도구 / 기타) with chip filter and search across title /
+    description / note / URL
 - **캘린더** (`/calendar`) — Bear-style sidebar workspace too. Left
   rail = filter list of the four event sources (기념일 · 할 일 · 구매 ·
   정산) with live counts and toggle visibility; main pane shows the

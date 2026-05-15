@@ -13,6 +13,7 @@ const SheetsPage       = lazy(() => import('./pages/SheetsPage'))
 const PurchaseList     = lazy(() => import('./features/purchases/PurchaseList'))
 const TodoList         = lazy(() => import('./features/todos/TodoList'))
 const AnniversaryList  = lazy(() => import('./features/anniversaries/AnniversaryList'))
+const LinkList         = lazy(() => import('./features/links/LinkList'))
 const CalendarPage     = lazy(() => import('./pages/CalendarPage'))
 const Admin            = lazy(() => import('./pages/Admin'))
 
@@ -49,6 +50,7 @@ function App() {
               <Route path="purchases" element={<PurchaseList />} />
               <Route path="todos" element={<TodoList />} />
               <Route path="anniversaries" element={<AnniversaryList />} />
+              <Route path="links" element={<LinkList />} />
             </Route>
             <Route path="/calendar" element={<CalendarPage />} />
 

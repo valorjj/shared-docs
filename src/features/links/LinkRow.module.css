@@ -1,0 +1,141 @@
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--c-border-dashed);
+  background: transparent;
+  transition: background var(--t-fast);
+}
+
+.row:last-child {
+  border-bottom: 0;
+}
+
+.row:hover {
+  background: var(--c-surface-tint);
+}
+
+.main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  text-decoration: none;
+  color: inherit;
+}
+
+.faviconWrap {
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: var(--c-surface-tint);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-xs);
+}
+
+.favicon {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+}
+
+.faviconFallback {
+  width: 12px;
+  height: 12px;
+  background: var(--c-border-strong);
+  border-radius: 2px;
+}
+
+.content {
+  min-width: 0;
+  flex: 1;
+}
+
+.titleLine {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.title {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  color: var(--c-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.main:hover .title {
+  color: var(--c-primary);
+}
+
+.pinned {
+  display: inline-flex;
+  align-items: center;
+  color: var(--c-accent);
+  flex-shrink: 0;
+}
+
+.externalIcon {
+  color: var(--c-text-placeholder);
+  flex-shrink: 0;
+}
+
+.metaLine {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-xs);
+  color: var(--c-text-placeholder);
+  margin-top: 2px;
+  min-width: 0;
+}
+
+.site {
+  flex-shrink: 0;
+}
+
+.category {
+  flex-shrink: 0;
+  color: var(--c-text-muted);
+}
+
+.sep {
+  flex-shrink: 0;
+}
+
+.desc {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  flex: 1;
+}
+
+.kebab {
+  background: transparent;
+  border: 0;
+  color: var(--c-text-muted);
+  cursor: pointer;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--r-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--t-fast), color var(--t-fast);
+  flex-shrink: 0;
+}
+
+.kebab:hover {
+  background: var(--c-surface);
+  color: var(--c-text);
+}

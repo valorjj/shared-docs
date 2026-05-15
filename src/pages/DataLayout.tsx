@@ -49,7 +49,7 @@ const NAV_ITEMS: DataNavItem[] = [
     label: '유용한 링크',
     description: '쇼핑 · 정보 · 자주 가는 사이트.',
     Icon: LinkIcon,
-    status: 'todo',
+    status: 'done',
   },
   {
     path: '/data/recipes',
