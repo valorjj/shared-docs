@@ -77,7 +77,10 @@ export default function NoteEditorBody({
 
   const editor = useEditor({
     extensions: [
-      StarterKit,
+      // StarterKit v3 bundles its own Link extension which collides with the
+      // explicit `Link.configure` below — disable the bundled one so the
+      // configured behavior (no openOnClick, autolink, linkOnPaste) wins.
+      StarterKit.configure({ link: false }),
       Image.configure({ inline: false, allowBase64: false }),
       Placeholder.configure({ placeholder: "내용을 입력하세요. '/' 를 누르면 메뉴가 열려요." }),
       Link.configure({ openOnClick: false, autolink: true, linkOnPaste: true }),

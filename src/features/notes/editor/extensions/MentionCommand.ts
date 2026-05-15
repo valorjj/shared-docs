@@ -1,5 +1,11 @@
 import { Extension } from '@tiptap/core'
 import Suggestion from '@tiptap/suggestion'
+import { PluginKey } from '@tiptap/pm/state'
+
+/** Distinct plugin key — see the equivalent comment in SlashCommand.ts.
+ *  Two suggestion plugins sharing the default key crash the editor at
+ *  mount with "Adding different instances of a keyed plugin (suggestion$)". */
+const MENTION_PLUGIN_KEY = new PluginKey('mentionCommand$')
 
 export type MentionItem = {
   id: number
@@ -56,6 +62,7 @@ export const MentionCommand = Extension.create<MentionOptions>({
     return [
       Suggestion<MentionItem>({
         editor: this.editor,
+        pluginKey: MENTION_PLUGIN_KEY,
         char: '@',
         startOfLine: false,
         allowSpaces: false,

@@ -1,7 +1,14 @@
 import { Extension } from '@tiptap/core'
 import type { Editor, Range } from '@tiptap/core'
 import Suggestion from '@tiptap/suggestion'
+import { PluginKey } from '@tiptap/pm/state'
 import type { LucideIcon } from 'lucide-react'
+
+/** Distinct plugin key — `@tiptap/suggestion` uses a single default key, so
+ *  two extensions both calling `Suggestion()` without their own would
+ *  collide at editor mount with "Adding different instances of a keyed
+ *  plugin (suggestion$)". */
+const SLASH_PLUGIN_KEY = new PluginKey('slashCommand$')
 
 export type SlashItem = {
   id: string
@@ -48,6 +55,7 @@ export const SlashCommand = Extension.create<SlashOptions>({
     return [
       Suggestion<SlashItem>({
         editor: this.editor,
+        pluginKey: SLASH_PLUGIN_KEY,
         char: '/',
         startOfLine: false,
         allowSpaces: false,
