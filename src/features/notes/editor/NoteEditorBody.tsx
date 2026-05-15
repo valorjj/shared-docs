@@ -26,6 +26,9 @@ import { buildSlashItems } from './slashItems'
 import NoteEditorBubbleMenu from './NoteEditorBubbleMenu'
 import SlashMenuPopup from './SlashMenuPopup'
 import MentionMenuPopup from './MentionMenuPopup'
+import LinkHoverPreview from './LinkHoverPreview'
+import EditorContextMenu from './EditorContextMenu'
+import LinkDialog from './LinkDialog'
 import styles from './NoteEditorBody.module.css'
 
 type Props = {
@@ -83,7 +86,15 @@ export default function NoteEditorBody({
       StarterKit.configure({ link: false }),
       Image.configure({ inline: false, allowBase64: false }),
       Placeholder.configure({ placeholder: "내용을 입력하세요. '/' 를 누르면 메뉴가 열려요." }),
-      Link.configure({ openOnClick: false, autolink: true, linkOnPaste: true }),
+      Link.configure({
+        openOnClick: true,
+        autolink: true,
+        linkOnPaste: true,
+        HTMLAttributes: {
+          target: '_blank',
+          rel: 'noopener noreferrer',
+        },
+      }),
       TaskList,
       TaskItem.configure({ nested: true }),
       Table.configure({ resizable: false }),
@@ -192,10 +203,29 @@ export default function NoteEditorBody({
     }
   }, [noteId, initialBody, editor])
 
+  // Container ref for the LinkHoverPreview + EditorContextMenu
+  // delegate listeners — they hook into the editor's DOM via this node.
+  const containerRef = useRef<HTMLDivElement | null>(null)
+
+  // Link dialog state — the context menu's 링크 편집 / 링크 추가 items
+  // open the same modal the toolbar uses.
+  const [linkDialogOpen, setLinkDialogOpen] = useState(false)
+
   return (
-    <div className={styles.wrapper}>
+    <div className={styles.wrapper} ref={containerRef}>
       <EditorContent editor={editor} />
       <NoteEditorBubbleMenu editor={editor} />
+      <LinkHoverPreview containerRef={containerRef} />
+      <EditorContextMenu
+        containerRef={containerRef}
+        editor={editor}
+        onRequestLinkDialog={() => setLinkDialogOpen(true)}
+      />
+      <LinkDialog
+        open={linkDialogOpen}
+        editor={editor}
+        onClose={() => setLinkDialogOpen(false)}
+      />
       {slashState && (
         <SlashMenuPopup state={slashState} keyHandlerRef={slashKeyHandlerRef} />
       )}
