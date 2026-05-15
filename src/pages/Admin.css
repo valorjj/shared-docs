@@ -38,6 +38,29 @@
   font-size: 0.92rem;
 }
 
+.admin__nav {
+  margin-top: 14px;
+}
+
+.admin__navLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.92rem;
+  color: var(--c-primary);
+  text-decoration: none;
+  background: var(--c-primary-soft);
+  border: 1px solid var(--c-primary-soft-strong);
+  border-radius: var(--r-pill);
+  padding: 5px 12px;
+  font-weight: 500;
+  transition: background var(--t-fast);
+}
+
+.admin__navLink:hover {
+  background: var(--c-primary-soft-strong);
+}
+
 .admin__section {
   background: #fff;
   border: 1px solid #e5e0d6;

@@ -1,0 +1,10 @@
+.intro {
+  font-size: var(--fs-sm);
+  color: var(--c-text-muted);
+  line-height: 1.55;
+  margin: var(--sp-2) 0 var(--sp-3);
+}
+
+.tabs {
+  margin-bottom: var(--sp-4);
+}

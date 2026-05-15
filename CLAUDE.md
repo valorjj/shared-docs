@@ -1,6 +1,6 @@
 shared-docs — 프로젝트 지침서
 > Claude Code와 함께 이어가기 위한 컨텍스트 및 작업 가이드
-> 최근 업데이트: 2026-05-15 (레시피 이미지 업로드 추가 후)
+> 최근 업데이트: 2026-05-15 (카테고리 관리 UI 추가 후)
 
 ***프로젝트 개요
 진과 채연 두 사람을 위한 비공개 웹앱.
@@ -193,7 +193,8 @@ src/
 | `/data/recipes` | RecipeList (nested in DataLayout) | authed | **lazy** |
 | `/data/recipes/:id` | RecipeEditor (nested in DataLayout) | authed | **lazy** |
 | `/calendar` | CalendarPage (AppSidebar 필터) | authed | **lazy** |
-| `/admin` | Admin | ADMIN only | **lazy** |
+| `/admin` | Admin (이메일 화이트리스트 + 사용자 역할) | ADMIN only | **lazy** |
+| `/admin/categories` | AdminCategories (5개 피처 카테고리 관리, ?tab=) | ADMIN only | **lazy** |
 | `*` | NotFound | — | eager |
 
 쿼리 파라미터:
@@ -353,12 +354,11 @@ com.shareddocs.backend/
 - 결과 클릭 시 `/?note=N` 또는 `/sheets?sheet=N`으로 라우팅.
 
 ***아직 안 한 것 (다음 작업 우선순위)
-🚧 1. **카테고리 관리 UI** — 각 피처의 "관리" 탭. 백엔드 API는 admin-only로 존재; 현재 curl만 가능.
-🚧 2. **노트/시트 사이드바를 `AppSidebar`로 통합** — 현재는 자체 `Sidebar` 보유. 같은 시각 규칙이지만 코드 중복.
-🚧 3. **시트 셀 검색 서버 사이드** — 현재 ⌘K 팔레트는 시트는 제목만 검색.
-🚧 4. **설정 서버 동기화** — 현재 localStorage 기반. 디바이스 간 동기화하려면 `user_settings` 테이블 필요.
-🚧 5. **첨부와 본문 inline 참조 동기화** — 현재 첨부 삭제는 본문 `<img>`/링크를 건드리지 않음 (사용자가 수동 정리).
-🚧 6. **데이터 스냅샷 v2 — 시트 셀 / 메모 블록 스냅샷** — 현재 v1은 `/data` 4종만. 시트 셀 값 또는 메모 블록 transclusion은 후속.
+🚧 1. **노트/시트 사이드바를 `AppSidebar`로 통합** — 현재는 자체 `Sidebar` 보유. 같은 시각 규칙이지만 코드 중복.
+🚧 2. **시트 셀 검색 서버 사이드** — 현재 ⌘K 팔레트는 시트는 제목만 검색.
+🚧 3. **설정 서버 동기화** — 현재 localStorage 기반. 디바이스 간 동기화하려면 `user_settings` 테이블 필요.
+🚧 4. **첨부와 본문 inline 참조 동기화** — 현재 첨부 삭제는 본문 `<img>`/링크를 건드리지 않음 (사용자가 수동 정리).
+🚧 5. **데이터 스냅샷 v2 — 시트 셀 / 메모 블록 스냅샷** — 현재 v1은 `/data` 4종만. 시트 셀 값 또는 메모 블록 transclusion은 후속.
 
 ***메모 (Claude용)
 - `npm run dev` → localhost:5173. 백엔드를 로컬에서 띄울 땐 `POST /api/auth/dev-login`으로 Google 없이 JWT.

@@ -18,6 +18,7 @@ const RecipeList       = lazy(() => import('./features/recipes/RecipeList'))
 const RecipeEditor     = lazy(() => import('./features/recipes/RecipeEditor'))
 const CalendarPage     = lazy(() => import('./pages/CalendarPage'))
 const Admin            = lazy(() => import('./pages/Admin'))
+const AdminCategories  = lazy(() => import('./pages/AdminCategories'))
 
 function RouteFallback() {
   return (
@@ -60,6 +61,7 @@ function App() {
 
             <Route element={<RequireRole role="ADMIN" />}>
               <Route path="/admin" element={<Admin />} />
+              <Route path="/admin/categories" element={<AdminCategories />} />
             </Route>
           </Route>
         </Route>

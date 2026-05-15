@@ -30,6 +30,11 @@ export default function Admin() {
         <p className="admin__sub">
           접속 권한과 사용자 역할을 관리합니다. 본인 계정의 권한은 변경할 수 없습니다.
         </p>
+        <nav className="admin__nav">
+          <Link to="/admin/categories" className="admin__navLink">
+            카테고리 관리 →
+          </Link>
+        </nav>
       </header>
 
       {isLoading && <p className="admin__status">불러오는 중…</p>}
