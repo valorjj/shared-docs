@@ -121,7 +121,7 @@ export default function TopNav() {
               </button>
             }
           >
-            <div className="top-nav__user-meta" aria-hidden="true">
+            <div className="top-nav__user-meta">
               <div className="top-nav__user-meta-name">{user.name}</div>
               <div className="top-nav__user-meta-email">{user.email}</div>
             </div>

@@ -185,13 +185,18 @@ export function useDeleteAttachment() {
 
 /** Lazily hydrate a soft-deleted note so a NoteLink chip can render its
  *  last-known title as a tombstone. The active list (`useNotes`) filters
- *  deleted rows out, so the chip falls back here when the id isn't present. */
+ *  deleted rows out, so the chip falls back here when the id isn't present.
+ *
+ *  retry: false because the most likely failure is a 404 from a hard-
+ *  deleted note (DELETE /forever) — retrying gains nothing and would burn
+ *  4 round-trips for every chip pointing at a missing id. */
 export function useTombstoneNote(id: number | null) {
   return useQuery({
     queryKey: id == null ? [] : noteKeys.tombstone(id),
     queryFn: () => fetchNoteIncludingDeletedReq(id as number),
     enabled: id !== null,
     staleTime: 5 * 60 * 1000,
+    retry: false,
   })
 }
 

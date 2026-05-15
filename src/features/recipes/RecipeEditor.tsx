@@ -186,20 +186,43 @@ function RecipeEditorInner({ recipe }: { recipe: Recipe }) {
   // Any local-state edit triggers a debounced save. Effect runs after each
   // render whose deps changed — schedule() is itself stable per-frame and
   // only resets the timer; no setState happens inside this effect's body.
+  //
+  // The `isInitialMount` ref skips the very first effect run so just viewing
+  // a recipe doesn't bump its `updatedAt` (which would also flip "저장됨" on
+  // for no reason). React StrictMode double-invokes effects in dev — the
+  // ref keeps the same behavior there because the cleanup between the
+  // two passes leaves `isInitialMount.current === false`.
+  const isInitialMount = useRef(true)
   useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false
+      return
+    }
     schedule()
     // schedule is intentionally NOT in deps — it captures the latest fields
     // via closures held in flush, and we want one timer per "edit tick".
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [title, category, servings, cookTime, imageUrl, sourceUrl, note, ingredients, steps])
 
-  // Flush on unmount / id change.
+  // Mirror the latest flush + dirty into refs so the unmount cleanup can
+  // read them without taking flush as a dep (which would force the
+  // cleanup to fire on every keystroke and defeat the debounce).
+  const flushRef = useRef(flush)
+  const dirtyRef = useRef(dirty)
+  useEffect(() => { flushRef.current = flush })
+  useEffect(() => { dirtyRef.current = dirty })
+
+  // Flush on unmount / id change. Without this the user can edit and then
+  // navigate away within the 800ms debounce window and lose the change.
+  // The keyed-inner pattern (`key={recipe.id}` on RecipeEditorInner) means
+  // unmount also covers "switched to a different recipe".
   useEffect(() => {
     return () => {
       if (pendingTimer.current) {
         window.clearTimeout(pendingTimer.current)
         pendingTimer.current = null
       }
+      if (dirtyRef.current) flushRef.current()
     }
   }, [])
 
