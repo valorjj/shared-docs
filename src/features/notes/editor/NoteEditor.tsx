@@ -115,6 +115,8 @@ export default function NoteEditor({ note, onDeleted, onBack }: Props) {
         }
       } catch (err) {
         console.error('upload failed', err)
+        const msg = err instanceof Error ? err.message : '파일 업로드에 실패했어요.'
+        window.alert(msg)
       }
     })()
   }

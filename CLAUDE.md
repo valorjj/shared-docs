@@ -178,6 +178,7 @@ src/
 - **bubble menu**: 텍스트 선택 시 뜨는 다크 풍선 (B/I/S/code/link). **터치 디바이스에선 숨김** — iOS 네이티브 선택 메뉴와 충돌하기 때문 (`useIsTouch`).
 - **케밥 메뉴**: 메타 strip의 `…` → Radix DropdownMenu → 고정/해제 + 삭제 (ConfirmDialog).
 - **첨부 갤러리**: 본문 아래 `NoteAttachments` 섹션이 `useAttachments(noteId)`로 모든 첨부를 나열. 행 = 썸네일(이미지) / 파일 아이콘 + 이름 + `formatBytes()` 사이즈 + 다운로드 링크 + 케밥(삭제 → ConfirmDialog). 이미지 클릭 시 `NoteAttachmentLightbox` (Radix Dialog) 풀스크린 뷰어. 첨부가 0개면 섹션 자체가 숨겨짐. 본문에 삽입된 `<img>`/링크는 첨부 삭제와 독립 — 사용자가 본문에서도 함께 지워야 함 (ConfirmDialog 설명에 안내).
+- **이미지 첨부 크기 제한**: 클라이언트 게이트 `MAX_IMAGE_BYTES = 5MB` (`notes/api.ts`에서 export). `uploadAttachmentReq`가 `image/*` 타입의 5MB 초과 파일을 즉시 Korean Error로 reject — 네트워크 요청이 가지 않음. 서버 멀티파트 한도(20MB)는 백스톱. 에러 메시지는 `NoteEditor` / `NoteEditorBody`에서 `window.alert`로 노출. 비이미지 첨부에는 제한 없음 (서버 한도까지).
 
 ***시트 (`/sheets`) 핵심
 - **2-pane** (리스트 + 그리드). 모바일은 같은 단일-팬 드릴인 패턴.

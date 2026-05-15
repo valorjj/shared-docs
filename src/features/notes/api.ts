@@ -9,6 +9,12 @@ import type {
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8090'
 
+/** Client-side per-image upload cap. Server has its own multipart limit
+ *  in application.yml as a backstop; this exists for friendly UX so the
+ *  request never leaves the browser when an image is too large. */
+export const MAX_IMAGE_BYTES = 5 * 1024 * 1024 // 5 MB
+const MAX_IMAGE_LABEL = '5MB'
+
 export const noteKeys = {
   list: () => ['notes', 'list'] as const,
   attachments: (noteId: number) => ['notes', 'attachments', noteId] as const,
@@ -45,6 +51,9 @@ async function listAttachmentsReq(noteId: number): Promise<Attachment[]> {
 }
 
 async function uploadAttachmentReq(noteId: number, file: File): Promise<Attachment> {
+  if (file.type.startsWith('image/') && file.size > MAX_IMAGE_BYTES) {
+    throw new Error(`이미지는 ${MAX_IMAGE_LABEL} 이하만 첨부할 수 있어요.`)
+  }
   const form = new FormData()
   form.append('file', file)
   const { data } = await apiClient.post<Attachment>(

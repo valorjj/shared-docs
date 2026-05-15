@@ -77,7 +77,7 @@ export default function NoteEditorToolbar({ editor, onPickFile }: Props) {
         editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run(), TableIcon)}
       <span className={styles.sep} aria-hidden="true" />
       {btn(editor.isActive('link'), '링크', promptLink, LinkIcon)}
-      {btn(false, '파일 첨부', onPickFile, Paperclip)}
+      {btn(false, '파일 첨부 (이미지 5MB까지)', onPickFile, Paperclip)}
     </div>
   )
 }
