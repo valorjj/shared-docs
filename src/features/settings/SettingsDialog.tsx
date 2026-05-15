@@ -1,5 +1,7 @@
 import * as Dialog from '@radix-ui/react-dialog'
-import { X } from 'lucide-react'
+import { LogOut, X } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../../auth/useAuth'
 import { useSettings } from './settingsContext'
 import {
   FONTS,
@@ -15,6 +17,13 @@ import styles from './SettingsDialog.module.css'
 
 export default function SettingsDialog() {
   const s = useSettings()
+  const { user, logout } = useAuth()
+  const navigate = useNavigate()
+  const handleLogout = () => {
+    s.setDialogOpen(false)
+    logout()
+    navigate('/login', { replace: true })
+  }
   return (
     <Dialog.Root open={s.dialogOpen} onOpenChange={s.setDialogOpen}>
       <Dialog.Portal>
@@ -63,6 +72,35 @@ export default function SettingsDialog() {
               />
             ))}
           </Section>
+
+          {user && (
+            <section className={styles.section}>
+              <div className={styles.sectionLabel}>계정</div>
+              <div className={styles.account}>
+                <div className={styles.accountIdentity}>
+                  {user.pictureUrl ? (
+                    <img className={styles.accountAvatar} src={user.pictureUrl} alt="" />
+                  ) : (
+                    <span className={`${styles.accountAvatar} ${styles.accountAvatarInitial}`} aria-hidden="true">
+                      {user.name?.[0] ?? '·'}
+                    </span>
+                  )}
+                  <div className={styles.accountText}>
+                    <div className={styles.accountName}>{user.name}</div>
+                    <div className={styles.accountEmail}>{user.email}</div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  className={styles.logout}
+                  onClick={handleLogout}
+                >
+                  <LogOut size={14} strokeWidth={1.75} aria-hidden="true" />
+                  로그아웃
+                </button>
+              </div>
+            </section>
+          )}
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>

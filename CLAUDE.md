@@ -1,6 +1,6 @@
 shared-docs — 프로젝트 지침서
 > Claude Code와 함께 이어가기 위한 컨텍스트 및 작업 가이드
-> 최근 업데이트: 2026-05-15 (메모 백링크 추가 후)
+> 최근 업데이트: 2026-05-15 (휴지통 UI + 로그아웃 진입점 추가 후)
 
 ***프로젝트 개요
 진과 채연 두 사람을 위한 비공개 웹앱.
@@ -69,9 +69,11 @@ src/
 │   │   │   └── SidebarSheet.tsx    ← 모바일 슬라이드업 시트 (필터 드로어)
 │   │   ├── list/
 │   │   │   ├── NoteList.tsx
-│   │   │   ├── NoteListHeader.tsx  ← 메모 N · + 새 메모 · 모바일 필터 chip
+│   │   │   ├── NoteListHeader.tsx  ← 메모 N · + 새 메모 · 모바일 필터 chip (createDisabled 옵션)
 │   │   │   ├── NoteListItem.tsx
-│   │   │   └── NoteListEmpty.tsx
+│   │   │   ├── NoteListEmpty.tsx
+│   │   │   ├── TrashList.tsx       ← 휴지통 필터 활성 시 NoteList 대신 렌더
+│   │   │   └── TrashListItem.tsx   ← 행: 제목 + 본문 발췌 + 삭제됨 N일 전 + 복원/영구 삭제 pill
 │   │   ├── editor/
 │   │   │   ├── NoteEditor.tsx      ← 오케스트레이터 (autosave + pin/delete + uploads)
 │   │   │   ├── NoteEditorTitle.tsx ← serif 큰 제목 입력 (note id로 re-key)
@@ -200,6 +202,7 @@ src/
 - **이미지 첨부 크기 제한**: 클라이언트 게이트 `MAX_IMAGE_BYTES = 5MB` (`notes/api.ts`에서 export). `uploadAttachmentReq`가 `image/*` 타입의 5MB 초과 파일을 즉시 Korean Error로 reject — 네트워크 요청이 가지 않음. 서버 멀티파트 한도(20MB)는 백스톱. 에러 메시지는 `NoteEditor` / `NoteEditorBody`에서 `window.alert`로 노출. 비이미지 첨부에는 제한 없음 (서버 한도까지).
 - **데이터 스냅샷**: 슬래시 메뉴 `데이터 스냅샷` → `DataSnapshotPicker`(2-step Radix Dialog) → 본문에 `dataSnapshot` 블록 노드 삽입. 종류 4종: `purchase-total` / `settlement` / `todo-subset` / `anniversary`. 카드는 **frozen** 값을 그대로 렌더 — 자동 refetch 없음. 새로고침 버튼이 `queryClient.fetchQuery`로 재캡처 후 `updateAttributes({ frozen })`. JSON 필드는 `data-*` 속성에 stringify되어 라운드트립. 디자인 근거 → `REFERENCES_BLUEPRINT.md` Part 1.
 - **메모 백링크**: 본문에 `@`를 누르면 `MentionMenuPopup`이 열려 메모 후보를 보여주고 (제목 + `~분 전` 힌트, ↑/↓/Enter), 또는 `[[제목]]`을 타이핑해 닫는 `]]` 순간 InputRule이 같은 제목의 메모로 해석해서 칩으로 치환. 둘 다 인라인 atom `noteLink` 노드를 본문에 삽입 — 페이로드는 `noteId`만 보관. 칩의 표시 제목은 `useNotes()` 캐시에서 **라이브**로 읽음(이름 바꾸면 모든 참조 칩 자동 갱신). 활성 목록에 없는 id는 `useTombstoneNote(id)`(`?includeDeleted=true`)로 lazy hydrate → 회색 줄긋기 "삭제됨" 톰스톤 칩. 칩 클릭 시 `/?note=N` 네비. 본문 위에는 `NoteReferrers` 패널이 `useNoteReferrers(noteId)`로 "참조됨 N" 스트립을 렌더(참조 0개면 숨김). 백엔드는 `notes.deleted_at` + `note_links(from, to)` 조인 테이블 + `NoteLinkIndexer`(JSoup으로 `span[data-type="note-link"]` 추출)로 본문 저장 시점에 reverse index 갱신. `DELETE /api/notes/:id`는 soft delete로 바뀌었고 `/forever`가 hard delete. 디자인 근거 → `REFERENCES_BLUEPRINT.md` Part 2.
+- **휴지통**: 사이드바에 `휴지통 N` 항목(고정됨 다음). 활성화 시 NoteList 대신 `TrashList`가 행 단위로 삭제된 메모를 렌더 — 각 행에 **복원** / **영구 삭제** pill. 클릭으로 에디터를 열 수 없음(액션 전용). 복원은 `POST /api/notes/:id/restore` → `deleted_at` 클리어 + `NoteLinkIndexer.reindex()` 재실행(아웃바운드 링크 복귀). 영구 삭제는 `ConfirmDialog` 후 `DELETE /api/notes/:id/forever` → 첨부 파일 포함 완전 제거. 휴지통 카운트는 `useTrashNotes(filter.kind === 'trash')`로 지연 로드 — 한 번 열어야 카운트가 채워짐.
 
 ***시트 (`/sheets`) 핵심
 - **2-pane** (리스트 + 그리드). 모바일은 같은 단일-팬 드릴인 패턴.
@@ -318,6 +321,7 @@ com.shareddocs.backend/
 - 줄 간격 3단: `compact`(1.45) / `normal`(1.65, 기본) / `relaxed`(1.85). `--lh-body` 변수 → `NoteEditorBody.module.css`의 `.editor`에서 사용.
 - 트리거 두 곳: 데스크톱 `TopNav`의 `Settings2` 아이콘 버튼, 모바일 `BottomNav`의 6번째 `설정` 버튼 (검색과 동일하게 NavLink 아닌 `<button>`).
 - 설정 변경은 클릭 즉시 반영 (저장 버튼 없음). Bear 스타일.
+- **계정 / 로그아웃**: 다이얼로그 하단에 계정 섹션 — 아바타 + 이름 + 이메일 + `로그아웃` outline pill. 데스크톱은 `TopNav` 우측 유저 영역이 Radix `Menu` 트리거가 되어 동일한 로그아웃 항목을 노출. 둘 다 `useAuth().logout()` 호출 후 `/login`으로 replace 네비.
 
 ***⌘K 검색 팔레트 (`src/features/search/`)
 - `SearchPaletteProvider`가 `MobileShell` 안쪽에 마운트되어 ⌘K / Ctrl+K 글로벌 키 리스너 등록.
@@ -328,16 +332,14 @@ com.shareddocs.backend/
 - 결과 클릭 시 `/?note=N` 또는 `/sheets?sheet=N`으로 라우팅.
 
 ***아직 안 한 것 (다음 작업 우선순위)
-🚧 1. **휴지통 / 복원 UI** — 메모 백링크 도입으로 `DELETE /api/notes/:id`가 soft delete로 바뀜. `/forever` hard delete는 UI 경로가 없음. `/data/trash` 또는 `/관리/휴지통` 페이지 하나면 무료로 undo가 생긴다.
-🚧 2. **전역 헤더 + 아바타 드롭다운 + 로그아웃** — 현재 로그아웃 UI 경로 없음 (localStorage 비우는 게 유일).
-🚧 3. **유용한 링크 컬렉션** (`/data/links`) — OpenGraph 프리뷰.
-🚧 4. **레시피 컬렉션** (`/data/recipes`) — `@dnd-kit` 필요.
-🚧 5. **카테고리 관리 UI** — 각 피처의 "관리" 탭. 백엔드 API는 admin-only로 존재; 현재 curl만 가능.
-🚧 6. **노트/시트 사이드바를 `AppSidebar`로 통합** — 현재는 자체 `Sidebar` 보유. 같은 시각 규칙이지만 코드 중복.
-🚧 7. **시트 셀 검색 서버 사이드** — 현재 ⌘K 팔레트는 시트는 제목만 검색.
-🚧 8. **설정 서버 동기화** — 현재 localStorage 기반. 디바이스 간 동기화하려면 `user_settings` 테이블 필요.
-🚧 9. **첨부와 본문 inline 참조 동기화** — 현재 첨부 삭제는 본문 `<img>`/링크를 건드리지 않음 (사용자가 수동 정리).
-🚧 10. **데이터 스냅샷 v2 — 시트 셀 / 메모 블록 스냅샷** — 현재 v1은 `/data` 4종만. 시트 셀 값 또는 메모 블록 transclusion은 후속.
+🚧 1. **유용한 링크 컬렉션** (`/data/links`) — OpenGraph 프리뷰.
+🚧 2. **레시피 컬렉션** (`/data/recipes`) — `@dnd-kit` 필요.
+🚧 3. **카테고리 관리 UI** — 각 피처의 "관리" 탭. 백엔드 API는 admin-only로 존재; 현재 curl만 가능.
+🚧 4. **노트/시트 사이드바를 `AppSidebar`로 통합** — 현재는 자체 `Sidebar` 보유. 같은 시각 규칙이지만 코드 중복.
+🚧 5. **시트 셀 검색 서버 사이드** — 현재 ⌘K 팔레트는 시트는 제목만 검색.
+🚧 6. **설정 서버 동기화** — 현재 localStorage 기반. 디바이스 간 동기화하려면 `user_settings` 테이블 필요.
+🚧 7. **첨부와 본문 inline 참조 동기화** — 현재 첨부 삭제는 본문 `<img>`/링크를 건드리지 않음 (사용자가 수동 정리).
+🚧 8. **데이터 스냅샷 v2 — 시트 셀 / 메모 블록 스냅샷** — 현재 v1은 `/data` 4종만. 시트 셀 값 또는 메모 블록 transclusion은 후속.
 
 ***메모 (Claude용)
 - `npm run dev` → localhost:5173. 백엔드를 로컬에서 띄울 땐 `POST /api/auth/dev-login`으로 Google 없이 JWT.

@@ -6,9 +6,17 @@ type Props = {
   filterLabel: string
   onCreate: () => void
   onOpenFilters: () => void
+  /** Hide the "+ 새 메모" affordance when the active filter wouldn't accept a new entry (e.g. 휴지통). */
+  createDisabled?: boolean
 }
 
-export default function NoteListHeader({ count, filterLabel, onCreate, onOpenFilters }: Props) {
+export default function NoteListHeader({
+  count,
+  filterLabel,
+  onCreate,
+  onOpenFilters,
+  createDisabled = false,
+}: Props) {
   return (
     <div className={styles.bar}>
       <button
@@ -24,15 +32,19 @@ export default function NoteListHeader({ count, filterLabel, onCreate, onOpenFil
         <span>메모</span>
         <span className={styles.count}>{count}</span>
       </div>
-      <button
-        type="button"
-        className={styles.add}
-        onClick={onCreate}
-        aria-label="새 메모"
-        title="새 메모"
-      >
-        <Plus size={18} strokeWidth={2} />
-      </button>
+      {createDisabled ? (
+        <span className={styles.add} aria-hidden="true" />
+      ) : (
+        <button
+          type="button"
+          className={styles.add}
+          onClick={onCreate}
+          aria-label="새 메모"
+          title="새 메모"
+        >
+          <Plus size={18} strokeWidth={2} />
+        </button>
+      )}
     </div>
   )
 }

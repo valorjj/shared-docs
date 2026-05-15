@@ -1,10 +1,21 @@
-import { Link, NavLink, useLocation } from 'react-router-dom'
-import { BookOpen, Database, Calendar, Search, Settings, Settings2, Table2, type LucideIcon } from 'lucide-react'
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
+import {
+  BookOpen,
+  Calendar,
+  Database,
+  LogOut,
+  Search,
+  Settings,
+  Settings2,
+  Table2,
+  type LucideIcon,
+} from 'lucide-react'
 import { useIsMobile } from '../../lib/useMediaQuery'
 import { useAuth } from '../../auth/useAuth'
 import { useSearchPalette } from '../../features/search/searchContext'
 import { useSettings } from '../../features/settings/settingsContext'
 import { Kbd } from '../ui'
+import { Menu, MenuItem, MenuSeparator } from '../ui/Menu'
 import './TopNav.css'
 
 type NavItem = {
@@ -26,7 +37,8 @@ const HIDDEN_PREFIXES = ['/login', '/auth']
 
 export default function TopNav() {
   const isMobile = useIsMobile()
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
+  const navigate = useNavigate()
   const location = useLocation()
   const search = useSearchPalette()
   const settings = useSettings()
@@ -36,6 +48,11 @@ export default function TopNav() {
 
   const items = ITEMS.filter((it) => !it.adminOnly || user?.role === 'ADMIN')
   const cmdLabel = navigator.platform.toLowerCase().includes('mac') ? '⌘' : 'Ctrl'
+
+  const handleLogout = () => {
+    logout()
+    navigate('/login', { replace: true })
+  }
 
   return (
     <header className="top-nav" aria-label="주 탐색">
@@ -90,16 +107,33 @@ export default function TopNav() {
         </button>
 
         {user && (
-          <div className="top-nav__user" title={user.name}>
-            {user.pictureUrl ? (
-              <img className="top-nav__avatar" src={user.pictureUrl} alt="" />
-            ) : (
-              <span className="top-nav__avatar top-nav__avatar--initial" aria-hidden="true">
-                {user.name?.[0] ?? '·'}
-              </span>
-            )}
-            <span className="top-nav__user-name">{user.name}</span>
-          </div>
+          <Menu
+            trigger={
+              <button type="button" className="top-nav__user" title={user.name} aria-label="계정 메뉴">
+                {user.pictureUrl ? (
+                  <img className="top-nav__avatar" src={user.pictureUrl} alt="" />
+                ) : (
+                  <span className="top-nav__avatar top-nav__avatar--initial" aria-hidden="true">
+                    {user.name?.[0] ?? '·'}
+                  </span>
+                )}
+                <span className="top-nav__user-name">{user.name}</span>
+              </button>
+            }
+          >
+            <div className="top-nav__user-meta" aria-hidden="true">
+              <div className="top-nav__user-meta-name">{user.name}</div>
+              <div className="top-nav__user-meta-email">{user.email}</div>
+            </div>
+            <MenuSeparator />
+            <MenuItem
+              onSelect={handleLogout}
+              icon={<LogOut size={14} strokeWidth={1.75} />}
+              destructive
+            >
+              로그아웃
+            </MenuItem>
+          </Menu>
         )}
       </div>
     </header>

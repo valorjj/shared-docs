@@ -1,5 +1,5 @@
 import * as Dialog from '@radix-ui/react-dialog'
-import { Hash, NotebookText, Pin } from 'lucide-react'
+import { Hash, NotebookText, Pin, Trash2 } from 'lucide-react'
 import SidebarSection from './SidebarSection'
 import type { SidebarFilter } from './Sidebar'
 import type { TagWithCount } from '../shared/extractTags'
@@ -11,7 +11,7 @@ type Props = {
   onOpenChange: (open: boolean) => void
   filter: SidebarFilter
   onFilterChange: (f: SidebarFilter) => void
-  counts: { all: number; pinned: number }
+  counts: { all: number; pinned: number; trash: number }
   tags: TagWithCount[]
 }
 
@@ -55,6 +55,13 @@ export default function SidebarSheet({
                 count={counts.pinned}
                 active={filter.kind === 'pinned'}
                 onClick={() => pick({ kind: 'pinned' })}
+              />
+              <SidebarSection
+                Icon={Trash2}
+                label="휴지통"
+                count={counts.trash}
+                active={filter.kind === 'trash'}
+                onClick={() => pick({ kind: 'trash' })}
               />
             </nav>
             {tags.length > 0 && (

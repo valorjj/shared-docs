@@ -23,6 +23,7 @@ export const noteKeys = {
   // resolves for soft-deleted notes don't poison the active list.
   tombstone: (id: number) => ['notes', 'tombstone', id] as const,
   referrers: (id: number) => ['notes', 'referrers', id] as const,
+  trash: () => ['notes', 'trash'] as const,
 }
 
 /** Backend serves file URLs as relative paths (`/files/...`). Compose to absolute. */
@@ -60,6 +61,20 @@ async function fetchNoteIncludingDeletedReq(id: number): Promise<Note> {
 async function fetchReferrersReq(id: number): Promise<NoteSummary[]> {
   const { data } = await apiClient.get<NoteSummary[]>(`/api/notes/${id}/referrers`)
   return data
+}
+
+async function fetchTrashReq(): Promise<Note[]> {
+  const { data } = await apiClient.get<Note[]>('/api/notes/trash')
+  return data
+}
+
+async function restoreNoteReq(id: number): Promise<Note> {
+  const { data } = await apiClient.post<Note>(`/api/notes/${id}/restore`)
+  return data
+}
+
+async function deleteForeverReq(id: number): Promise<void> {
+  await apiClient.delete(`/api/notes/${id}/forever`)
 }
 
 async function listAttachmentsReq(noteId: number): Promise<Attachment[]> {
@@ -185,5 +200,39 @@ export function useNoteReferrers(id: number | null) {
     queryKey: id == null ? [] : noteKeys.referrers(id),
     queryFn: () => fetchReferrersReq(id as number),
     enabled: id !== null,
+  })
+}
+
+/** Soft-deleted notes — feeds the "휴지통" sidebar item and trash list. */
+export function useTrashNotes(enabled: boolean = true) {
+  return useQuery({
+    queryKey: noteKeys.trash(),
+    queryFn: fetchTrashReq,
+    enabled,
+  })
+}
+
+export function useRestoreNote() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => restoreNoteReq(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: noteKeys.list() })
+      qc.invalidateQueries({ queryKey: noteKeys.trash() })
+      qc.invalidateQueries({ queryKey: ['notes', 'referrers'] })
+      qc.invalidateQueries({ queryKey: ['notes', 'tombstone'] })
+    },
+  })
+}
+
+export function useDeleteForever() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => deleteForeverReq(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: noteKeys.trash() })
+      qc.invalidateQueries({ queryKey: ['notes', 'referrers'] })
+      qc.invalidateQueries({ queryKey: ['notes', 'tombstone'] })
+    },
   })
 }

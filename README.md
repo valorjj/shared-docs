@@ -28,7 +28,10 @@ to two Google accounts via an OAuth + JWT pipeline; everything else
   cache (rename and every reference updates); deleted targets
   render as a greyed "삭제됨" tombstone instead of vanishing.
   A "참조됨" strip above the body lists every memo that points
-  here. Pin and per-note autosave on every keystroke.
+  here. **Soft delete + 휴지통**: the sidebar's 휴지통 section
+  lists removed memos with 복원 / 영구 삭제 actions per row;
+  restore re-runs the body indexer so outbound links come back
+  live. Pin and per-note autosave on every keystroke.
 - **시트** (`/sheets`) — lightweight spreadsheet. Two-pane workspace.
   On desktop a react-data-grid (column rename via header double-click,
   delete via hover ×, `+ 행` / `+ 열` toolbar). On mobile the same
@@ -63,7 +66,9 @@ to two Google accounts via an OAuth + JWT pipeline; everything else
   serif / mono), line height (compact / normal / relaxed). Click-to-
   apply, persisted in localStorage, cross-tab synced. Reached via the
   gear icon in the desktop TopNav or the 설정 item in the mobile
-  BottomNav.
+  BottomNav. The dialog also carries a 계정 section with avatar +
+  email + 로그아웃; desktop additionally exposes 로그아웃 via the
+  TopNav avatar dropdown.
 
 iPhone-aware: the workspace collapses to single pane, mobile back
 buttons drop you out of the editor, a slide-up sheet exposes the

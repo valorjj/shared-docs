@@ -1,4 +1,4 @@
-import { Hash, NotebookText, Pin } from 'lucide-react'
+import { Hash, NotebookText, Pin, Trash2 } from 'lucide-react'
 import SidebarSection from './SidebarSection'
 import type { TagWithCount } from '../shared/extractTags'
 import styles from './Sidebar.module.css'
@@ -6,12 +6,13 @@ import styles from './Sidebar.module.css'
 export type SidebarFilter =
   | { kind: 'all' }
   | { kind: 'pinned' }
+  | { kind: 'trash' }
   | { kind: 'tag'; value: string }
 
 type Props = {
   filter: SidebarFilter
   onFilterChange: (f: SidebarFilter) => void
-  counts: { all: number; pinned: number }
+  counts: { all: number; pinned: number; trash: number }
   tags: TagWithCount[]
 }
 
@@ -33,6 +34,13 @@ export default function Sidebar({ filter, onFilterChange, counts, tags }: Props)
           count={counts.pinned}
           active={filter.kind === 'pinned'}
           onClick={() => onFilterChange({ kind: 'pinned' })}
+        />
+        <SidebarSection
+          Icon={Trash2}
+          label="휴지통"
+          count={counts.trash}
+          active={filter.kind === 'trash'}
+          onClick={() => onFilterChange({ kind: 'trash' })}
         />
       </nav>
 
