@@ -7,6 +7,7 @@ import NotFound from './pages/NotFound'
 import RequireAuth from './auth/RequireAuth'
 import RequireRole from './auth/RequireRole'
 import MobileShell from './components/common/MobileShell'
+import { Spinner } from './components/ui'
 
 const Hub              = lazy(() => import('./pages/Hub'))
 const SheetsPage       = lazy(() => import('./pages/SheetsPage'))
@@ -28,12 +29,11 @@ function RouteFallback() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        color: 'var(--c-text-muted)',
         fontFamily: 'var(--font-sans)',
-        fontSize: 'var(--fs-base)',
       }}
+      aria-busy="true"
     >
-      불러오는 중…
+      <Spinner label="불러오는 중…" />
     </div>
   )
 }

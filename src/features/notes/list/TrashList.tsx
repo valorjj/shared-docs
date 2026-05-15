@@ -1,4 +1,5 @@
 import { Trash2 } from 'lucide-react'
+import { Skeleton } from '../../../components/ui'
 import type { Note } from '../types'
 import NoteListHeader from './NoteListHeader'
 import TrashListItem from './TrashListItem'
@@ -37,7 +38,17 @@ export default function TrashList({
       />
       <div className={styles.scroll}>
         {loading && notes.length === 0 ? (
-          <div className={styles.loading}>불러오는 중…</div>
+          <ul className={styles.list} aria-busy="true" aria-label="휴지통 불러오는 중">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <li key={i} className={styles.skeletonRow}>
+                <div className={styles.skeletonTitleRow}>
+                  <Skeleton width="50%" height={14} />
+                </div>
+                <Skeleton width="80%" height={11} />
+                <Skeleton width="40%" height={10} />
+              </li>
+            ))}
+          </ul>
         ) : notes.length === 0 ? (
           <div className={emptyStyles.root}>
             <span className={emptyStyles.icon} aria-hidden="true">

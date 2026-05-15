@@ -22,6 +22,7 @@ import {
   Badge,
   Button,
   Row,
+  Skeleton,
 } from '../components/ui'
 import { formatMoney } from '../lib/format'
 import { useIsMobile } from '../lib/useMediaQuery'
@@ -63,7 +64,7 @@ export default function CalendarPage() {
     [month],
   )
 
-  const { data: events } = useCalendarEvents(range.from, range.to)
+  const { data: events, isLoading: eventsLoading } = useCalendarEvents(range.from, range.to)
 
   const sourceCounts = useMemo(() => {
     const counts: Record<CalendarEventType, number> = {
@@ -188,10 +189,23 @@ export default function CalendarPage() {
           }
         >
           <Card padding="md">
-            {selected && selectedEvents.length === 0 && (
+            {eventsLoading && (
+              <ul className="cal-page__list" aria-busy="true" aria-label="이 날의 일정 불러오는 중">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <li key={i} className="cal-page__row cal-page__row--skeleton">
+                    <Skeleton width={8} height={28} radius={2} />
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1 }}>
+                      <Skeleton width={`${50 + (i * 10) % 30}%`} height={13} />
+                      <Skeleton width="30%" height={10} />
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {!eventsLoading && selected && selectedEvents.length === 0 && (
               <p className="cal-page__empty">이 날의 일정이 없습니다.</p>
             )}
-            {selectedEvents.length > 0 && (
+            {!eventsLoading && selectedEvents.length > 0 && (
               <ul className="cal-page__list">
                 {selectedEvents.map((e) => (
                   <EventRow

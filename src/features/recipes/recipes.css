@@ -158,3 +158,23 @@
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: var(--sp-3);
 }
+
+.recipes__grid--skeleton {
+  /* inherits .recipes__grid layout via the joint class on the ul */
+}
+
+.recipes__skeleton-card {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.recipes__skeleton-card-body {
+  padding: 12px 14px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}

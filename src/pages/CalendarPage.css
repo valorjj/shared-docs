@@ -98,6 +98,15 @@
   gap: var(--sp-1);
 }
 
+.cal-page__row--skeleton {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  border: 1px solid var(--c-border-dashed);
+  border-radius: var(--r-sm);
+}
+
 .cal-page__event {
   display: flex;
   align-items: center;

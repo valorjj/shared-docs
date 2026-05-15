@@ -6,6 +6,7 @@ import {
   useDeleteComment,
   type Comment,
 } from '../api/comments'
+import { Spinner } from './ui'
 import './Comments.css'
 
 type CommentsProps = {
@@ -38,7 +39,11 @@ export default function Comments({ pageId, title = '댓글' }: CommentsProps) {
     <section className="comments">
       {title && <h3 className="comments__title">{title}</h3>}
 
-      {isLoading && <p className="comments__status">불러오는 중…</p>}
+      {isLoading && (
+        <p className="comments__status">
+          <Spinner label="불러오는 중…" />
+        </p>
+      )}
       {isError && (
         <p className="comments__status comments__status--error">
           댓글을 불러오지 못했습니다. {error instanceof Error ? error.message : ''}{' '}

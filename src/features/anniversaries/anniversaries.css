@@ -16,6 +16,19 @@
   gap: var(--sp-2);
 }
 
+.anniv__list--skeleton {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.anniv__row--skeleton {
+  display: flex;
+  align-items: center;
+  padding: 14px 16px;
+  border-bottom: 1px dashed var(--c-border-dashed);
+}
+
 .anniv__row {
   display: flex;
   align-items: stretch;

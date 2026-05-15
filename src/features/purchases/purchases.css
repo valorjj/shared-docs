@@ -61,6 +61,28 @@ body:has(.purchase-page) { /* hook left intentionally; tokens handle bg */ }
   color: var(--c-danger);
 }
 
+.purchase__skeleton {
+  display: flex;
+  flex-direction: column;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  margin-top: var(--sp-3);
+}
+
+.purchase__skeleton-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--c-border-dashed);
+}
+
+.purchase__skeleton-row:last-child {
+  border-bottom: 0;
+}
+
 /* ── Inline cell renders (used by MobileTable + Grid) ── */
 .purchase__item-cell {
   display: inline-flex;

@@ -33,6 +33,7 @@ import {
   Field,
   Input,
   Label,
+  Spinner,
   Stack,
   Textarea,
 } from '../../components/ui'
@@ -77,7 +78,11 @@ export default function RecipeEditor() {
   }
 
   if (isLoading) {
-    return <div className={styles.statePad}>불러오는 중…</div>
+    return (
+      <div className={styles.statePad} aria-busy="true" aria-label="레시피 불러오는 중">
+        <Spinner label="레시피 불러오는 중…" />
+      </div>
+    )
   }
   if (isError || !recipe) {
     return (

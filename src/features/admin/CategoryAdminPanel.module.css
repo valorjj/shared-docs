@@ -49,6 +49,19 @@
   overflow: hidden;
 }
 
+.skeletonRow {
+  display: grid;
+  grid-template-columns: auto auto 1fr auto auto;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--c-border-dashed);
+}
+
+.skeletonRow:last-child {
+  border-bottom: 0;
+}
+
 .row {
   display: grid;
   grid-template-columns: auto auto 1fr 110px 90px auto;

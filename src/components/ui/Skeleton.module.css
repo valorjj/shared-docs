@@ -1,0 +1,41 @@
+.skeleton {
+  display: block;
+  background-color: var(--c-surface-tint);
+  background-image: linear-gradient(
+    90deg,
+    transparent 0,
+    rgba(255, 255, 255, 0.55) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  background-position: -150% 0;
+  border-radius: 4px;
+  animation: skeletonShimmer 1.4s ease-in-out infinite;
+  /* The shimmer overlay is intentionally subtle — Bear / Linear / Notion
+     all err toward "barely moving" so the loading state doesn't feel busy. */
+}
+
+/* Dark / Dracula / Monokai themes redefine --c-surface-tint to something
+   dark; the white overlay then becomes way too bright. Use a translucent
+   white that reads on both ends without theme-specific overrides. */
+:root[data-theme='dark'] .skeleton,
+:root[data-theme='dracula'] .skeleton,
+:root[data-theme='monokai'] .skeleton {
+  background-image: linear-gradient(
+    90deg,
+    transparent 0,
+    rgba(255, 255, 255, 0.06) 50%,
+    transparent 100%
+  );
+}
+
+@keyframes skeletonShimmer {
+  0% { background-position: -150% 0; }
+  100% { background-position: 150% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
+}

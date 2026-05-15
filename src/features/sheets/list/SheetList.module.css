@@ -25,3 +25,12 @@
   color: var(--c-text-placeholder);
   font-size: var(--fs-sm);
 }
+
+.skeletonRow {
+  padding: 14px 16px 14px 13px;
+  border-bottom: 1px solid var(--c-border-dashed);
+  border-left: 3px solid transparent;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}

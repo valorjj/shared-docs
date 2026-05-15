@@ -8,6 +8,7 @@ import {
   BackLink,
   Fab,
   Button,
+  Skeleton,
 } from '../../components/ui'
 import {
   useCreateRecipe,
@@ -111,7 +112,20 @@ export default function RecipeList() {
         })}
       </nav>
 
-      {isLoading && <p className="recipes__status">불러오는 중…</p>}
+      {isLoading && (
+        <ul className="recipes__grid recipes__grid--skeleton" aria-busy="true" aria-label="레시피 불러오는 중">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <li key={i} className="recipes__skeleton-card">
+              <Skeleton width="100%" height={150} radius={0} />
+              <div className="recipes__skeleton-card-body">
+                <Skeleton width={48} height={9} />
+                <Skeleton width="75%" height={16} />
+                <Skeleton width="45%" height={10} />
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
       {isError && (
         <p className="recipes__status recipes__status--error">
           {error instanceof Error ? error.message : '데이터를 불러오지 못했습니다.'}{' '}

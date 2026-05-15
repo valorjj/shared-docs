@@ -12,6 +12,7 @@ import {
   Fab,
   IconButton,
   Button,
+  Skeleton,
 } from '../../components/ui'
 import { useAuth } from '../../auth/useAuth'
 import {
@@ -86,7 +87,19 @@ export default function TodoList() {
 
       <Tabs items={TABS} value={filter} onChange={setFilter} className="todos__tabs-wrap" />
 
-      {isLoading && <p className="todos__status">불러오는 중…</p>}
+      {isLoading && (
+        <ul className="todos__list todos__list--skeleton" aria-busy="true" aria-label="할 일 불러오는 중">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <li key={i} className="todos__row todos__row--skeleton">
+              <Skeleton width={18} height={18} radius={4} />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1 }}>
+                <Skeleton width={`${55 + (i * 7) % 30}%`} height={14} />
+                <Skeleton width="30%" height={10} />
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
       {isError && (
         <p className="todos__status todos__status--error">
           {error instanceof Error ? error.message : '데이터를 불러오지 못했습니다.'}{' '}

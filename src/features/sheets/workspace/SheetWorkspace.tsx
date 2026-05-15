@@ -1,4 +1,5 @@
 import { useSearchParams } from 'react-router-dom'
+import { Spinner } from '../../../components/ui'
 import { useCreateSheet, useSheet, useSheets } from '../api'
 import { defaultSheetData, stringifySheetData } from '../shared/sheetData'
 import SheetEditor from '../editor/SheetEditor'
@@ -63,7 +64,9 @@ export default function SheetWorkspace() {
               onBack={clearSheet}
             />
           ) : activeId !== null && activeSheetQuery.isLoading ? (
-            <div className={styles.loading}>불러오는 중…</div>
+            <div className={styles.loading}>
+              <Spinner label="시트 불러오는 중…" />
+            </div>
           ) : (
             <SheetEditorEmpty />
           )}

@@ -5,6 +5,7 @@ import {
   Field,
   Input,
   Label,
+  Skeleton,
   Stack,
 } from '../../components/ui'
 import ConfirmDialog from '../../components/ui/ConfirmDialog'
@@ -65,7 +66,19 @@ export default function CategoryAdminPanel({ kind }: Props) {
         </Button>
       </header>
 
-      {isLoading && <p className={styles.status}>불러오는 중…</p>}
+      {isLoading && (
+        <ul className={styles.list} aria-busy="true" aria-label="카테고리 불러오는 중">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <li key={i} className={styles.skeletonRow}>
+              <Skeleton width={56} height={14} />
+              <Skeleton width={16} height={16} radius="pill" />
+              <Skeleton width="55%" height={14} />
+              <Skeleton width={88} height={12} />
+              <Skeleton width={48} height={12} />
+            </li>
+          ))}
+        </ul>
+      )}
       {isError && (
         <p className={`${styles.status} ${styles.error}`}>
           불러오지 못했어요.{' '}

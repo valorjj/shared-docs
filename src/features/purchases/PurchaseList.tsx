@@ -16,6 +16,7 @@ import {
   Select,
   Button,
   Badge,
+  Skeleton,
 } from '../../components/ui'
 import { useAuth } from '../../auth/useAuth'
 import { useIsDesktop } from '../../lib/useMediaQuery'
@@ -255,7 +256,22 @@ export default function PurchaseList() {
         />
       )}
 
-      {isLoading && <p className="purchase__status">불러오는 중…</p>}
+      {isLoading && (
+        <div
+          className="purchase__skeleton"
+          aria-busy="true"
+          aria-label="구매 내역 불러오는 중"
+        >
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="purchase__skeleton-row">
+              <Skeleton width={80} height={12} />
+              <Skeleton width="35%" height={14} />
+              <Skeleton width={64} height={18} radius="pill" />
+              <Skeleton width={90} height={14} />
+            </div>
+          ))}
+        </div>
+      )}
       {isError && (
         <Stack gap={2} align="center" className="purchase__status purchase__status--error">
           <span>{error instanceof Error ? error.message : '데이터를 불러오지 못했습니다.'}</span>

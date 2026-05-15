@@ -2,7 +2,7 @@ import * as Dialog from '@radix-ui/react-dialog'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { BookOpen, Pin, Search, Table2 } from 'lucide-react'
-import { Kbd } from '../../components/ui'
+import { Kbd, Spinner } from '../../components/ui'
 import { useSearchResults, type SearchResult } from './useSearchResults'
 import styles from './SearchPalette.module.css'
 
@@ -93,7 +93,9 @@ function SearchBody({ onClose }: { onClose: () => void }) {
         {query.trim() === '' ? (
           <EmptyHint />
         ) : isLoading ? (
-          <div className={styles.statusRow}>불러오는 중…</div>
+          <div className={styles.statusRow}>
+            <Spinner label="불러오는 중…" />
+          </div>
         ) : results.length === 0 ? (
           <div className={styles.statusRow}>검색 결과가 없습니다.</div>
         ) : (

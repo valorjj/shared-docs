@@ -11,6 +11,7 @@ import {
   Fab,
   IconButton,
   Button,
+  Skeleton,
 } from '../../components/ui'
 import { useAuth } from '../../auth/useAuth'
 import {
@@ -83,7 +84,22 @@ export default function AnniversaryList() {
         <PageTitle icon={<Cake size={22} strokeWidth={2} />}>기념일</PageTitle>
       </PageHeader>
 
-      {isLoading && <p className="anniv__status">불러오는 중…</p>}
+      {isLoading && (
+        <ul className="anniv__list anniv__list--skeleton" aria-busy="true" aria-label="기념일 불러오는 중">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <li key={i} className="anniv__row anniv__row--skeleton">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
+                <Skeleton width="45%" height={16} />
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <Skeleton width={48} height={18} radius="pill" />
+                  <Skeleton width={92} height={11} />
+                  <Skeleton width={48} height={11} />
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
       {isError && (
         <p className="anniv__status anniv__status--error">
           {error instanceof Error ? error.message : '데이터를 불러오지 못했습니다.'}{' '}

@@ -7,6 +7,7 @@ import {
   BackLink,
   Fab,
   Button,
+  Skeleton,
 } from '../../components/ui'
 import {
   useUsefulLinks,
@@ -152,7 +153,34 @@ export default function LinkList() {
         })}
       </nav>
 
-      {isLoading && <p className="links__status">불러오는 중…</p>}
+      {isLoading && (
+        view === 'card' ? (
+          <ul className="links__grid links__grid--skeleton" aria-busy="true" aria-label="링크 불러오는 중">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <li key={i} className="links__skeleton-card">
+                <Skeleton width="100%" height={140} radius={0} />
+                <div className="links__skeleton-card-body">
+                  <Skeleton width={72} height={10} />
+                  <Skeleton width="80%" height={14} />
+                  <Skeleton width="60%" height={11} />
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <ul className="links__rows" aria-busy="true" aria-label="링크 불러오는 중">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <li key={i} className="links__skeleton-row">
+                <Skeleton width={24} height={24} radius={4} />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>
+                  <Skeleton width="55%" height={13} />
+                  <Skeleton width="35%" height={10} />
+                </div>
+              </li>
+            ))}
+          </ul>
+        )
+      )}
       {isError && (
         <p className="links__status links__status--error">
           {error instanceof Error ? error.message : '데이터를 불러오지 못했습니다.'}{' '}
