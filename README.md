@@ -16,7 +16,10 @@ to two Google accounts via an OAuth + JWT pipeline; everything else
   mobile. Tiptap WYSIWYG with task lists, tables, bubble menu, `/`
   slash command palette, `#hashtag` parsing surfaced in the sidebar
   with counts and click-to-filter. Paste / drag / clip-button image
-  and file uploads. Pin and per-note autosave on every keystroke.
+  and file uploads. A note's attachments appear in a gallery strip
+  below the body with thumbnails, filename + size pills, per-file
+  download and delete, and a full-screen image lightbox. Pin and
+  per-note autosave on every keystroke.
 - **시트** (`/sheets`) — lightweight spreadsheet. Two-pane workspace.
   On desktop a react-data-grid (column rename via header double-click,
   delete via hover ×, `+ 행` / `+ 열` toolbar). On mobile the same

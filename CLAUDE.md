@@ -1,6 +1,6 @@
 shared-docs — 프로젝트 지침서
 > Claude Code와 함께 이어가기 위한 컨텍스트 및 작업 가이드
-> 최근 업데이트: 2026-05-14 (⌘K 검색 팔레트 추가 후)
+> 최근 업데이트: 2026-05-15 (메모 첨부 갤러리 + 라이트박스 추가 후)
 
 ***프로젝트 개요
 진과 채연 두 사람을 위한 비공개 웹앱.
@@ -82,6 +82,9 @@ src/
 │   │   │   ├── NoteEditorMobileBar.tsx ← 모바일 < 메모 뒤로가기
 │   │   │   ├── SlashMenuPopup.tsx  ← '/' 명령 메뉴 (포털, 뷰포트 클램프)
 │   │   │   ├── slashItems.ts       ← 명령 리스트 (H1-3, lists, task, quote, code, table, file)
+│   │   │   ├── NoteAttachments.tsx ← 본문 아래 첨부 갤러리 섹션 (zero attachments면 숨김)
+│   │   │   ├── NoteAttachmentRow.tsx ← 썸네일(이미지) 또는 파일 아이콘 + 이름 + 사이즈 + 다운로드 + 케밥(삭제)
+│   │   │   ├── NoteAttachmentLightbox.tsx ← Radix Dialog 풀스크린 이미지 뷰어
 │   │   │   └── extensions/
 │   │   │       ├── Tag.ts          ← '#tag' 인라인 mark (markInputRule + markPasteRule)
 │   │   │       └── SlashCommand.ts ← @tiptap/suggestion 래핑 확장
@@ -174,6 +177,7 @@ src/
 - **slash menu**: `/` → 헤딩/리스트/체크리스트/인용/코드/표/파일첨부 명령 메뉴. 키보드 네비 (Up/Down/Enter/Tab/Esc), 뷰포트 클램프, 포털 렌더.
 - **bubble menu**: 텍스트 선택 시 뜨는 다크 풍선 (B/I/S/code/link). **터치 디바이스에선 숨김** — iOS 네이티브 선택 메뉴와 충돌하기 때문 (`useIsTouch`).
 - **케밥 메뉴**: 메타 strip의 `…` → Radix DropdownMenu → 고정/해제 + 삭제 (ConfirmDialog).
+- **첨부 갤러리**: 본문 아래 `NoteAttachments` 섹션이 `useAttachments(noteId)`로 모든 첨부를 나열. 행 = 썸네일(이미지) / 파일 아이콘 + 이름 + `formatBytes()` 사이즈 + 다운로드 링크 + 케밥(삭제 → ConfirmDialog). 이미지 클릭 시 `NoteAttachmentLightbox` (Radix Dialog) 풀스크린 뷰어. 첨부가 0개면 섹션 자체가 숨겨짐. 본문에 삽입된 `<img>`/링크는 첨부 삭제와 독립 — 사용자가 본문에서도 함께 지워야 함 (ConfirmDialog 설명에 안내).
 
 ***시트 (`/sheets`) 핵심
 - **2-pane** (리스트 + 그리드). 모바일은 같은 단일-팬 드릴인 패턴.
@@ -293,13 +297,13 @@ com.shareddocs.backend/
 - 결과 클릭 시 `/?note=N` 또는 `/sheets?sheet=N`으로 라우팅.
 
 ***아직 안 한 것 (다음 작업 우선순위)
-🚧 1. **첨부 폴리시** — 노트 안에 첨부 갤러리 뷰 + 파일명/사이즈 + 개별 삭제. 이미지 라이트박스.
+🚧 1. **전역 헤더 + 아바타 드롭다운 + 로그아웃** — 현재 로그아웃 UI 경로 없음 (localStorage 비우는 게 유일). 메모/시트 케밥 패턴과 통일.
 🚧 2. **유용한 링크 컬렉션** (`/data/links`) — OpenGraph 프리뷰.
 🚧 3. **레시피 컬렉션** (`/data/recipes`) — `@dnd-kit` 필요.
 🚧 4. **카테고리 관리 UI** — 각 피처의 "관리" 탭. 백엔드 API는 admin-only로 존재; 현재 curl만 가능.
-🚧 5. **전역 헤더 + 아바타 드롭다운 + 로그아웃** — 현재 메모/시트 케밥 패턴과 통일 검토.
-🚧 6. **노트/시트 사이드바를 `AppSidebar`로 통합** — 현재는 자체 `Sidebar` 보유. 같은 시각 규칙이지만 코드 중복.
-🚧 7. **시트 셀 검색 서버 사이드** — 현재 ⌘K 팔레트는 시트는 제목만 검색. 셀 데이터까지 검색하려면 백엔드 풀텍스트 또는 전 시트 데이터 캐시 필요.
+🚧 5. **노트/시트 사이드바를 `AppSidebar`로 통합** — 현재는 자체 `Sidebar` 보유. 같은 시각 규칙이지만 코드 중복.
+🚧 6. **시트 셀 검색 서버 사이드** — 현재 ⌘K 팔레트는 시트는 제목만 검색. 셀 데이터까지 검색하려면 백엔드 풀텍스트 또는 전 시트 데이터 캐시 필요.
+🚧 7. **첨부와 본문 inline 참조 동기화** — 현재 첨부 삭제는 본문 `<img>`/링크를 건드리지 않음 (사용자가 수동 정리). 본문에서 참조를 못 찾는 첨부 자동 정리 또는 첨부 갤러리에서 "본문 참조" 표시 검토.
 
 ***메모 (Claude용)
 - `npm run dev` → localhost:5173. 백엔드를 로컬에서 띄울 땐 `POST /api/auth/dev-login`으로 Google 없이 JWT.

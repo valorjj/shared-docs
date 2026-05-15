@@ -1,0 +1,149 @@
+.root {
+  margin-top: var(--sp-6);
+  padding-top: var(--sp-4);
+  border-top: 1px dashed var(--c-border-dashed);
+  font-family: var(--font-sans);
+}
+
+.header {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: var(--sp-3);
+  color: var(--c-text-muted);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  letter-spacing: 0.02em;
+}
+
+.headerIcon {
+  color: var(--c-text-placeholder);
+}
+
+.headerLabel {
+  color: var(--c-text-muted);
+}
+
+.headerCount {
+  font-variant-numeric: tabular-nums;
+  color: var(--c-text-placeholder);
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+  border: 1px solid var(--c-border-dashed);
+  border-radius: var(--r-sm);
+  background: var(--c-surface);
+  transition: border-color var(--t-fast), background var(--t-fast);
+}
+
+.row:hover {
+  border-color: var(--c-border);
+  background: var(--c-surface-tint);
+}
+
+.preview {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-sm);
+  overflow: hidden;
+  background: var(--c-surface-tint);
+  border: 1px solid var(--c-border-dashed);
+  color: var(--c-text-muted);
+  flex-shrink: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+.preview:disabled {
+  cursor: default;
+}
+
+.preview:hover:not(:disabled) {
+  border-color: var(--c-border-strong);
+}
+
+.previewImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.previewIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.meta {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.name {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semi);
+  color: var(--c-text);
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.name:hover {
+  color: var(--c-primary);
+}
+
+.size {
+  font-size: var(--fs-xs);
+  color: var(--c-text-placeholder);
+  font-variant-numeric: tabular-nums;
+}
+
+.action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--r-sm);
+  background: transparent;
+  border: 0;
+  color: var(--c-text-muted);
+  cursor: pointer;
+  text-decoration: none;
+  transition: background var(--t-fast), color var(--t-fast);
+  flex-shrink: 0;
+}
+
+.action:hover,
+.action:focus-visible {
+  background: var(--c-surface-tint);
+  color: var(--c-text);
+  outline: none;
+}
+
+@media (max-width: 767px) {
+  .preview { width: 48px; height: 48px; }
+  .action  { width: 40px; height: 40px; }
+  .row     { padding: 10px 8px; }
+}

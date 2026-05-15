@@ -7,6 +7,7 @@ import {
   useUploadAttachment,
 } from '../api'
 import type { Note } from '../types'
+import NoteAttachments from './NoteAttachments'
 import NoteEditorBody from './NoteEditorBody'
 import NoteEditorMeta from './NoteEditorMeta'
 import NoteEditorMobileBar from './NoteEditorMobileBar'
@@ -151,6 +152,7 @@ export default function NoteEditor({ note, onDeleted, onBack }: Props) {
             onPickFile={onPickFile}
             registerEditor={setEditor}
           />
+          <NoteAttachments noteId={note.id} />
         </div>
       </div>
     </div>

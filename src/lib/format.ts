@@ -32,3 +32,18 @@ export function formatMonthLabel(yyyyMm: string, locale = 'ko-KR'): string {
   const [y, m] = yyyyMm.split('-').map(Number)
   return new Intl.DateTimeFormat(locale, { year: 'numeric', month: 'long' }).format(new Date(y, m - 1, 1))
 }
+
+/** Bytes → human-readable size (e.g. `4.2 MB`, `824 KB`, `512 B`). */
+export function formatBytes(bytes: number): string {
+  if (!Number.isFinite(bytes) || bytes < 0) return '—'
+  if (bytes < 1024) return `${bytes} B`
+  const units = ['KB', 'MB', 'GB', 'TB']
+  let value = bytes / 1024
+  let unitIdx = 0
+  while (value >= 1024 && unitIdx < units.length - 1) {
+    value /= 1024
+    unitIdx++
+  }
+  const formatted = value >= 10 ? value.toFixed(0) : value.toFixed(1)
+  return `${formatted} ${units[unitIdx]}`
+}
