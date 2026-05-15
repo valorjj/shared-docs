@@ -2,9 +2,11 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 6px 0 8px;
-  border-bottom: 1px solid var(--c-border-dashed);
-  margin-bottom: 12px;
+  padding: 8px 10px;
+  background: var(--c-surface-tint);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-sm);
+  margin-bottom: 10px;
 }
 
 .btn {
@@ -24,9 +26,11 @@
 }
 
 .btn:hover {
-  background: var(--c-surface-tint);
+  /* Bar is now on --c-surface-tint, so invert to --c-surface for the
+     hover so buttons read against the tinted band. */
+  background: var(--c-surface);
   color: var(--c-text);
-  border-color: var(--c-border);
+  border-color: var(--c-border-strong);
 }
 
 .plus {

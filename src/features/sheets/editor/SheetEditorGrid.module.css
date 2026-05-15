@@ -4,7 +4,7 @@
   display: flex;
   flex-direction: column;
   background: var(--c-surface);
-  border: 1px solid var(--c-border);
+  border: 1px solid var(--c-border-strong);
   border-radius: var(--r-md);
   overflow: hidden;
 }
@@ -15,16 +15,30 @@
   block-size: 100%;
   font-family: var(--font-sans);
   font-size: var(--fs-sm);
+  /* Drive react-data-grid's own CSS vars so theme switches and our
+     tokens stay in lock-step. */
+  --rdg-background-color: var(--c-surface);
+  --rdg-header-background-color: var(--c-surface-sunken);
+  --rdg-border-color: var(--c-border);
+  --rdg-row-hover-background-color: var(--c-surface-tint);
 }
 
 .grid :global(.rdg-header-row) {
-  background: var(--c-surface-tint);
+  background: var(--c-surface-sunken);
   font-weight: var(--fw-semi);
   color: var(--c-text);
+  border-bottom: 1px solid var(--c-border-strong);
 }
 
 .grid :global(.rdg-cell) {
-  border-color: var(--c-border-dashed);
+  border-color: var(--c-border);
+}
+
+/* Body-row hover — pointer devices only; touch doesn't have hover. */
+@media (hover: hover) {
+  .grid :global(.rdg-row):hover :global(.rdg-cell) {
+    background: var(--c-surface-tint);
+  }
 }
 
 .header {

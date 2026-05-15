@@ -12,6 +12,7 @@
   --c-bg: #16181d;
   --c-surface: #1d2026;
   --c-surface-tint: #252830;
+  --c-surface-sunken: #2c2f38;
   --c-overlay: rgba(0, 0, 0, 0.7);
 
   --c-text: #e8e6e2;
@@ -51,6 +52,7 @@
   --c-bg: #282a36;
   --c-surface: #2f323e;
   --c-surface-tint: #383b48;
+  --c-surface-sunken: #424657;
   --c-overlay: rgba(0, 0, 0, 0.7);
 
   --c-text: #f8f8f2;
@@ -90,6 +92,7 @@
   --c-bg: #272822;
   --c-surface: #2d2e26;
   --c-surface-tint: #383933;
+  --c-surface-sunken: #424238;
   --c-overlay: rgba(0, 0, 0, 0.7);
 
   --c-text: #f8f8f2;

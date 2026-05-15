@@ -4,6 +4,9 @@
   --c-bg: #f4f4f4;
   --c-surface: #ffffff;
   --c-surface-tint: #fafafa;
+  /* One step darker than --c-surface-tint — used to ground grids and
+     toolbars that would otherwise read as floating on pure white. */
+  --c-surface-sunken: #ededed;
   --c-overlay: rgba(0, 0, 0, 0.45);
 
   --c-text: #1c1916;
