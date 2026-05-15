@@ -7,7 +7,7 @@
 .editor {
   font-family: var(--font-sans);
   font-size: 16px;
-  line-height: 1.7;
+  line-height: var(--lh-body);
   color: var(--c-text);
   outline: none;
   padding: 0;

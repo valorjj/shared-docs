@@ -1,6 +1,6 @@
 shared-docs — 프로젝트 지침서
 > Claude Code와 함께 이어가기 위한 컨텍스트 및 작업 가이드
-> 최근 업데이트: 2026-05-15 (메모 첨부 갤러리 + 라이트박스 추가 후)
+> 최근 업데이트: 2026-05-15 (테마/글꼴/줄간격 설정 + 다크/Dracula/Monokai 추가 후)
 
 ***프로젝트 개요
 진과 채연 두 사람을 위한 비공개 웹앱.
@@ -109,6 +109,11 @@ src/
 │   │   │   ├── SheetEditorEmpty.tsx
 │   │   │   └── SheetEditorMobileBar.tsx
 │   │   └── shared/sheetData.ts     ← JSON 파스/직렬화 + 기본값 + nextColumnKey/Label
+│   ├── settings/                   ← ★ 외형 설정 (테마/글꼴/줄간격)
+│   │   ├── SettingsProvider.tsx    ← localStorage 영속화 + <html>에 data-* 속성 반영
+│   │   ├── SettingsDialog.tsx      ← Radix Dialog, 3 섹션 (테마/글꼴/줄 간격), 클릭 즉시 적용
+│   │   ├── settingsContext.ts      ← useSettings()
+│   │   └── types.ts                ← THEMES/FONTS/LINE_HEIGHTS + labels
 │   ├── search/                     ← ★ ⌘K 검색 팔레트 (전역)
 │   │   ├── SearchPaletteProvider.tsx ← Radix Dialog 마운트 + ⌘K/Ctrl+K 글로벌 단축키
 │   │   ├── SearchPalette.tsx       ← 입력 + 결과 리스트 + 키보드 네비
@@ -288,6 +293,14 @@ com.shareddocs.backend/
 ├── comment/        ← 댓글 (현재 메모/시트에는 미연결; 데이터 피처용)
 ├── user/ admin/ auth/ config/
 ```
+
+***외형 설정 (`src/features/settings/`)
+- `SettingsProvider`가 `SearchPaletteProvider` 바깥에서 `MobileShell`을 감쌈. `theme` / `font` / `lineHeight` 3개 키를 `localStorage`(`shared-docs:settings:v1`)에 영속화 + `<html>`에 `data-theme` / `data-font` / `data-line-height` 속성 반영. 크로스탭 동기화는 `storage` 이벤트로.
+- 테마 4종: `light`(기본), `dark`, `dracula`, `monokai`. 각각 `themes.css`의 `:root[data-theme="X"]` 블록에서 `--c-*` / `--shadow-*` 토큰 전체 재정의. 변수명은 동일 — 피처 CSS는 그대로.
+- 글꼴 3종: `sans`(기본, Noto Sans KR), `serif`(Noto Serif KR — 본문도 세리프 "독서 모드"), `mono`(시스템 모노). `--font-sans`만 갈아끼움 — 큰 제목은 항상 `--font-serif`로 고정.
+- 줄 간격 3단: `compact`(1.45) / `normal`(1.65, 기본) / `relaxed`(1.85). `--lh-body` 변수 → `NoteEditorBody.module.css`의 `.editor`에서 사용.
+- 트리거 두 곳: 데스크톱 `TopNav`의 `Settings2` 아이콘 버튼, 모바일 `BottomNav`의 6번째 `설정` 버튼 (검색과 동일하게 NavLink 아닌 `<button>`).
+- 설정 변경은 클릭 즉시 반영 (저장 버튼 없음). Bear 스타일.
 
 ***⌘K 검색 팔레트 (`src/features/search/`)
 - `SearchPaletteProvider`가 `MobileShell` 안쪽에 마운트되어 ⌘K / Ctrl+K 글로벌 키 리스너 등록.

@@ -1,8 +1,9 @@
 import { Link, NavLink, useLocation } from 'react-router-dom'
-import { BookOpen, Database, Calendar, Search, Settings, Table2, type LucideIcon } from 'lucide-react'
+import { BookOpen, Database, Calendar, Search, Settings, Settings2, Table2, type LucideIcon } from 'lucide-react'
 import { useIsMobile } from '../../lib/useMediaQuery'
 import { useAuth } from '../../auth/useAuth'
 import { useSearchPalette } from '../../features/search/searchContext'
+import { useSettings } from '../../features/settings/settingsContext'
 import { Kbd } from '../ui'
 import './TopNav.css'
 
@@ -28,6 +29,7 @@ export default function TopNav() {
   const { user } = useAuth()
   const location = useLocation()
   const search = useSearchPalette()
+  const settings = useSettings()
 
   if (isMobile) return null
   if (HIDDEN_PREFIXES.some((p) => location.pathname.startsWith(p))) return null
@@ -75,6 +77,16 @@ export default function TopNav() {
           <span className="top-nav__search-kbd" aria-hidden="true">
             <Kbd>{cmdLabel}</Kbd><Kbd>K</Kbd>
           </span>
+        </button>
+
+        <button
+          type="button"
+          className="top-nav__iconbtn"
+          onClick={() => settings.setDialogOpen(true)}
+          aria-label="설정"
+          title="설정"
+        >
+          <Settings2 size={16} strokeWidth={1.75} aria-hidden="true" />
         </button>
 
         {user && (

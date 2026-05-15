@@ -1,0 +1,140 @@
+/* ──────────────────────────────────────────────────────────────────────
+   Themes — each block redefines the existing --c-* / --shadow-* tokens.
+   Variable names stay the same so feature CSS doesn't change. Pick by
+   setting `data-theme` on <html>; the SettingsProvider does this.
+   ────────────────────────────────────────────────────────────────────── */
+
+/* The light palette lives in tokens.css and is the implicit default
+   when no `data-theme` attribute is set, or when it equals "light". */
+
+/* ── Dark ────────────────────────────────────────────────────────────── */
+:root[data-theme='dark'] {
+  --c-bg: #16181d;
+  --c-surface: #1d2026;
+  --c-surface-tint: #252830;
+  --c-overlay: rgba(0, 0, 0, 0.7);
+
+  --c-text: #e8e6e2;
+  --c-text-muted: #a8a39a;
+  --c-text-subtle: #7d7870;
+  --c-text-placeholder: #5a554d;
+
+  --c-primary: #7aa3d6;
+  --c-primary-hover: #92b6e3;
+  --c-primary-soft: rgba(122, 163, 214, 0.14);
+  --c-primary-soft-strong: rgba(122, 163, 214, 0.22);
+
+  --c-accent: #ff6168;
+  --c-accent-hover: #ff7a80;
+  --c-accent-soft: rgba(255, 97, 104, 0.16);
+  --c-accent-soft-strong: rgba(255, 97, 104, 0.24);
+
+  --c-danger: #ff7c75;
+  --c-danger-soft: rgba(255, 124, 117, 0.14);
+  --c-danger-border: #6b3c39;
+  --c-danger-bg: rgba(255, 124, 117, 0.08);
+
+  --c-border: #2e3038;
+  --c-border-strong: #3f424c;
+  --c-border-dashed: #262830;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.55);
+  --shadow-fab: 0 6px 18px rgba(0, 0, 0, 0.55);
+
+  --ring-focus: 0 0 0 2px var(--c-surface), 0 0 0 4px var(--c-primary);
+}
+
+/* ── Dracula ─────────────────────────────────────────────────────────── */
+:root[data-theme='dracula'] {
+  --c-bg: #282a36;
+  --c-surface: #2f323e;
+  --c-surface-tint: #383b48;
+  --c-overlay: rgba(0, 0, 0, 0.7);
+
+  --c-text: #f8f8f2;
+  --c-text-muted: #b9b9af;
+  --c-text-subtle: #8e8d86;
+  --c-text-placeholder: #6a6a64;
+
+  --c-primary: #bd93f9;
+  --c-primary-hover: #cda9fa;
+  --c-primary-soft: rgba(189, 147, 249, 0.16);
+  --c-primary-soft-strong: rgba(189, 147, 249, 0.26);
+
+  --c-accent: #ff79c6;
+  --c-accent-hover: #ff8dd2;
+  --c-accent-soft: rgba(255, 121, 198, 0.16);
+  --c-accent-soft-strong: rgba(255, 121, 198, 0.26);
+
+  --c-danger: #ff5555;
+  --c-danger-soft: rgba(255, 85, 85, 0.14);
+  --c-danger-border: #6b3232;
+  --c-danger-bg: rgba(255, 85, 85, 0.08);
+
+  --c-border: #44475a;
+  --c-border-strong: #565a70;
+  --c-border-dashed: #383b48;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.6);
+  --shadow-fab: 0 6px 18px rgba(0, 0, 0, 0.6);
+
+  --ring-focus: 0 0 0 2px var(--c-surface), 0 0 0 4px var(--c-primary);
+}
+
+/* ── Monokai ─────────────────────────────────────────────────────────── */
+:root[data-theme='monokai'] {
+  --c-bg: #272822;
+  --c-surface: #2d2e26;
+  --c-surface-tint: #383933;
+  --c-overlay: rgba(0, 0, 0, 0.7);
+
+  --c-text: #f8f8f2;
+  --c-text-muted: #b9b9a8;
+  --c-text-subtle: #8a8a78;
+  --c-text-placeholder: #62624e;
+
+  --c-primary: #66d9ef;
+  --c-primary-hover: #84e1f2;
+  --c-primary-soft: rgba(102, 217, 239, 0.14);
+  --c-primary-soft-strong: rgba(102, 217, 239, 0.24);
+
+  --c-accent: #f92672;
+  --c-accent-hover: #fa4a8b;
+  --c-accent-soft: rgba(249, 38, 114, 0.14);
+  --c-accent-soft-strong: rgba(249, 38, 114, 0.24);
+
+  --c-danger: #f92672;
+  --c-danger-soft: rgba(249, 38, 114, 0.14);
+  --c-danger-border: #6b1f3b;
+  --c-danger-bg: rgba(249, 38, 114, 0.08);
+
+  --c-border: #3e3f37;
+  --c-border-strong: #56564a;
+  --c-border-dashed: #353630;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.6);
+  --shadow-fab: 0 6px 18px rgba(0, 0, 0, 0.6);
+
+  --ring-focus: 0 0 0 2px var(--c-surface), 0 0 0 4px var(--c-primary);
+}
+
+/* ── Font choices (drive --font-sans which most surfaces inherit). ──── */
+:root[data-font='serif'] {
+  --font-sans: 'Noto Serif KR', 'Noto Sans KR', Georgia, serif;
+}
+:root[data-font='mono'] {
+  --font-sans: ui-monospace, SFMono-Regular, 'JetBrains Mono', Menlo, monospace;
+}
+
+/* ── Line-height presets (memo body is the primary consumer). ───────── */
+:root {
+  --lh-body: 1.65;
+}
+:root[data-line-height='compact'] { --lh-body: 1.45; }
+:root[data-line-height='relaxed'] { --lh-body: 1.85; }

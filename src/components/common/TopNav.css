@@ -111,6 +111,27 @@
   gap: 2px;
 }
 
+.top-nav__iconbtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--r-sm);
+  background: transparent;
+  border: 0;
+  color: var(--c-text-muted);
+  cursor: pointer;
+  transition: background var(--t-fast), color var(--t-fast);
+}
+
+.top-nav__iconbtn:hover,
+.top-nav__iconbtn:focus-visible {
+  background: var(--c-surface-tint);
+  color: var(--c-text);
+  outline: none;
+}
+
 .top-nav__user {
   display: inline-flex;
   align-items: center;

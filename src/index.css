@@ -1,5 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Noto+Serif+KR:wght@400;600&display=swap');
 @import './components/ui/tokens.css';
+@import './components/ui/themes.css';
 
 :root {
   /* legacy aliases — prefer tokens.css vars in new code */
@@ -16,9 +17,9 @@
 
 body {
   margin: 0;
-  font-family: 'Noto Sans KR', sans-serif;
-  background: var(--cream);
-  color: var(--text);
+  font-family: var(--font-sans);
+  background: var(--c-bg);
+  color: var(--c-text);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }

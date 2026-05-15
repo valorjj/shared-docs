@@ -50,6 +50,11 @@ to two Google accounts via an OAuth + JWT pipeline; everything else
   (title) results. Opens via `⌘K` / `Ctrl+K`, via the search chip in
   the desktop TopNav, or via the 검색 item in the mobile BottomNav.
   Keyboard-navigable; Enter opens the result, Esc closes.
+- **설정** — theme (light / dark / Dracula / Monokai), body font (sans /
+  serif / mono), line height (compact / normal / relaxed). Click-to-
+  apply, persisted in localStorage, cross-tab synced. Reached via the
+  gear icon in the desktop TopNav or the 설정 item in the mobile
+  BottomNav.
 
 iPhone-aware: the workspace collapses to single pane, mobile back
 buttons drop you out of the editor, a slide-up sheet exposes the
