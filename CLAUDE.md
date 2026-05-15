@@ -1,6 +1,6 @@
 shared-docs — 프로젝트 지침서
 > Claude Code와 함께 이어가기 위한 컨텍스트 및 작업 가이드
-> 최근 업데이트: 2026-05-15 (유용한 링크 피처 추가 후)
+> 최근 업데이트: 2026-05-15 (레시피 피처 + Tiptap suggestion plugin-key 핫픽스 후)
 
 ***프로젝트 개요
 진과 채연 두 사람을 위한 비공개 웹앱.
@@ -155,6 +155,16 @@ src/
 │   │   ├── LinkAddModal.tsx        ← URL 붙여넣기 → 디바운스 /preview → 미리보기 카드 → 저장
 │   │   ├── LinkEditModal.tsx       ← 제목/설명/메모/카테고리/고정 편집
 │   │   └── links.css
+│   ├── recipes/                    ← 🍳 레시피 (재료/순서 dnd-kit + 인분 환산)
+│   │   ├── types.ts                ← Recipe + RecipeCategory + RecipeIngredient + RecipeStep
+│   │   ├── api.ts                  ← CRUD 훅 (PATCH는 ingredients/steps JSON 통째로 교체)
+│   │   ├── recipeData.ts           ← JSON 파스/직렬화 + makeId + UNITS + scaleAmount
+│   │   ├── RecipeList.tsx          ← /data/recipes 그리드 (RecipeCard + 검색 + 카테고리 칩 + FAB)
+│   │   ├── RecipeCard.tsx          ← 카드 (hero image + 카테고리 + 제목 + 인분/재료수/시간)
+│   │   ├── RecipeEditor.tsx        ← /data/recipes/:id 풀페이지 에디터 (autosave 800ms + 인분 환산)
+│   │   ├── IngredientRow.tsx       ← dnd-kit 정렬 행 (이름 + 양 + 단위)
+│   │   ├── StepRow.tsx             ← dnd-kit 정렬 행 (번호 + textarea)
+│   │   └── recipes.css / RecipeCard.module.css / RecipeEditor.module.css
 │   └── calendar/                   ← 📅 캘린더 집계 (자체 엔티티 없음, 4개 소스 조인)
 ├── lib/
 │   ├── format.ts                   ← formatMoney / monthBounds / formatShortDate 등
@@ -180,6 +190,8 @@ src/
 | `/data/todos` | TodoList (nested in DataLayout) | authed | **lazy** |
 | `/data/anniversaries` | AnniversaryList (nested in DataLayout) | authed | **lazy** |
 | `/data/links` | LinkList (nested in DataLayout) | authed | **lazy** |
+| `/data/recipes` | RecipeList (nested in DataLayout) | authed | **lazy** |
+| `/data/recipes/:id` | RecipeEditor (nested in DataLayout) | authed | **lazy** |
 | `/calendar` | CalendarPage (AppSidebar 필터) | authed | **lazy** |
 | `/admin` | Admin | ADMIN only | **lazy** |
 | `*` | NotFound | — | eager |
@@ -341,13 +353,13 @@ com.shareddocs.backend/
 - 결과 클릭 시 `/?note=N` 또는 `/sheets?sheet=N`으로 라우팅.
 
 ***아직 안 한 것 (다음 작업 우선순위)
-🚧 1. **레시피 컬렉션** (`/data/recipes`) — `@dnd-kit` 필요.
-🚧 2. **카테고리 관리 UI** — 각 피처의 "관리" 탭. 백엔드 API는 admin-only로 존재; 현재 curl만 가능.
-🚧 3. **노트/시트 사이드바를 `AppSidebar`로 통합** — 현재는 자체 `Sidebar` 보유. 같은 시각 규칙이지만 코드 중복.
-🚧 4. **시트 셀 검색 서버 사이드** — 현재 ⌘K 팔레트는 시트는 제목만 검색.
-🚧 5. **설정 서버 동기화** — 현재 localStorage 기반. 디바이스 간 동기화하려면 `user_settings` 테이블 필요.
-🚧 6. **첨부와 본문 inline 참조 동기화** — 현재 첨부 삭제는 본문 `<img>`/링크를 건드리지 않음 (사용자가 수동 정리).
-🚧 7. **데이터 스냅샷 v2 — 시트 셀 / 메모 블록 스냅샷** — 현재 v1은 `/data` 4종만. 시트 셀 값 또는 메모 블록 transclusion은 후속.
+🚧 1. **카테고리 관리 UI** — 각 피처의 "관리" 탭. 백엔드 API는 admin-only로 존재; 현재 curl만 가능.
+🚧 2. **노트/시트 사이드바를 `AppSidebar`로 통합** — 현재는 자체 `Sidebar` 보유. 같은 시각 규칙이지만 코드 중복.
+🚧 3. **시트 셀 검색 서버 사이드** — 현재 ⌘K 팔레트는 시트는 제목만 검색.
+🚧 4. **설정 서버 동기화** — 현재 localStorage 기반. 디바이스 간 동기화하려면 `user_settings` 테이블 필요.
+🚧 5. **첨부와 본문 inline 참조 동기화** — 현재 첨부 삭제는 본문 `<img>`/링크를 건드리지 않음 (사용자가 수동 정리).
+🚧 6. **데이터 스냅샷 v2 — 시트 셀 / 메모 블록 스냅샷** — 현재 v1은 `/data` 4종만. 시트 셀 값 또는 메모 블록 transclusion은 후속.
+🚧 7. **레시피 이미지 업로드** — 현재 v1은 URL 붙여넣기만. 첨부 인프라(`FileStorageService`)를 레시피로 확장하면 됨.
 
 ***메모 (Claude용)
 - `npm run dev` → localhost:5173. 백엔드를 로컬에서 띄울 땐 `POST /api/auth/dev-login`으로 Google 없이 JWT.

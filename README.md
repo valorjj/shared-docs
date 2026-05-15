@@ -41,9 +41,9 @@ to two Google accounts via an OAuth + JWT pipeline; everything else
   Debounced autosave of the whole grid as one JSON payload.
 - **데이터** (`/data`) — Bear-style sidebar workspace for the typed
   mini-apps. Left rail lists each tracker (구매 내역 / 할 일 / 기념일 /
-  유용한 링크, with 레시피 as "준비 중"); main pane shows the active
-  subroute via React Router nested routes. On `/data` with no
-  subroute, a clean picker list mirrors the same options.
+  유용한 링크 / 레시피); main pane shows the active subroute via React
+  Router nested routes. On `/data` with no subroute, a clean picker
+  list mirrors the same options.
   - 구매 내역 — multi-currency, inline-edit grid on desktop, per-row
     split mode (SHARED · MINE · THEIRS), per-currency settlement card
     with one-click 정산 완료 + history, KRW donut chart by category,
@@ -56,6 +56,11 @@ to two Google accounts via an OAuth + JWT pipeline; everything else
     per-link 메모 field, pin, 6 seeded categories (개발 / 디자인 / 글 /
     영상 / 도구 / 기타) with chip filter and search across title /
     description / note / URL
+  - 레시피 — recipe collection with hero image (URL), ingredients +
+    steps as `@dnd-kit`-sortable lists, 인분 환산 scaler that
+    re-renders amounts at any serving size without mutating the
+    baseline, 6 seeded categories (한식 / 일식 / 양식 / 중식 / 디저트 /
+    기타), debounced autosave
 - **캘린더** (`/calendar`) — Bear-style sidebar workspace too. Left
   rail = filter list of the four event sources (기념일 · 할 일 · 구매 ·
   정산) with live counts and toggle visibility; main pane shows the

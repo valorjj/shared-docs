@@ -56,7 +56,7 @@ const NAV_ITEMS: DataNavItem[] = [
     label: '레시피',
     description: '재료 · 순서 · 1인분 환산.',
     Icon: ChefHat,
-    status: 'todo',
+    status: 'done',
   },
 ]
 

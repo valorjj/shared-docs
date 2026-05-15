@@ -14,6 +14,8 @@ const PurchaseList     = lazy(() => import('./features/purchases/PurchaseList'))
 const TodoList         = lazy(() => import('./features/todos/TodoList'))
 const AnniversaryList  = lazy(() => import('./features/anniversaries/AnniversaryList'))
 const LinkList         = lazy(() => import('./features/links/LinkList'))
+const RecipeList       = lazy(() => import('./features/recipes/RecipeList'))
+const RecipeEditor     = lazy(() => import('./features/recipes/RecipeEditor'))
 const CalendarPage     = lazy(() => import('./pages/CalendarPage'))
 const Admin            = lazy(() => import('./pages/Admin'))
 
@@ -51,6 +53,8 @@ function App() {
               <Route path="todos" element={<TodoList />} />
               <Route path="anniversaries" element={<AnniversaryList />} />
               <Route path="links" element={<LinkList />} />
+              <Route path="recipes" element={<RecipeList />} />
+              <Route path="recipes/:id" element={<RecipeEditor />} />
             </Route>
             <Route path="/calendar" element={<CalendarPage />} />
 
