@@ -1,6 +1,6 @@
 shared-docs — 프로젝트 지침서
 > Claude Code와 함께 이어가기 위한 컨텍스트 및 작업 가이드
-> 최근 업데이트: 2026-05-15 (테마/글꼴/줄간격 설정 + 다크/Dracula/Monokai 추가 후)
+> 최근 업데이트: 2026-05-15 (테마/글꼴/줄간격 설정 후 + References 블루프린트 작성)
 
 ***프로젝트 개요
 진과 채연 두 사람을 위한 비공개 웹앱.
@@ -23,8 +23,9 @@ shared-docs-root/
 └── shared-docs-backend/   ← 별도 레포 (Spring Boot, GitHub Actions self-hosted runner)
     ├── docker-compose.yml ← uploads 볼륨 마운트 포함
     └── docs/
-        ├── AUTH_BLUEPRINT.md      ← Google OAuth + JWT 설계
-        └── SCALING_BLUEPRINT.md   ← 로드맵 + 구현 로그 (메모/시트 항목 포함)
+        ├── AUTH_BLUEPRINT.md       ← Google OAuth + JWT 설계
+        ├── SCALING_BLUEPRINT.md    ← 로드맵 + 구현 로그 (메모/시트/검색/설정 등)
+        └── REFERENCES_BLUEPRINT.md ← 데이터 스냅샷 + 메모 백링크 설계 (다음 작업 2건)
 ```
 
 ***src/ 폴더 구조 (현재)
@@ -311,13 +312,16 @@ com.shareddocs.backend/
 - 결과 클릭 시 `/?note=N` 또는 `/sheets?sheet=N`으로 라우팅.
 
 ***아직 안 한 것 (다음 작업 우선순위)
-🚧 1. **전역 헤더 + 아바타 드롭다운 + 로그아웃** — 현재 로그아웃 UI 경로 없음 (localStorage 비우는 게 유일). 메모/시트 케밥 패턴과 통일.
-🚧 2. **유용한 링크 컬렉션** (`/data/links`) — OpenGraph 프리뷰.
-🚧 3. **레시피 컬렉션** (`/data/recipes`) — `@dnd-kit` 필요.
-🚧 4. **카테고리 관리 UI** — 각 피처의 "관리" 탭. 백엔드 API는 admin-only로 존재; 현재 curl만 가능.
-🚧 5. **노트/시트 사이드바를 `AppSidebar`로 통합** — 현재는 자체 `Sidebar` 보유. 같은 시각 규칙이지만 코드 중복.
-🚧 6. **시트 셀 검색 서버 사이드** — 현재 ⌘K 팔레트는 시트는 제목만 검색. 셀 데이터까지 검색하려면 백엔드 풀텍스트 또는 전 시트 데이터 캐시 필요.
-🚧 7. **첨부와 본문 inline 참조 동기화** — 현재 첨부 삭제는 본문 `<img>`/링크를 건드리지 않음 (사용자가 수동 정리). 본문에서 참조를 못 찾는 첨부 자동 정리 또는 첨부 갤러리에서 "본문 참조" 표시 검토.
+🚧 1. **데이터 스냅샷** — 메모 본문에 `/data` 슬라이스를 frozen 카드로 임베드. 설계 → `shared-docs-backend/docs/REFERENCES_BLUEPRINT.md` Part 1. 프런트 전용, 백엔드 무변경.
+🚧 2. **메모 백링크** — `@`멘션 / `[[제목]]` 자동 링크 + soft-delete + tombstone + 참조됨 패널. 설계 → `REFERENCES_BLUEPRINT.md` Part 2. `note_links` 테이블 마이그레이션 필요.
+🚧 3. **전역 헤더 + 아바타 드롭다운 + 로그아웃** — 현재 로그아웃 UI 경로 없음 (localStorage 비우는 게 유일).
+🚧 4. **유용한 링크 컬렉션** (`/data/links`) — OpenGraph 프리뷰.
+🚧 5. **레시피 컬렉션** (`/data/recipes`) — `@dnd-kit` 필요.
+🚧 6. **카테고리 관리 UI** — 각 피처의 "관리" 탭. 백엔드 API는 admin-only로 존재; 현재 curl만 가능.
+🚧 7. **노트/시트 사이드바를 `AppSidebar`로 통합** — 현재는 자체 `Sidebar` 보유. 같은 시각 규칙이지만 코드 중복.
+🚧 8. **시트 셀 검색 서버 사이드** — 현재 ⌘K 팔레트는 시트는 제목만 검색.
+🚧 9. **설정 서버 동기화** — 현재 localStorage 기반. 디바이스 간 동기화하려면 `user_settings` 테이블 필요.
+🚧 10. **첨부와 본문 inline 참조 동기화** — 현재 첨부 삭제는 본문 `<img>`/링크를 건드리지 않음 (사용자가 수동 정리).
 
 ***메모 (Claude용)
 - `npm run dev` → localhost:5173. 백엔드를 로컬에서 띄울 땐 `POST /api/auth/dev-login`으로 Google 없이 JWT.

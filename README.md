@@ -164,10 +164,15 @@ Two blueprints in `shared-docs-backend/docs/` document the architecture
 and roadmap:
 
 - `AUTH_BLUEPRINT.md` — Google OAuth, JWT, allowlist, admin model
-- `SCALING_BLUEPRINT.md` — feature roadmap + implementation log (latest
-  entries cover the memo + sheet workspaces, Bear sidebar for
-  `/data` and `/calendar`, the `#tag` input-rule fix, and the
-  chrome refinement pass)
+- `SCALING_BLUEPRINT.md` — feature roadmap + implementation log
+  (memo + sheet workspaces, Bear sidebar for `/data` and `/calendar`,
+  the `#tag` input-rule fix, the chrome refinement pass, the ⌘K
+  search palette, the attachment gallery, the theme / font / line-
+  height settings panel)
+- `REFERENCES_BLUEPRINT.md` — design for the next two big features:
+  data snapshots (frozen `/data` cards embedded in memo bodies) and
+  memo backlinks (`@`-mention / `[[title]]` linking + soft delete +
+  tombstone + referrer panel)
 
 ## Conventions
 
