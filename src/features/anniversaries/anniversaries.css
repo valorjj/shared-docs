@@ -42,8 +42,8 @@
 }
 
 .anniv__row--highlight {
-  border-color: #d97706;
-  background: linear-gradient(180deg, var(--c-surface) 0%, #fffaf2 100%);
+  border-color: var(--c-accent);
+  background: var(--c-accent-soft);
 }
 
 .anniv__row-main {

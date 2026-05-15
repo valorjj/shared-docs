@@ -1,16 +1,16 @@
 .mtbl__empty {
   padding: 2rem 1rem;
   text-align: center;
-  color: #6b6660;
+  color: var(--c-text-muted);
   font-size: 0.9rem;
 }
 
 /* ─── Desktop ─── */
 .mtbl__desktop-wrap {
   overflow-x: auto;
-  border: 1px solid #e5e0d6;
-  border-radius: 10px;
-  background: #fff;
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  background: var(--c-surface);
 }
 
 .mtbl__table {
@@ -22,16 +22,16 @@
 .mtbl__table th,
 .mtbl__table td {
   padding: 0.7rem 0.85rem;
-  border-bottom: 1px solid #efe9dd;
+  border-bottom: 1px solid var(--c-border-dashed);
 }
 
 .mtbl__table th {
   font-size: 0.78rem;
-  font-weight: 600;
-  color: #6b6660;
+  font-weight: var(--fw-semi);
+  color: var(--c-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  background: #faf6ed;
+  background: var(--c-surface-sunken);
 }
 
 .mtbl__table tr:last-child td {
@@ -40,11 +40,11 @@
 
 .mtbl__row--clickable {
   cursor: pointer;
-  transition: background 0.12s;
+  transition: background var(--t-fast);
 }
 
 .mtbl__row--clickable:hover {
-  background: #f8f5ee;
+  background: var(--c-surface-tint);
 }
 
 .mtbl__actions-th,
@@ -66,9 +66,9 @@
 
 .mtbl__card {
   padding: 0.85rem 1rem;
-  background: #fff;
-  border: 1px solid #e5e0d6;
-  border-radius: 10px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
@@ -79,7 +79,7 @@
 }
 
 .mtbl__card--clickable:active {
-  background: #faf6ed;
+  background: var(--c-surface-tint);
 }
 
 .mtbl__card-primary {
@@ -88,8 +88,8 @@
   justify-content: space-between;
   gap: 0.6rem;
   font-size: 1rem;
-  font-weight: 600;
-  color: #1c1916;
+  font-weight: var(--fw-semi);
+  color: var(--c-text);
 }
 
 .mtbl__card-secondary {
@@ -106,12 +106,12 @@
 }
 
 .mtbl__card-label {
-  color: #8a857c;
+  color: var(--c-text-subtle);
   font-size: 0.78rem;
 }
 
 .mtbl__card-value {
-  color: #1c1916;
+  color: var(--c-text);
 }
 
 .mtbl__card-meta {
@@ -121,9 +121,9 @@
   gap: 0.6rem;
   margin-top: 0.15rem;
   padding-top: 0.45rem;
-  border-top: 1px dashed #efe9dd;
+  border-top: 1px dashed var(--c-border-dashed);
   font-size: 0.8rem;
-  color: #6b6660;
+  color: var(--c-text-muted);
 }
 
 .mtbl__card-actions {

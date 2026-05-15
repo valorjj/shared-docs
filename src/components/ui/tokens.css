@@ -7,6 +7,11 @@
   /* One step darker than --c-surface-tint — used to ground grids and
      toolbars that would otherwise read as floating on pure white. */
   --c-surface-sunken: #ededed;
+  /* Translucent version of --c-surface for sticky chrome (TopNav,
+     BottomNav) that uses backdrop-blur. Because var() resolves at the
+     use site, this picks up whichever --c-surface is in scope — the
+     dark / dracula / monokai overrides don't need their own copy. */
+  --c-surface-translucent: color-mix(in srgb, var(--c-surface) 92%, transparent);
   --c-overlay: rgba(0, 0, 0, 0.45);
 
   --c-text: #1c1916;
