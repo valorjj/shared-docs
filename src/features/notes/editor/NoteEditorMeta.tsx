@@ -68,7 +68,7 @@ export default function NoteEditorMeta({ note, saving, onTogglePin, onDelete }: 
         open={confirming}
         onOpenChange={setConfirming}
         title="메모를 삭제할까요?"
-        description="이 메모와 첨부 파일을 영구히 지웁니다. 되돌릴 수 없어요."
+        description="목록에서 사라집니다. 이 메모를 참조하던 다른 메모의 링크는 '삭제됨' 상태로 표시돼요."
         confirmLabel="삭제"
         cancelLabel="취소"
         destructive

@@ -1,0 +1,70 @@
+.chip,
+.tombstone,
+.loading,
+.broken {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  vertical-align: baseline;
+  border-radius: var(--r-pill);
+  padding: 1px 8px;
+  font-size: 0.85em;
+  line-height: 1.4;
+  font-family: var(--font-sans);
+  white-space: nowrap;
+  user-select: none;
+}
+
+.chip {
+  background: var(--c-primary-soft);
+  color: var(--c-primary);
+  border: 1px solid transparent;
+}
+
+.button {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.button:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.tombstone {
+  background: var(--c-surface-tint);
+  color: var(--c-text-subtle);
+  border: 1px solid var(--c-border);
+  text-decoration: line-through;
+  text-decoration-color: var(--c-text-subtle);
+}
+
+.tombstoneTitle {
+  text-decoration: inherit;
+}
+
+.tombstoneLabel {
+  font-size: 0.78em;
+  text-decoration: none;
+  color: var(--c-text-placeholder);
+}
+
+.loading {
+  background: var(--c-surface-tint);
+  color: var(--c-text-placeholder);
+  border: 1px solid var(--c-border);
+}
+
+.broken {
+  background: var(--c-danger-soft);
+  color: var(--c-danger);
+  border: 1px solid var(--c-danger-border);
+}

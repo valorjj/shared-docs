@@ -22,8 +22,13 @@ to two Google accounts via an OAuth + JWT pipeline; everything else
   **`/ 데이터 스냅샷`** embeds a frozen card from `/data` (purchase
   totals, settlement state, todo subsets, anniversaries) — the
   numbers stay fixed at insertion time, with a per-card refresh
-  button when you want to recapture. Pin and per-note autosave on
-  every keystroke.
+  button when you want to recapture. **Memo backlinks**: type
+  `@` to pick another memo from a popover, or `[[제목]]` to
+  auto-link by title. Chips read the target's title live from the
+  cache (rename and every reference updates); deleted targets
+  render as a greyed "삭제됨" tombstone instead of vanishing.
+  A "참조됨" strip above the body lists every memo that points
+  here. Pin and per-note autosave on every keystroke.
 - **시트** (`/sheets`) — lightweight spreadsheet. Two-pane workspace.
   On desktop a react-data-grid (column rename via header double-click,
   delete via hover ×, `+ 행` / `+ 열` toolbar). On mobile the same
@@ -173,10 +178,10 @@ and roadmap:
   the `#tag` input-rule fix, the chrome refinement pass, the ⌘K
   search palette, the attachment gallery, the theme / font / line-
   height settings panel)
-- `REFERENCES_BLUEPRINT.md` — design for the next two big features:
-  data snapshots (frozen `/data` cards embedded in memo bodies) and
-  memo backlinks (`@`-mention / `[[title]]` linking + soft delete +
-  tombstone + referrer panel)
+- `REFERENCES_BLUEPRINT.md` — design for the two References features
+  (both shipped 2026-05-15): data snapshots (frozen `/data` cards
+  embedded in memo bodies) and memo backlinks (`@`-mention /
+  `[[title]]` linking + soft delete + tombstone + referrer panel)
 
 ## Conventions
 

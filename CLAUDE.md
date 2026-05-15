@@ -1,6 +1,6 @@
 shared-docs — 프로젝트 지침서
 > Claude Code와 함께 이어가기 위한 컨텍스트 및 작업 가이드
-> 최근 업데이트: 2026-05-15 (데이터 스냅샷 v1 추가 후)
+> 최근 업데이트: 2026-05-15 (메모 백링크 추가 후)
 
 ***프로젝트 개요
 진과 채연 두 사람을 위한 비공개 웹앱.
@@ -83,12 +83,17 @@ src/
 │   │   │   ├── NoteEditorMobileBar.tsx ← 모바일 < 메모 뒤로가기
 │   │   │   ├── SlashMenuPopup.tsx  ← '/' 명령 메뉴 (포털, 뷰포트 클램프)
 │   │   │   ├── slashItems.ts       ← 명령 리스트 (H1-3, lists, task, quote, code, table, file)
+│   │   │   ├── MentionMenuPopup.tsx ← '@' 멘션 팝업 (메모 후보 + 키보드 네비)
+│   │   │   ├── NoteReferrers.tsx   ← 본문 위 '참조됨' 패널 (참조 0개면 숨김)
 │   │   │   ├── NoteAttachments.tsx ← 본문 아래 첨부 갤러리 섹션 (zero attachments면 숨김)
 │   │   │   ├── NoteAttachmentRow.tsx ← 썸네일(이미지) 또는 파일 아이콘 + 이름 + 사이즈 + 다운로드 + 케밥(삭제)
 │   │   │   ├── NoteAttachmentLightbox.tsx ← Radix Dialog 풀스크린 이미지 뷰어
 │   │   │   └── extensions/
-│   │   │       ├── Tag.ts          ← '#tag' 인라인 mark (markInputRule + markPasteRule)
-│   │   │       └── SlashCommand.ts ← @tiptap/suggestion 래핑 확장
+│   │   │       ├── Tag.ts          ← '#tag' 인라인 mark (trailing-space InputRule + markPasteRule)
+│   │   │       ├── SlashCommand.ts ← @tiptap/suggestion 래핑 확장
+│   │   │       ├── MentionCommand.ts ← '@' 멘션 — @tiptap/suggestion 래퍼, noteLink atom 삽입
+│   │   │       ├── NoteLink.ts     ← 인라인 atom 노드 (data-id 라운드트립) + '[[제목]]' InputRule
+│   │   │       └── NoteLinkChip.tsx ← React NodeView 칩 (캐시 라이브 제목 / 톰스톤 폴백)
 │   │   └── shared/
 │   │       ├── PinButton.tsx       ← (현재 미사용; Menu의 핀 아이콘으로 흡수됨)
 │   │       ├── notePreview.ts      ← HTML → 평문 발췌, 제목 추출
@@ -194,6 +199,7 @@ src/
 - **첨부 갤러리**: 본문 아래 `NoteAttachments` 섹션이 `useAttachments(noteId)`로 모든 첨부를 나열. 행 = 썸네일(이미지) / 파일 아이콘 + 이름 + `formatBytes()` 사이즈 + 다운로드 링크 + 케밥(삭제 → ConfirmDialog). 이미지 클릭 시 `NoteAttachmentLightbox` (Radix Dialog) 풀스크린 뷰어. 첨부가 0개면 섹션 자체가 숨겨짐. 본문에 삽입된 `<img>`/링크는 첨부 삭제와 독립 — 사용자가 본문에서도 함께 지워야 함 (ConfirmDialog 설명에 안내).
 - **이미지 첨부 크기 제한**: 클라이언트 게이트 `MAX_IMAGE_BYTES = 5MB` (`notes/api.ts`에서 export). `uploadAttachmentReq`가 `image/*` 타입의 5MB 초과 파일을 즉시 Korean Error로 reject — 네트워크 요청이 가지 않음. 서버 멀티파트 한도(20MB)는 백스톱. 에러 메시지는 `NoteEditor` / `NoteEditorBody`에서 `window.alert`로 노출. 비이미지 첨부에는 제한 없음 (서버 한도까지).
 - **데이터 스냅샷**: 슬래시 메뉴 `데이터 스냅샷` → `DataSnapshotPicker`(2-step Radix Dialog) → 본문에 `dataSnapshot` 블록 노드 삽입. 종류 4종: `purchase-total` / `settlement` / `todo-subset` / `anniversary`. 카드는 **frozen** 값을 그대로 렌더 — 자동 refetch 없음. 새로고침 버튼이 `queryClient.fetchQuery`로 재캡처 후 `updateAttributes({ frozen })`. JSON 필드는 `data-*` 속성에 stringify되어 라운드트립. 디자인 근거 → `REFERENCES_BLUEPRINT.md` Part 1.
+- **메모 백링크**: 본문에 `@`를 누르면 `MentionMenuPopup`이 열려 메모 후보를 보여주고 (제목 + `~분 전` 힌트, ↑/↓/Enter), 또는 `[[제목]]`을 타이핑해 닫는 `]]` 순간 InputRule이 같은 제목의 메모로 해석해서 칩으로 치환. 둘 다 인라인 atom `noteLink` 노드를 본문에 삽입 — 페이로드는 `noteId`만 보관. 칩의 표시 제목은 `useNotes()` 캐시에서 **라이브**로 읽음(이름 바꾸면 모든 참조 칩 자동 갱신). 활성 목록에 없는 id는 `useTombstoneNote(id)`(`?includeDeleted=true`)로 lazy hydrate → 회색 줄긋기 "삭제됨" 톰스톤 칩. 칩 클릭 시 `/?note=N` 네비. 본문 위에는 `NoteReferrers` 패널이 `useNoteReferrers(noteId)`로 "참조됨 N" 스트립을 렌더(참조 0개면 숨김). 백엔드는 `notes.deleted_at` + `note_links(from, to)` 조인 테이블 + `NoteLinkIndexer`(JSoup으로 `span[data-type="note-link"]` 추출)로 본문 저장 시점에 reverse index 갱신. `DELETE /api/notes/:id`는 soft delete로 바뀌었고 `/forever`가 hard delete. 디자인 근거 → `REFERENCES_BLUEPRINT.md` Part 2.
 
 ***시트 (`/sheets`) 핵심
 - **2-pane** (리스트 + 그리드). 모바일은 같은 단일-팬 드릴인 패턴.
@@ -206,7 +212,8 @@ src/
 ***엔티티 & 권한 규칙
 | 엔티티 | 위치 | 권한 |
 |---|---|---|
-| `Note` (id, title?, body LONGTEXT HTML, pinned, createdBy, ts) | `com.shareddocs.backend.note` | 읽기=인증 사용자 모두 / 수정=작성자 / 삭제=작성자 또는 ADMIN |
+| `Note` (id, title?, body LONGTEXT HTML, pinned, createdBy, ts, **deletedAt?**) | `com.shareddocs.backend.note` | 읽기=인증 사용자 모두 / 수정=작성자 / 삭제=작성자 또는 ADMIN (soft delete: 기본은 `deleted_at` 세팅 / `DELETE /forever`만 hard delete) |
+| `NoteLink` (from_note_id, to_note_id, composite PK) | `note` 패키지 | `NoteLinkIndexer`가 본문 저장 시점에 자동 채움 — 직접 쓰기 없음 |
 | `Attachment` (id, note FK, originalFilename, contentType, sizeBytes, storedFilename UUID, uploadedBy) | 같음 | 작성자만 업로드 / 작성자·ADMIN 삭제 |
 | `Sheet` (id, title?, data LONGTEXT JSON, pinned, createdBy, ts) | `com.shareddocs.backend.sheet` | Note와 동일 |
 | `Purchase` / `Settlement` / `RecurringPurchase` | `purchase/` / `settlement/` / `recurring/` | 같은 패턴 |
@@ -321,7 +328,7 @@ com.shareddocs.backend/
 - 결과 클릭 시 `/?note=N` 또는 `/sheets?sheet=N`으로 라우팅.
 
 ***아직 안 한 것 (다음 작업 우선순위)
-🚧 1. **메모 백링크** — `@`멘션 / `[[제목]]` 자동 링크 + soft-delete + tombstone + 참조됨 패널. 설계 → `REFERENCES_BLUEPRINT.md` Part 2. `note_links` 테이블 마이그레이션 필요.
+🚧 1. **휴지통 / 복원 UI** — 메모 백링크 도입으로 `DELETE /api/notes/:id`가 soft delete로 바뀜. `/forever` hard delete는 UI 경로가 없음. `/data/trash` 또는 `/관리/휴지통` 페이지 하나면 무료로 undo가 생긴다.
 🚧 2. **전역 헤더 + 아바타 드롭다운 + 로그아웃** — 현재 로그아웃 UI 경로 없음 (localStorage 비우는 게 유일).
 🚧 3. **유용한 링크 컬렉션** (`/data/links`) — OpenGraph 프리뷰.
 🚧 4. **레시피 컬렉션** (`/data/recipes`) — `@dnd-kit` 필요.

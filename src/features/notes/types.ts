@@ -12,6 +12,13 @@ export type Note = {
   createdBy: NoteUserRef
   createdAt: string
   updatedAt: string
+  deletedAt?: string | null
+}
+
+export type NoteSummary = {
+  id: number
+  title: string | null
+  updatedAt: string
 }
 
 export type CreateNotePayload = {

@@ -15,6 +15,7 @@ import NoteEditorMeta from './NoteEditorMeta'
 import NoteEditorMobileBar from './NoteEditorMobileBar'
 import NoteEditorTitle from './NoteEditorTitle'
 import NoteEditorToolbar from './NoteEditorToolbar'
+import NoteReferrers from './NoteReferrers'
 import styles from './NoteEditor.module.css'
 
 type Props = {
@@ -154,6 +155,7 @@ export default function NoteEditor({ note, onDeleted, onBack }: Props) {
             onTogglePin={handleTogglePin}
             onDelete={handleDelete}
           />
+          <NoteReferrers noteId={note.id} />
           <NoteEditorBody
             noteId={note.id}
             initialBody={note.body}

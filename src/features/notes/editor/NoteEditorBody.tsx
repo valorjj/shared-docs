@@ -7,17 +7,25 @@ import Link from '@tiptap/extension-link'
 import { TaskList } from '@tiptap/extension-task-list'
 import { TaskItem } from '@tiptap/extension-task-item'
 import { Table, TableRow, TableCell, TableHeader } from '@tiptap/extension-table'
-import { absoluteFileUrl } from '../api'
+import { absoluteFileUrl, useNotes } from '../api'
 import { DataSnapshot } from '../../snapshots/DataSnapshot'
 import { Tag } from './extensions/Tag'
+import { NoteLink } from './extensions/NoteLink'
 import {
   SlashCommand,
   type SlashKeyHandler,
   type SlashState,
 } from './extensions/SlashCommand'
+import {
+  MentionCommand,
+  type MentionItem,
+  type MentionKeyHandler,
+  type MentionState,
+} from './extensions/MentionCommand'
 import { buildSlashItems } from './slashItems'
 import NoteEditorBubbleMenu from './NoteEditorBubbleMenu'
 import SlashMenuPopup from './SlashMenuPopup'
+import MentionMenuPopup from './MentionMenuPopup'
 import styles from './NoteEditorBody.module.css'
 
 type Props = {
@@ -53,6 +61,20 @@ export default function NoteEditorBody({
     [onPickFile, onPickSnapshot],
   )
 
+  // @-mention state — same plumbing pattern as slash. The mention items
+  // are read live from the notes cache via refs so the Suggestion plugin
+  // (created once at editor mount) sees fresh data on every keystroke.
+  const [mentionState, setMentionState] = useState<MentionState | null>(null)
+  const mentionKeyHandlerRef = useRef<MentionKeyHandler | null>(null)
+  const mentionItemsRef = useRef<MentionItem[]>([])
+  const currentNoteIdRef = useRef<number | null>(noteId)
+  const { data: notes } = useNotes()
+  useEffect(() => {
+    mentionItemsRef.current =
+      notes?.map((n) => ({ id: n.id, title: n.title, updatedAt: n.updatedAt })) ?? []
+  }, [notes])
+  useEffect(() => { currentNoteIdRef.current = noteId }, [noteId])
+
   const editor = useEditor({
     extensions: [
       StarterKit,
@@ -66,6 +88,11 @@ export default function NoteEditorBody({
       TableHeader,
       TableCell,
       Tag,
+      // eslint-disable-next-line react-hooks/refs
+      NoteLink.configure({
+        itemsRef: mentionItemsRef,
+        currentNoteIdRef,
+      }),
       DataSnapshot,
       // Ref is stored on the extension and only read inside ProseMirror
       // keydown handlers — never during render.
@@ -76,6 +103,15 @@ export default function NoteEditorBody({
         onOpen: setSlashState,
         onUpdate: setSlashState,
         onClose: () => setSlashState(null),
+      }),
+      // eslint-disable-next-line react-hooks/refs
+      MentionCommand.configure({
+        itemsRef: mentionItemsRef,
+        currentNoteIdRef,
+        keyHandlerRef: mentionKeyHandlerRef,
+        onOpen: setMentionState,
+        onUpdate: setMentionState,
+        onClose: () => setMentionState(null),
       }),
     ],
     content: initialBody || '',
@@ -159,6 +195,9 @@ export default function NoteEditorBody({
       <NoteEditorBubbleMenu editor={editor} />
       {slashState && (
         <SlashMenuPopup state={slashState} keyHandlerRef={slashKeyHandlerRef} />
+      )}
+      {mentionState && (
+        <MentionMenuPopup state={mentionState} keyHandlerRef={mentionKeyHandlerRef} />
       )}
     </div>
   )
