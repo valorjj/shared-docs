@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import type { Editor } from '@tiptap/react'
 import {
   Bold,
@@ -15,16 +14,22 @@ import {
   Link as LinkIcon,
   Paperclip,
 } from 'lucide-react'
-import LinkDialog from './LinkDialog'
 import styles from './NoteEditorToolbar.module.css'
 
 type Props = {
   editor: Editor | null
   onPickFile: () => void
+  /** Parent owns the LinkDialog; toolbar just requests it open. The
+   *  context menu (also inside the editor body) requests it via the
+   *  same prop, so the dialog has a single source of truth. */
+  onRequestLinkDialog: () => void
 }
 
-export default function NoteEditorToolbar({ editor, onPickFile }: Props) {
-  const [linkDialogOpen, setLinkDialogOpen] = useState(false)
+export default function NoteEditorToolbar({
+  editor,
+  onPickFile,
+  onRequestLinkDialog,
+}: Props) {
   if (!editor) return null
 
   const btn = (
@@ -68,14 +73,8 @@ export default function NoteEditorToolbar({ editor, onPickFile }: Props) {
       {btn(editor.isActive('table'), '표', () =>
         editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run(), TableIcon)}
       <span className={styles.sep} aria-hidden="true" />
-      {btn(editor.isActive('link'), '링크', () => setLinkDialogOpen(true), LinkIcon)}
+      {btn(editor.isActive('link'), '링크', onRequestLinkDialog, LinkIcon)}
       {btn(false, '파일 첨부 (이미지 5MB까지)', onPickFile, Paperclip)}
-
-      <LinkDialog
-        open={linkDialogOpen}
-        editor={editor}
-        onClose={() => setLinkDialogOpen(false)}
-      />
     </div>
   )
 }

@@ -9,6 +9,7 @@ import {
 import type { Note } from '../types'
 import DataSnapshotPicker from '../../snapshots/DataSnapshotPicker'
 import type { SnapshotAttrs } from '../../snapshots/types'
+import LinkDialog from './LinkDialog'
 import NoteAttachments from './NoteAttachments'
 import NoteEditorBody from './NoteEditorBody'
 import NoteEditorMeta from './NoteEditorMeta'
@@ -34,6 +35,8 @@ export default function NoteEditor({ note, onDeleted, onBack }: Props) {
   const [editor, setEditor] = useState<Editor | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const [snapshotOpen, setSnapshotOpen] = useState(false)
+  const [linkDialogOpen, setLinkDialogOpen] = useState(false)
+  const openLinkDialog = useCallback(() => setLinkDialogOpen(true), [])
 
   // Autosave: pendingBody holds the latest HTML; bodyDirty drives the UI hint.
   const pendingBody = useRef<string | null>(null)
@@ -134,7 +137,11 @@ export default function NoteEditor({ note, onDeleted, onBack }: Props) {
   return (
     <div className={styles.root}>
       <NoteEditorMobileBar onBack={onBack} />
-      <NoteEditorToolbar editor={editor} onPickFile={onPickFile} />
+      <NoteEditorToolbar
+        editor={editor}
+        onPickFile={onPickFile}
+        onRequestLinkDialog={openLinkDialog}
+      />
       <input
         ref={fileInputRef}
         type="file"
@@ -165,6 +172,7 @@ export default function NoteEditor({ note, onDeleted, onBack }: Props) {
             onPickFile={onPickFile}
             onPickSnapshot={onPickSnapshot}
             registerEditor={setEditor}
+            onRequestLinkDialog={openLinkDialog}
           />
           <NoteAttachments noteId={note.id} />
         </div>
@@ -173,6 +181,11 @@ export default function NoteEditor({ note, onDeleted, onBack }: Props) {
         open={snapshotOpen}
         onOpenChange={setSnapshotOpen}
         onInsert={handleInsertSnapshot}
+      />
+      <LinkDialog
+        open={linkDialogOpen}
+        editor={editor}
+        onClose={() => setLinkDialogOpen(false)}
       />
     </div>
   )

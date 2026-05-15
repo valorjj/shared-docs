@@ -28,7 +28,6 @@ import SlashMenuPopup from './SlashMenuPopup'
 import MentionMenuPopup from './MentionMenuPopup'
 import LinkHoverPreview from './LinkHoverPreview'
 import EditorContextMenu from './EditorContextMenu'
-import LinkDialog from './LinkDialog'
 import styles from './NoteEditorBody.module.css'
 
 type Props = {
@@ -40,6 +39,10 @@ type Props = {
   onPickFile: () => void
   onPickSnapshot: () => void
   registerEditor: (editor: Editor | null) => void
+  /** Single source of truth for the link dialog lives in NoteEditor —
+   *  both this body's context menu and the toolbar's link button
+   *  open it via this prop. */
+  onRequestLinkDialog: () => void
 }
 
 const IMAGE_MIME = /^image\//
@@ -53,6 +56,7 @@ export default function NoteEditorBody({
   onPickFile,
   onPickSnapshot,
   registerEditor,
+  onRequestLinkDialog,
 }: Props) {
   const lastNoteId = useRef(noteId)
 
@@ -207,24 +211,15 @@ export default function NoteEditorBody({
   // delegate listeners — they hook into the editor's DOM via this node.
   const containerRef = useRef<HTMLDivElement | null>(null)
 
-  // Link dialog state — the context menu's 링크 편집 / 링크 추가 items
-  // open the same modal the toolbar uses.
-  const [linkDialogOpen, setLinkDialogOpen] = useState(false)
-
   return (
     <div className={styles.wrapper} ref={containerRef}>
       <EditorContent editor={editor} />
-      <NoteEditorBubbleMenu editor={editor} />
+      <NoteEditorBubbleMenu editor={editor} onRequestLinkDialog={onRequestLinkDialog} />
       <LinkHoverPreview containerRef={containerRef} />
       <EditorContextMenu
         containerRef={containerRef}
         editor={editor}
-        onRequestLinkDialog={() => setLinkDialogOpen(true)}
-      />
-      <LinkDialog
-        open={linkDialogOpen}
-        editor={editor}
-        onClose={() => setLinkDialogOpen(false)}
+        onRequestLinkDialog={onRequestLinkDialog}
       />
       {slashState && (
         <SlashMenuPopup state={slashState} keyHandlerRef={slashKeyHandlerRef} />
