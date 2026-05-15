@@ -44,6 +44,8 @@
   font-size: var(--fs-xl);
   font-weight: var(--fw-semi);
   color: var(--c-text);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tracking-display);
 }
 
 .indexSub {

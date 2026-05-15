@@ -10,8 +10,9 @@ import {
   Badge,
   Fab,
   IconButton,
-  Button,
   Skeleton,
+  EmptyState,
+  ErrorState,
 } from '../../components/ui'
 import { useAuth } from '../../auth/useAuth'
 import {
@@ -100,15 +101,14 @@ export default function AnniversaryList() {
           ))}
         </ul>
       )}
-      {isError && (
-        <p className="anniv__status anniv__status--error">
-          {error instanceof Error ? error.message : '데이터를 불러오지 못했습니다.'}{' '}
-          <Button variant="outline" size="sm" onClick={() => refetch()}>다시 시도</Button>
-        </p>
-      )}
+      {isError && <ErrorState error={error} onRetry={() => refetch()} />}
 
       {data && data.length === 0 && (
-        <p className="anniv__empty">아직 등록된 기념일이 없어요. + 버튼으로 추가하세요.</p>
+        <EmptyState
+          icon={<Cake size={24} strokeWidth={1.5} />}
+          title="아직 등록된 기념일이 없어요"
+          description="+ 버튼으로 결혼기념일이나 생일을 추가해 보세요."
+        />
       )}
 
       {upcoming.length > 0 && (

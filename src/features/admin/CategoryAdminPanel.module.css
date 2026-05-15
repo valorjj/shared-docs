@@ -17,6 +17,8 @@
   font-size: var(--fs-lg);
   font-weight: var(--fw-semi);
   color: var(--c-text);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tracking-display);
 }
 
 .status {
@@ -222,5 +224,23 @@
 
   .addRow {
     grid-template-columns: 1fr;
+  }
+}
+
+/* Touch hit-area overlays for the dense ↑/↓ and delete icon buttons.
+   Same invisible-pseudo-element pattern as the recipe editor. */
+@media (hover: none) and (pointer: coarse) {
+  .iconBtn {
+    position: relative;
+  }
+  .iconBtn::after {
+    content: '';
+    position: absolute;
+    inset: -10px;
+  }
+  /* Bump the name/color text inputs so they're easier to tap-to-edit */
+  .nameInput,
+  .colorInput {
+    padding: 10px 8px;
   }
 }

@@ -19,8 +19,8 @@
   font-family: var(--font-serif);
   font-size: var(--fs-xl);
   font-weight: var(--fw-bold);
-  line-height: 1.2;
-  letter-spacing: -0.01em;
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tracking-display);
   display: flex;
   align-items: center;
   gap: var(--sp-2);

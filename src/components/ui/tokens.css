@@ -64,6 +64,21 @@
   --fw-semi: 600;
   --fw-bold: 700;
 
+  /* Line-height scale. Use --lh-tight for serif display titles where
+     Korean glyphs need the descender headroom but a narrow leading; use
+     --lh-snug for chrome (nav, meta strips) and --lh-body for prose. */
+  --lh-tight: 1.25;
+  --lh-snug: 1.4;
+  --lh-body: 1.65;
+  --lh-loose: 1.85;
+
+  /* Korean glyphs sit on a wider em than Latin ones — tightening serif
+     display titles by a hair makes "기념일", "유용한 링크" etc. feel
+     less stretched without looking compressed. Roughly -0.5% to -1%. */
+  --tracking-display: -0.01em;
+  --tracking-tight: -0.005em;
+  --tracking-normal: 0;
+
   --shadow-sm: 0 1px 2px rgba(28, 25, 22, 0.04);
   --shadow-md: 0 4px 14px rgba(28, 25, 22, 0.08);
   --shadow-lg: 0 12px 32px rgba(28, 25, 22, 0.12);

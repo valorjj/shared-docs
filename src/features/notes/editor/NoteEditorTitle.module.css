@@ -7,9 +7,9 @@
   font-family: var(--font-serif);
   font-size: 30px;
   font-weight: var(--fw-semi);
-  letter-spacing: -0.02em;
+  letter-spacing: var(--tracking-display);
   color: var(--c-text);
-  line-height: 1.25;
+  line-height: var(--lh-tight);
   padding: 0;
 }
 

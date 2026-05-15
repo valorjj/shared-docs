@@ -8,7 +8,6 @@ import {
   PageTitle,
   BackLink,
   Card,
-  Stack,
   Row,
   Field,
   Label,
@@ -17,6 +16,7 @@ import {
   Button,
   Badge,
   Skeleton,
+  ErrorState,
 } from '../../components/ui'
 import { useAuth } from '../../auth/useAuth'
 import { useIsDesktop } from '../../lib/useMediaQuery'
@@ -272,14 +272,7 @@ export default function PurchaseList() {
           ))}
         </div>
       )}
-      {isError && (
-        <Stack gap={2} align="center" className="purchase__status purchase__status--error">
-          <span>{error instanceof Error ? error.message : '데이터를 불러오지 못했습니다.'}</span>
-          <Button variant="outline" size="sm" onClick={() => refetch()}>
-            다시 시도
-          </Button>
-        </Stack>
-      )}
+      {isError && <ErrorState error={error} onRetry={() => refetch()} />}
 
       {rows && (
         isDesktop ? (

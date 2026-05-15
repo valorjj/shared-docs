@@ -16,7 +16,8 @@
   font-size: 15px;
   font-weight: var(--fw-semi);
   color: var(--c-text-muted);
-  letter-spacing: -0.01em;
+  letter-spacing: var(--tracking-display);
+  line-height: var(--lh-snug);
 }
 
 .nav {

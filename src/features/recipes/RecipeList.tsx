@@ -9,6 +9,8 @@ import {
   Fab,
   Button,
   Skeleton,
+  EmptyState,
+  ErrorState,
 } from '../../components/ui'
 import {
   useCreateRecipe,
@@ -126,23 +128,19 @@ export default function RecipeList() {
           ))}
         </ul>
       )}
-      {isError && (
-        <p className="recipes__status recipes__status--error">
-          {error instanceof Error ? error.message : '데이터를 불러오지 못했습니다.'}{' '}
-          <Button variant="outline" size="sm" onClick={() => refetch()}>다시 시도</Button>
-        </p>
-      )}
+      {isError && <ErrorState error={error} onRetry={() => refetch()} />}
 
       {data && data.length === 0 && !isLoading && (
-        <div className="recipes__empty">
-          <span className="recipes__empty-icon" aria-hidden="true">
-            <ChefHat size={24} strokeWidth={1.5} />
-          </span>
-          <p className="recipes__empty-title">아직 저장한 레시피가 없어요</p>
-          <Button variant="outline" size="sm" onClick={handleCreate}>
-            첫 레시피 만들기
-          </Button>
-        </div>
+        <EmptyState
+          icon={<ChefHat size={24} strokeWidth={1.5} />}
+          title="아직 저장한 레시피가 없어요"
+          description="좋아하는 요리를 기록해 두면 인분 환산까지 자동으로 됩니다."
+          action={
+            <Button variant="outline" size="sm" onClick={handleCreate}>
+              첫 레시피 만들기
+            </Button>
+          }
+        />
       )}
 
       {data && filtered.length === 0 && data.length > 0 && (

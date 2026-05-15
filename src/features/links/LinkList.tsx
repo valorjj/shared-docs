@@ -8,6 +8,8 @@ import {
   Fab,
   Button,
   Skeleton,
+  EmptyState,
+  ErrorState,
 } from '../../components/ui'
 import {
   useUsefulLinks,
@@ -181,23 +183,19 @@ export default function LinkList() {
           </ul>
         )
       )}
-      {isError && (
-        <p className="links__status links__status--error">
-          {error instanceof Error ? error.message : '데이터를 불러오지 못했습니다.'}{' '}
-          <Button variant="outline" size="sm" onClick={() => refetch()}>다시 시도</Button>
-        </p>
-      )}
+      {isError && <ErrorState error={error} onRetry={() => refetch()} />}
 
       {data && data.length === 0 && !isLoading && (
-        <div className="links__empty">
-          <span className="links__empty-icon" aria-hidden="true">
-            <LinkIcon size={24} strokeWidth={1.5} />
-          </span>
-          <p className="links__empty-title">아직 저장한 링크가 없어요</p>
-          <Button variant="outline" size="sm" onClick={() => setAddOpen(true)}>
-            첫 링크 추가하기
-          </Button>
-        </div>
+        <EmptyState
+          icon={<LinkIcon size={24} strokeWidth={1.5} />}
+          title="아직 저장한 링크가 없어요"
+          description="URL을 붙여넣으면 OpenGraph 정보를 자동으로 불러옵니다."
+          action={
+            <Button variant="outline" size="sm" onClick={() => setAddOpen(true)}>
+              첫 링크 추가하기
+            </Button>
+          }
+        />
       )}
 
       {data && filtered.length === 0 && data.length > 0 && (

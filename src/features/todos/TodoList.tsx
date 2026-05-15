@@ -11,8 +11,9 @@ import {
   Badge,
   Fab,
   IconButton,
-  Button,
   Skeleton,
+  EmptyState,
+  ErrorState,
 } from '../../components/ui'
 import { useAuth } from '../../auth/useAuth'
 import {
@@ -100,17 +101,14 @@ export default function TodoList() {
           ))}
         </ul>
       )}
-      {isError && (
-        <p className="todos__status todos__status--error">
-          {error instanceof Error ? error.message : '데이터를 불러오지 못했습니다.'}{' '}
-          <Button variant="outline" size="sm" onClick={() => refetch()}>다시 시도</Button>
-        </p>
-      )}
+      {isError && <ErrorState error={error} onRetry={() => refetch()} />}
 
       {rows && rows.length === 0 && (
-        <div className="todos__empty">
-          {filter === 'done' ? '아직 완료된 항목이 없어요.' : '할 일이 없어요. + 버튼으로 추가하세요.'}
-        </div>
+        <EmptyState
+          icon={<ListTodo size={24} strokeWidth={1.5} />}
+          title={filter === 'done' ? '아직 완료된 항목이 없어요' : '할 일이 없어요'}
+          description={filter === 'done' ? undefined : '+ 버튼으로 새 할 일을 추가하세요.'}
+        />
       )}
 
       {rows && rows.length > 0 && (

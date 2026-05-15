@@ -80,3 +80,13 @@
   border-color: var(--c-danger-border);
   color: var(--c-danger);
 }
+
+@media (hover: none) and (pointer: coarse) {
+  /* Pills are 3px+13px text+padding ≈ 22px tall on desktop; bump them
+     to a thumb-friendly height on touch instead of overlay-padding
+     since the pills are visible buttons (not icon-only). */
+  .action {
+    padding: 8px 14px;
+    font-size: var(--fs-sm);
+  }
+}

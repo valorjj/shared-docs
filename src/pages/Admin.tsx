@@ -11,7 +11,7 @@ import {
   type AllowedEmail,
 } from '../api/admin'
 import { useAuth } from '../auth/useAuth'
-import { Spinner } from '../components/ui'
+import { ErrorState, Spinner } from '../components/ui'
 import type { Role } from '../auth/authContext'
 import './Admin.css'
 
@@ -43,12 +43,7 @@ export default function Admin() {
           <Spinner label="불러오는 중…" />
         </p>
       )}
-      {isError && (
-        <p className="admin__status admin__status--error">
-          {error instanceof Error ? error.message : '데이터를 불러오지 못했습니다.'}{' '}
-          <button type="button" onClick={() => refetch()}>다시 시도</button>
-        </p>
-      )}
+      {isError && <ErrorState error={error} onRetry={() => refetch()} />}
 
       {data && (
         <>

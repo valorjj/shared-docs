@@ -1,10 +1,9 @@
 import { Trash2 } from 'lucide-react'
-import { Skeleton } from '../../../components/ui'
+import { EmptyState, Skeleton } from '../../../components/ui'
 import type { Note } from '../types'
 import NoteListHeader from './NoteListHeader'
 import TrashListItem from './TrashListItem'
 import styles from './NoteList.module.css'
-import emptyStyles from './NoteListEmpty.module.css'
 
 type Props = {
   notes: Note[]
@@ -50,12 +49,11 @@ export default function TrashList({
             ))}
           </ul>
         ) : notes.length === 0 ? (
-          <div className={emptyStyles.root}>
-            <span className={emptyStyles.icon} aria-hidden="true">
-              <Trash2 size={24} strokeWidth={1.5} />
-            </span>
-            <p className={emptyStyles.title}>휴지통이 비어 있어요</p>
-          </div>
+          <EmptyState
+            icon={<Trash2 size={24} strokeWidth={1.5} />}
+            title="휴지통이 비어 있어요"
+            description="삭제한 메모는 여기로 옵니다."
+          />
         ) : (
           <ul className={styles.list}>
             {notes.map((n) => (

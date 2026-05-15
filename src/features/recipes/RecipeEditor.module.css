@@ -192,7 +192,8 @@
   font-size: var(--fs-2xl);
   font-weight: var(--fw-semi);
   color: var(--c-text);
-  line-height: 1.2;
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tracking-display);
   padding: var(--sp-2) 0;
   outline: none;
 }
@@ -343,6 +344,8 @@ button.metaPill:hover {
   font-size: var(--fs-md);
   font-weight: var(--fw-semi);
   color: var(--c-text);
+  line-height: var(--lh-snug);
+  letter-spacing: var(--tracking-tight);
   border-bottom: 1px solid var(--c-border-dashed);
   padding-bottom: 6px;
 }
@@ -526,5 +529,40 @@ button.metaPill:hover {
   background: var(--c-primary-soft);
   border-color: var(--c-primary-soft-strong);
   color: var(--c-primary);
+}
+
+/* ── Mobile touch-target overlays ────────────────────────────────────
+ *
+ * Dense inline controls (drag handle, stepper, sort arrows, row delete)
+ * stay visually compact but get a ≥44×44 invisible hit area on touch
+ * devices so they meet the Apple HIG minimum. Implemented as a
+ * pseudo-element so layout doesn't shift on viewport resize.
+ */
+@media (hover: none) and (pointer: coarse) {
+  .dragHandle,
+  .stepperBtn,
+  .rowDelete,
+  .heroAction,
+  .kebab {
+    position: relative;
+  }
+  .dragHandle::after,
+  .stepperBtn::after,
+  .rowDelete::after,
+  .heroAction::after,
+  .kebab::after {
+    content: '';
+    position: absolute;
+    inset: -12px;
+  }
+  /* Row delete is opacity-0 on desktop until row hover; force visible
+     on touch since hover doesn't exist. */
+  .rowDelete {
+    opacity: 1;
+  }
+  /* Hero actions are also hover-gated; show them on touch. */
+  .heroActions {
+    opacity: 1;
+  }
 }
 

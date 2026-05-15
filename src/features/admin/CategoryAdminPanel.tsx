@@ -2,6 +2,8 @@ import { useState, type FormEvent } from 'react'
 import { ChevronDown, ChevronUp, Plus, Trash2 } from 'lucide-react'
 import {
   Button,
+  EmptyState,
+  ErrorState,
   Field,
   Input,
   Label,
@@ -79,15 +81,10 @@ export default function CategoryAdminPanel({ kind }: Props) {
           ))}
         </ul>
       )}
-      {isError && (
-        <p className={`${styles.status} ${styles.error}`}>
-          불러오지 못했어요.{' '}
-          <Button variant="outline" size="sm" onClick={() => refetch()}>다시 시도</Button>
-        </p>
-      )}
+      {isError && <ErrorState onRetry={() => refetch()} />}
 
       {data && data.length === 0 && (
-        <p className={styles.empty}>등록된 카테고리가 없어요.</p>
+        <EmptyState variant="inline" title="등록된 카테고리가 없어요" />
       )}
 
       {sorted.length > 0 && (
