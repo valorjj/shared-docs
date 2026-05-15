@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { Editor } from '@tiptap/react'
 import {
   Bold,
@@ -14,6 +15,7 @@ import {
   Link as LinkIcon,
   Paperclip,
 } from 'lucide-react'
+import LinkDialog from './LinkDialog'
 import styles from './NoteEditorToolbar.module.css'
 
 type Props = {
@@ -22,18 +24,8 @@ type Props = {
 }
 
 export default function NoteEditorToolbar({ editor, onPickFile }: Props) {
+  const [linkDialogOpen, setLinkDialogOpen] = useState(false)
   if (!editor) return null
-
-  const promptLink = () => {
-    const previous = editor.getAttributes('link').href as string | undefined
-    const url = window.prompt('링크 URL', previous ?? 'https://')
-    if (url === null) return
-    if (url === '') {
-      editor.chain().focus().extendMarkRange('link').unsetLink().run()
-      return
-    }
-    editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run()
-  }
 
   const btn = (
     active: boolean,
@@ -76,8 +68,14 @@ export default function NoteEditorToolbar({ editor, onPickFile }: Props) {
       {btn(editor.isActive('table'), '표', () =>
         editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run(), TableIcon)}
       <span className={styles.sep} aria-hidden="true" />
-      {btn(editor.isActive('link'), '링크', promptLink, LinkIcon)}
+      {btn(editor.isActive('link'), '링크', () => setLinkDialogOpen(true), LinkIcon)}
       {btn(false, '파일 첨부 (이미지 5MB까지)', onPickFile, Paperclip)}
+
+      <LinkDialog
+        open={linkDialogOpen}
+        editor={editor}
+        onClose={() => setLinkDialogOpen(false)}
+      />
     </div>
   )
 }
