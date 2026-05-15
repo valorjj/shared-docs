@@ -7,6 +7,44 @@ import type {
   UpdateRecipePayload,
 } from './types'
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8090'
+
+/** Same cap as the note attachment gate — keeps a friendly client-side
+ *  rejection before the request leaves the browser. */
+export const MAX_RECIPE_IMAGE_BYTES = 5 * 1024 * 1024
+const MAX_LABEL = '5MB'
+
+export type UploadedFile = {
+  url: string
+  originalFilename: string
+  contentType: string
+  sizeBytes: number
+}
+
+/** Compose an absolute URL from a stored-file path like `/files/abc.jpg`. */
+export function absoluteFileUrl(pathOrUrl: string): string {
+  if (/^https?:\/\//i.test(pathOrUrl)) return pathOrUrl
+  return `${API_BASE}${pathOrUrl}`
+}
+
+async function uploadFileReq(file: File): Promise<UploadedFile> {
+  if (file.type.startsWith('image/') && file.size > MAX_RECIPE_IMAGE_BYTES) {
+    throw new Error(`이미지는 ${MAX_LABEL} 이하만 업로드할 수 있어요.`)
+  }
+  const form = new FormData()
+  form.append('file', file)
+  const { data } = await apiClient.post<UploadedFile>('/api/files/upload', form, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+  return data
+}
+
+export function useUploadFile() {
+  return useMutation({
+    mutationFn: (file: File) => uploadFileReq(file),
+  })
+}
+
 export const recipeKeys = {
   list: () => ['recipes', 'list'] as const,
   detail: (id: number) => ['recipes', 'detail', id] as const,

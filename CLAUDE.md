@@ -1,6 +1,6 @@
 shared-docs — 프로젝트 지침서
 > Claude Code와 함께 이어가기 위한 컨텍스트 및 작업 가이드
-> 최근 업데이트: 2026-05-15 (레시피 피처 + Tiptap suggestion plugin-key 핫픽스 후)
+> 최근 업데이트: 2026-05-15 (레시피 이미지 업로드 추가 후)
 
 ***프로젝트 개요
 진과 채연 두 사람을 위한 비공개 웹앱.
@@ -155,13 +155,13 @@ src/
 │   │   ├── LinkAddModal.tsx        ← URL 붙여넣기 → 디바운스 /preview → 미리보기 카드 → 저장
 │   │   ├── LinkEditModal.tsx       ← 제목/설명/메모/카테고리/고정 편집
 │   │   └── links.css
-│   ├── recipes/                    ← 🍳 레시피 (재료/순서 dnd-kit + 인분 환산)
+│   ├── recipes/                    ← 🍳 레시피 (재료/순서 dnd-kit + 인분 환산 + 이미지 업로드)
 │   │   ├── types.ts                ← Recipe + RecipeCategory + RecipeIngredient + RecipeStep
-│   │   ├── api.ts                  ← CRUD 훅 (PATCH는 ingredients/steps JSON 통째로 교체)
+│   │   ├── api.ts                  ← CRUD 훅 + useUploadFile (POST /api/files/upload) + absoluteFileUrl
 │   │   ├── recipeData.ts           ← JSON 파스/직렬화 + makeId + UNITS + scaleAmount
 │   │   ├── RecipeList.tsx          ← /data/recipes 그리드 (RecipeCard + 검색 + 카테고리 칩 + FAB)
 │   │   ├── RecipeCard.tsx          ← 카드 (hero image + 카테고리 + 제목 + 인분/재료수/시간)
-│   │   ├── RecipeEditor.tsx        ← /data/recipes/:id 풀페이지 에디터 (autosave 800ms + 인분 환산)
+│   │   ├── RecipeEditor.tsx        ← /data/recipes/:id 풀페이지 에디터 (autosave 800ms + 인분 환산 + hero 업로드)
 │   │   ├── IngredientRow.tsx       ← dnd-kit 정렬 행 (이름 + 양 + 단위)
 │   │   ├── StepRow.tsx             ← dnd-kit 정렬 행 (번호 + textarea)
 │   │   └── recipes.css / RecipeCard.module.css / RecipeEditor.module.css
@@ -246,7 +246,7 @@ src/
 읽기는 공유 데이터, 수정은 작성자, 삭제는 작성자+ADMIN — **이 패턴을 모든 새 엔티티에서 유지**.
 
 ***백엔드 파일 저장 (uploads)
-- `FileStorageService` (`note/` 패키지)가 `app.storage.upload-dir`로 파일 저장.
+- `FileStorageService` (`note/` 패키지)가 `app.storage.upload-dir`로 파일 저장. 일반 업로드는 `POST /api/files/upload` (multipart, 인증 필요) → `{ url: "/files/{stored}", ... }` 반환 — 레시피 hero 이미지 + 향후 다른 피처 공통 경로. 노트 첨부는 별도로 `POST /api/notes/:id/attachments` 유지 (FK가 필요해서 분리됨).
   - local: `./uploads`
   - docker: `/app/uploads` (docker-compose에서 `./uploads:/app/uploads` 볼륨 마운트)
 - 저장 파일명은 UUID + 확장자. 경로 트래버설 방어 (`startsWith(root)` 체크).
@@ -359,7 +359,6 @@ com.shareddocs.backend/
 🚧 4. **설정 서버 동기화** — 현재 localStorage 기반. 디바이스 간 동기화하려면 `user_settings` 테이블 필요.
 🚧 5. **첨부와 본문 inline 참조 동기화** — 현재 첨부 삭제는 본문 `<img>`/링크를 건드리지 않음 (사용자가 수동 정리).
 🚧 6. **데이터 스냅샷 v2 — 시트 셀 / 메모 블록 스냅샷** — 현재 v1은 `/data` 4종만. 시트 셀 값 또는 메모 블록 transclusion은 후속.
-🚧 7. **레시피 이미지 업로드** — 현재 v1은 URL 붙여넣기만. 첨부 인프라(`FileStorageService`)를 레시피로 확장하면 됨.
 
 ***메모 (Claude용)
 - `npm run dev` → localhost:5173. 백엔드를 로컬에서 띄울 땐 `POST /api/auth/dev-login`으로 Google 없이 JWT.

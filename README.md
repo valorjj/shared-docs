@@ -56,11 +56,12 @@ to two Google accounts via an OAuth + JWT pipeline; everything else
     per-link 메모 field, pin, 6 seeded categories (개발 / 디자인 / 글 /
     영상 / 도구 / 기타) with chip filter and search across title /
     description / note / URL
-  - 레시피 — recipe collection with hero image (URL), ingredients +
-    steps as `@dnd-kit`-sortable lists, 인분 환산 scaler that
-    re-renders amounts at any serving size without mutating the
-    baseline, 6 seeded categories (한식 / 일식 / 양식 / 중식 / 디저트 /
-    기타), debounced autosave
+  - 레시피 — recipe collection with hero image (paste-URL OR
+    click-to-upload via `POST /api/files/upload`), ingredients + steps
+    as `@dnd-kit`-sortable lists, 인분 환산 scaler that re-renders
+    amounts at any serving size without mutating the baseline, 6
+    seeded categories (한식 / 일식 / 양식 / 중식 / 디저트 / 기타),
+    debounced autosave
 - **캘린더** (`/calendar`) — Bear-style sidebar workspace too. Left
   rail = filter list of the four event sources (기념일 · 할 일 · 구매 ·
   정산) with live counts and toggle visibility; main pane shows the

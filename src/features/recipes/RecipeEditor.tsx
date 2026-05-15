@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
   DndContext,
@@ -21,10 +21,13 @@ import {
   Clock,
   ExternalLink,
   Image as ImageIcon,
+  Loader2,
   MoreHorizontal,
   Plus,
   Trash2,
+  Upload,
   Users,
+  X,
 } from 'lucide-react'
 import {
   Field,
@@ -38,10 +41,12 @@ import ConfirmDialog from '../../components/ui/ConfirmDialog'
 import { Menu, MenuItem, MenuSeparator } from '../../components/ui/Menu'
 import { useAuth } from '../../auth/useAuth'
 import {
+  absoluteFileUrl,
   useDeleteRecipe,
   useRecipe,
   useRecipeCategories,
   useUpdateRecipe,
+  useUploadFile,
 } from './api'
 import {
   makeId,
@@ -102,6 +107,8 @@ function RecipeEditorInner({ recipe }: { recipe: Recipe }) {
   const { data: categories } = useRecipeCategories()
   const update = useUpdateRecipe()
   const del = useDeleteRecipe()
+  const upload = useUploadFile()
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   // Local controlled state — autosave flushes debounced patches.
   const [title, setTitle] = useState(recipe.title)
@@ -225,6 +232,21 @@ function RecipeEditorInner({ recipe }: { recipe: Recipe }) {
     del.mutate(recipe.id, { onSuccess: () => navigate('/data/recipes', { replace: true }) })
   }
 
+  const handleUploadPick = () => fileInputRef.current?.click()
+
+  const handleFileSelected = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    upload.mutate(file, {
+      onSuccess: (res) => setImageUrl(absoluteFileUrl(res.url)),
+      onError: (err) =>
+        window.alert(err instanceof Error ? err.message : '업로드에 실패했어요.'),
+    })
+  }
+
+  const handleClearImage = () => setImageUrl('')
+
   return (
     <div className={styles.root}>
       <header className={styles.topBar}>
@@ -269,18 +291,70 @@ function RecipeEditorInner({ recipe }: { recipe: Recipe }) {
         </div>
       </header>
 
-      {imageUrl && (
-        <div className={styles.hero}>
-          <img
-            className={styles.heroImage}
-            src={imageUrl}
-            alt=""
-            onError={(e) => {
-              e.currentTarget.style.display = 'none'
-            }}
-          />
-        </div>
-      )}
+      <div className={styles.hero}>
+        {imageUrl ? (
+          <>
+            <img
+              className={styles.heroImage}
+              src={imageUrl}
+              alt=""
+              onError={(e) => { e.currentTarget.style.display = 'none' }}
+            />
+            <div className={styles.heroActions}>
+              <button
+                type="button"
+                className={styles.heroAction}
+                onClick={handleUploadPick}
+                disabled={upload.isPending}
+                title="다른 사진"
+              >
+                {upload.isPending ? (
+                  <Loader2 size={12} strokeWidth={2} className={styles.spin} aria-hidden="true" />
+                ) : (
+                  <Upload size={12} strokeWidth={2} aria-hidden="true" />
+                )}
+                다른 사진
+              </button>
+              <button
+                type="button"
+                className={styles.heroAction}
+                onClick={handleClearImage}
+                title="사진 제거"
+              >
+                <X size={12} strokeWidth={2} aria-hidden="true" />
+                제거
+              </button>
+            </div>
+          </>
+        ) : (
+          <button
+            type="button"
+            className={styles.heroEmpty}
+            onClick={handleUploadPick}
+            disabled={upload.isPending}
+          >
+            {upload.isPending ? (
+              <>
+                <Loader2 size={20} strokeWidth={1.6} className={styles.spin} aria-hidden="true" />
+                <span>업로드 중…</span>
+              </>
+            ) : (
+              <>
+                <Upload size={20} strokeWidth={1.6} aria-hidden="true" />
+                <span>사진 추가</span>
+                <span className={styles.heroEmptyHint}>5MB 이하 이미지</span>
+              </>
+            )}
+          </button>
+        )}
+      </div>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className={styles.hiddenFile}
+        onChange={handleFileSelected}
+      />
 
       <div className={styles.inner}>
         <input
