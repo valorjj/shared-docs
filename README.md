@@ -18,8 +18,12 @@ to two Google accounts via an OAuth + JWT pipeline; everything else
   with counts and click-to-filter. Paste / drag / clip-button image
   and file uploads. A note's attachments appear in a gallery strip
   below the body with thumbnails, filename + size pills, per-file
-  download and delete, and a full-screen image lightbox. Pin and
-  per-note autosave on every keystroke.
+  download and delete, and a full-screen image lightbox.
+  **`/ 데이터 스냅샷`** embeds a frozen card from `/data` (purchase
+  totals, settlement state, todo subsets, anniversaries) — the
+  numbers stay fixed at insertion time, with a per-card refresh
+  button when you want to recapture. Pin and per-note autosave on
+  every keystroke.
 - **시트** (`/sheets`) — lightweight spreadsheet. Two-pane workspace.
   On desktop a react-data-grid (column rename via header double-click,
   delete via hover ×, `+ 행` / `+ 열` toolbar). On mobile the same

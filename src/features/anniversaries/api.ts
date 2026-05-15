@@ -43,10 +43,11 @@ export const anniversaryKeys = {
   categories: () => ['anniversary-categories'] as const,
 }
 
-async function fetchList(): Promise<Anniversary[]> {
+export async function fetchAnniversaryList(): Promise<Anniversary[]> {
   const { data } = await apiClient.get<Anniversary[]>('/api/anniversaries')
   return data
 }
+const fetchList = fetchAnniversaryList
 
 async function fetchCategories(): Promise<AnniversaryCategory[]> {
   const { data } = await apiClient.get<AnniversaryCategory[]>('/api/anniversary-categories')

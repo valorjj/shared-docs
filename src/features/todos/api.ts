@@ -46,10 +46,11 @@ export const todoKeys = {
   categories: () => ['todo-categories'] as const,
 }
 
-async function fetchList(filter: TodoFilter): Promise<Todo[]> {
+export async function fetchTodoList(filter: TodoFilter): Promise<Todo[]> {
   const { data } = await apiClient.get<Todo[]>('/api/todos', { params: { filter } })
   return data
 }
+const fetchList = fetchTodoList
 
 async function fetchCategories(): Promise<TodoCategory[]> {
   const { data } = await apiClient.get<TodoCategory[]>('/api/todo-categories')

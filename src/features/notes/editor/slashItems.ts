@@ -7,16 +7,22 @@ import {
   ListTodo,
   Quote,
   Code,
+  Database,
   Table as TableIcon,
   Paperclip,
 } from 'lucide-react'
 import type { SlashItem } from './extensions/SlashCommand'
 
 /**
- * Slash menu command list. The `onPickFile` handler is injected from the
- * editor since file picking lives outside the Tiptap chain.
+ * Slash menu command list. The `onPickFile` + `onPickSnapshot` handlers
+ * are injected from the editor since they live outside the Tiptap chain
+ * (file picking opens a hidden <input>; data-snapshot picking opens a
+ * Radix Dialog owned by NoteEditor).
  */
-export function buildSlashItems(onPickFile: () => void): SlashItem[] {
+export function buildSlashItems(
+  onPickFile: () => void,
+  onPickSnapshot: () => void,
+): SlashItem[] {
   return [
     {
       id: 'h1',
@@ -103,6 +109,16 @@ export function buildSlashItems(onPickFile: () => void): SlashItem[] {
       run: (editor, range) => {
         editor.chain().focus().deleteRange(range).run()
         onPickFile()
+      },
+    },
+    {
+      id: 'data-snapshot',
+      title: '데이터 스냅샷',
+      hint: 'data snapshot',
+      Icon: Database,
+      run: (editor, range) => {
+        editor.chain().focus().deleteRange(range).run()
+        onPickSnapshot()
       },
     },
   ]

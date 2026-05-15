@@ -7,6 +7,8 @@ import {
   useUploadAttachment,
 } from '../api'
 import type { Note } from '../types'
+import DataSnapshotPicker from '../../snapshots/DataSnapshotPicker'
+import type { SnapshotAttrs } from '../../snapshots/types'
 import NoteAttachments from './NoteAttachments'
 import NoteEditorBody from './NoteEditorBody'
 import NoteEditorMeta from './NoteEditorMeta'
@@ -30,6 +32,7 @@ export default function NoteEditor({ note, onDeleted, onBack }: Props) {
 
   const [editor, setEditor] = useState<Editor | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const [snapshotOpen, setSnapshotOpen] = useState(false)
 
   // Autosave: pendingBody holds the latest HTML; bodyDirty drives the UI hint.
   const pendingBody = useRef<string | null>(null)
@@ -89,6 +92,12 @@ export default function NoteEditor({ note, onDeleted, onBack }: Props) {
   }
 
   const onPickFile = useCallback(() => fileInputRef.current?.click(), [])
+  const onPickSnapshot = useCallback(() => setSnapshotOpen(true), [])
+
+  const handleInsertSnapshot = (attrs: SnapshotAttrs) => {
+    if (!editor) return
+    editor.chain().focus().insertContent({ type: 'dataSnapshot', attrs }).run()
+  }
 
   const handlePickedFile = (file: File) => {
     void (async () => {
@@ -152,11 +161,17 @@ export default function NoteEditor({ note, onDeleted, onBack }: Props) {
             onUploadImage={onUploadImage}
             onUploadFile={onUploadFile}
             onPickFile={onPickFile}
+            onPickSnapshot={onPickSnapshot}
             registerEditor={setEditor}
           />
           <NoteAttachments noteId={note.id} />
         </div>
       </div>
+      <DataSnapshotPicker
+        open={snapshotOpen}
+        onOpenChange={setSnapshotOpen}
+        onInsert={handleInsertSnapshot}
+      />
     </div>
   )
 }

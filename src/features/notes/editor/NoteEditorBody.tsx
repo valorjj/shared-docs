@@ -8,6 +8,7 @@ import { TaskList } from '@tiptap/extension-task-list'
 import { TaskItem } from '@tiptap/extension-task-item'
 import { Table, TableRow, TableCell, TableHeader } from '@tiptap/extension-table'
 import { absoluteFileUrl } from '../api'
+import { DataSnapshot } from '../../snapshots/DataSnapshot'
 import { Tag } from './extensions/Tag'
 import {
   SlashCommand,
@@ -26,6 +27,7 @@ type Props = {
   onUploadImage: (file: File) => Promise<string>
   onUploadFile: (file: File) => Promise<{ url: string; filename: string; sizeBytes: number }>
   onPickFile: () => void
+  onPickSnapshot: () => void
   registerEditor: (editor: Editor | null) => void
 }
 
@@ -38,6 +40,7 @@ export default function NoteEditorBody({
   onUploadImage,
   onUploadFile,
   onPickFile,
+  onPickSnapshot,
   registerEditor,
 }: Props) {
   const lastNoteId = useRef(noteId)
@@ -45,7 +48,10 @@ export default function NoteEditorBody({
   // Slash menu state — driven from the Tiptap extension's callbacks.
   const [slashState, setSlashState] = useState<SlashState | null>(null)
   const slashKeyHandlerRef = useRef<SlashKeyHandler | null>(null)
-  const slashItems = useMemo(() => buildSlashItems(onPickFile), [onPickFile])
+  const slashItems = useMemo(
+    () => buildSlashItems(onPickFile, onPickSnapshot),
+    [onPickFile, onPickSnapshot],
+  )
 
   const editor = useEditor({
     extensions: [
@@ -60,6 +66,7 @@ export default function NoteEditorBody({
       TableHeader,
       TableCell,
       Tag,
+      DataSnapshot,
       // Ref is stored on the extension and only read inside ProseMirror
       // keydown handlers — never during render.
       // eslint-disable-next-line react-hooks/refs

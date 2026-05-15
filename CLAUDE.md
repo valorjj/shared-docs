@@ -1,6 +1,6 @@
 shared-docs — 프로젝트 지침서
 > Claude Code와 함께 이어가기 위한 컨텍스트 및 작업 가이드
-> 최근 업데이트: 2026-05-15 (테마/글꼴/줄간격 설정 후 + References 블루프린트 작성)
+> 최근 업데이트: 2026-05-15 (데이터 스냅샷 v1 추가 후)
 
 ***프로젝트 개요
 진과 채연 두 사람을 위한 비공개 웹앱.
@@ -110,6 +110,14 @@ src/
 │   │   │   ├── SheetEditorEmpty.tsx
 │   │   │   └── SheetEditorMobileBar.tsx
 │   │   └── shared/sheetData.ts     ← JSON 파스/직렬화 + 기본값 + nextColumnKey/Label
+│   ├── snapshots/                  ← ★ 데이터 스냅샷 (메모 본문에 frozen 카드)
+│   │   ├── types.ts                ← SnapshotKind/Filter/Frozen/Attrs
+│   │   ├── compute.ts              ← 순수 컴퓨터: filter + cached data → frozen
+│   │   ├── refresh.ts              ← queryClient.fetchQuery로 재캡처
+│   │   ├── sourceLink.ts           ← /data 딥링크 생성
+│   │   ├── DataSnapshot.ts         ← Tiptap block node (atom, draggable, JSON in data-* attrs)
+│   │   ├── DataSnapshotCard.tsx    ← React NodeView 카드 (새로고침/삭제 케밥)
+│   │   └── DataSnapshotPicker.tsx  ← Radix Dialog 2-step (종류 → 필터 + 미리보기)
 │   ├── settings/                   ← ★ 외형 설정 (테마/글꼴/줄간격)
 │   │   ├── SettingsProvider.tsx    ← localStorage 영속화 + <html>에 data-* 속성 반영
 │   │   ├── SettingsDialog.tsx      ← Radix Dialog, 3 섹션 (테마/글꼴/줄 간격), 클릭 즉시 적용
@@ -185,6 +193,7 @@ src/
 - **케밥 메뉴**: 메타 strip의 `…` → Radix DropdownMenu → 고정/해제 + 삭제 (ConfirmDialog).
 - **첨부 갤러리**: 본문 아래 `NoteAttachments` 섹션이 `useAttachments(noteId)`로 모든 첨부를 나열. 행 = 썸네일(이미지) / 파일 아이콘 + 이름 + `formatBytes()` 사이즈 + 다운로드 링크 + 케밥(삭제 → ConfirmDialog). 이미지 클릭 시 `NoteAttachmentLightbox` (Radix Dialog) 풀스크린 뷰어. 첨부가 0개면 섹션 자체가 숨겨짐. 본문에 삽입된 `<img>`/링크는 첨부 삭제와 독립 — 사용자가 본문에서도 함께 지워야 함 (ConfirmDialog 설명에 안내).
 - **이미지 첨부 크기 제한**: 클라이언트 게이트 `MAX_IMAGE_BYTES = 5MB` (`notes/api.ts`에서 export). `uploadAttachmentReq`가 `image/*` 타입의 5MB 초과 파일을 즉시 Korean Error로 reject — 네트워크 요청이 가지 않음. 서버 멀티파트 한도(20MB)는 백스톱. 에러 메시지는 `NoteEditor` / `NoteEditorBody`에서 `window.alert`로 노출. 비이미지 첨부에는 제한 없음 (서버 한도까지).
+- **데이터 스냅샷**: 슬래시 메뉴 `데이터 스냅샷` → `DataSnapshotPicker`(2-step Radix Dialog) → 본문에 `dataSnapshot` 블록 노드 삽입. 종류 4종: `purchase-total` / `settlement` / `todo-subset` / `anniversary`. 카드는 **frozen** 값을 그대로 렌더 — 자동 refetch 없음. 새로고침 버튼이 `queryClient.fetchQuery`로 재캡처 후 `updateAttributes({ frozen })`. JSON 필드는 `data-*` 속성에 stringify되어 라운드트립. 디자인 근거 → `REFERENCES_BLUEPRINT.md` Part 1.
 
 ***시트 (`/sheets`) 핵심
 - **2-pane** (리스트 + 그리드). 모바일은 같은 단일-팬 드릴인 패턴.
@@ -312,16 +321,16 @@ com.shareddocs.backend/
 - 결과 클릭 시 `/?note=N` 또는 `/sheets?sheet=N`으로 라우팅.
 
 ***아직 안 한 것 (다음 작업 우선순위)
-🚧 1. **데이터 스냅샷** — 메모 본문에 `/data` 슬라이스를 frozen 카드로 임베드. 설계 → `shared-docs-backend/docs/REFERENCES_BLUEPRINT.md` Part 1. 프런트 전용, 백엔드 무변경.
-🚧 2. **메모 백링크** — `@`멘션 / `[[제목]]` 자동 링크 + soft-delete + tombstone + 참조됨 패널. 설계 → `REFERENCES_BLUEPRINT.md` Part 2. `note_links` 테이블 마이그레이션 필요.
-🚧 3. **전역 헤더 + 아바타 드롭다운 + 로그아웃** — 현재 로그아웃 UI 경로 없음 (localStorage 비우는 게 유일).
-🚧 4. **유용한 링크 컬렉션** (`/data/links`) — OpenGraph 프리뷰.
-🚧 5. **레시피 컬렉션** (`/data/recipes`) — `@dnd-kit` 필요.
-🚧 6. **카테고리 관리 UI** — 각 피처의 "관리" 탭. 백엔드 API는 admin-only로 존재; 현재 curl만 가능.
-🚧 7. **노트/시트 사이드바를 `AppSidebar`로 통합** — 현재는 자체 `Sidebar` 보유. 같은 시각 규칙이지만 코드 중복.
-🚧 8. **시트 셀 검색 서버 사이드** — 현재 ⌘K 팔레트는 시트는 제목만 검색.
-🚧 9. **설정 서버 동기화** — 현재 localStorage 기반. 디바이스 간 동기화하려면 `user_settings` 테이블 필요.
-🚧 10. **첨부와 본문 inline 참조 동기화** — 현재 첨부 삭제는 본문 `<img>`/링크를 건드리지 않음 (사용자가 수동 정리).
+🚧 1. **메모 백링크** — `@`멘션 / `[[제목]]` 자동 링크 + soft-delete + tombstone + 참조됨 패널. 설계 → `REFERENCES_BLUEPRINT.md` Part 2. `note_links` 테이블 마이그레이션 필요.
+🚧 2. **전역 헤더 + 아바타 드롭다운 + 로그아웃** — 현재 로그아웃 UI 경로 없음 (localStorage 비우는 게 유일).
+🚧 3. **유용한 링크 컬렉션** (`/data/links`) — OpenGraph 프리뷰.
+🚧 4. **레시피 컬렉션** (`/data/recipes`) — `@dnd-kit` 필요.
+🚧 5. **카테고리 관리 UI** — 각 피처의 "관리" 탭. 백엔드 API는 admin-only로 존재; 현재 curl만 가능.
+🚧 6. **노트/시트 사이드바를 `AppSidebar`로 통합** — 현재는 자체 `Sidebar` 보유. 같은 시각 규칙이지만 코드 중복.
+🚧 7. **시트 셀 검색 서버 사이드** — 현재 ⌘K 팔레트는 시트는 제목만 검색.
+🚧 8. **설정 서버 동기화** — 현재 localStorage 기반. 디바이스 간 동기화하려면 `user_settings` 테이블 필요.
+🚧 9. **첨부와 본문 inline 참조 동기화** — 현재 첨부 삭제는 본문 `<img>`/링크를 건드리지 않음 (사용자가 수동 정리).
+🚧 10. **데이터 스냅샷 v2 — 시트 셀 / 메모 블록 스냅샷** — 현재 v1은 `/data` 4종만. 시트 셀 값 또는 메모 블록 transclusion은 후속.
 
 ***메모 (Claude용)
 - `npm run dev` → localhost:5173. 백엔드를 로컬에서 띄울 땐 `POST /api/auth/dev-login`으로 Google 없이 JWT.

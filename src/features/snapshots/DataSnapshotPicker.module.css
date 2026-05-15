@@ -1,0 +1,262 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--c-overlay);
+  z-index: 230;
+  animation: fadeIn var(--t-base);
+}
+
+.content {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(520px, calc(100vw - 24px));
+  max-height: 86vh;
+  z-index: 231;
+  background: var(--c-surface);
+  color: var(--c-text);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  font-family: var(--font-sans);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  outline: none;
+  animation: dropIn var(--t-base);
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  max-height: 86vh;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--c-border);
+}
+
+.headerSpacer {
+  width: 28px;
+  height: 28px;
+}
+
+.headerBack,
+.headerClose {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--r-sm);
+  background: transparent;
+  border: 0;
+  color: var(--c-text-muted);
+  cursor: pointer;
+}
+
+.headerBack:hover,
+.headerClose:hover,
+.headerBack:focus-visible,
+.headerClose:focus-visible {
+  background: var(--c-surface-tint);
+  color: var(--c-text);
+  outline: none;
+}
+
+.title {
+  flex: 1;
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-semi);
+  color: var(--c-text);
+  text-align: center;
+}
+
+/* ── Step 1: kind grid ───────────────────────────────────────────────── */
+.kindGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  padding: 14px;
+}
+
+.kindCard {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 14px;
+  background: transparent;
+  border: 1px solid var(--c-border-dashed);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  color: var(--c-text);
+  transition: background var(--t-fast), border-color var(--t-fast);
+}
+
+.kindCard:hover {
+  background: var(--c-surface-tint);
+  border-color: var(--c-border);
+}
+
+.kindIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--r-sm);
+  background: var(--c-surface-tint);
+  color: var(--c-text-muted);
+}
+
+.kindLabel {
+  font-size: var(--fs-base);
+  font-weight: var(--fw-semi);
+  color: var(--c-text);
+}
+
+.kindHint {
+  font-size: var(--fs-xs);
+  color: var(--c-text-muted);
+  line-height: 1.4;
+}
+
+/* ── Step 2: filter form ─────────────────────────────────────────────── */
+.form {
+  display: flex;
+  flex-direction: column;
+  padding: 14px;
+  gap: 12px;
+  overflow-y: auto;
+}
+
+.fields {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.fieldLabel {
+  font-size: var(--fs-xs);
+  color: var(--c-text-muted);
+  font-weight: var(--fw-medium);
+}
+
+.input,
+.select {
+  appearance: none;
+  height: 36px;
+  padding: 0 10px;
+  background: var(--c-surface-tint);
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+  font-family: inherit;
+  font-size: var(--fs-sm);
+  color: var(--c-text);
+  transition: background var(--t-fast), border-color var(--t-fast);
+}
+
+.input:focus,
+.select:focus {
+  outline: none;
+  background: var(--c-surface);
+  border-color: var(--c-border-strong);
+}
+
+.previewLabel {
+  font-size: var(--fs-xs);
+  color: var(--c-text-placeholder);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-top: 4px;
+}
+
+.previewSlot {
+  margin-bottom: 4px;
+}
+
+/* Mini-card preview — matches the real node-view geometry but inert. */
+.preview {
+  display: flex;
+  align-items: stretch;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border-dashed);
+  border-radius: var(--r-sm);
+  overflow: hidden;
+}
+
+.previewAccent {
+  width: 3px;
+  background: var(--c-accent);
+  flex-shrink: 0;
+}
+
+.previewBody {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.previewTopline {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  color: var(--c-text-muted);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.previewPrimary {
+  font-family: var(--font-serif);
+  font-size: 20px;
+  font-weight: var(--fw-semi);
+  color: var(--c-text);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+
+.previewSecondary {
+  font-size: var(--fs-sm);
+  color: var(--c-text-muted);
+}
+
+.formFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 4px;
+  border-top: 1px dashed var(--c-border-dashed);
+  margin-top: 4px;
+}
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes dropIn {
+  from { transform: translate(-50%, calc(-50% - 8px)); opacity: 0; }
+  to   { transform: translate(-50%, -50%); opacity: 1; }
+}
+
+@media (max-width: 767px) {
+  .content { width: calc(100vw - 16px); }
+  .kindGrid { grid-template-columns: 1fr; }
+  .fields { grid-template-columns: 1fr; }
+}

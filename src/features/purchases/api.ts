@@ -60,10 +60,11 @@ export const purchaseKeys = {
   categories: () => ['purchase-categories'] as const,
 }
 
-async function fetchList(from: string, to: string): Promise<Purchase[]> {
+export async function fetchPurchaseList(from: string, to: string): Promise<Purchase[]> {
   const { data } = await apiClient.get<Purchase[]>('/api/purchases', { params: { from, to } })
   return data
 }
+const fetchList = fetchPurchaseList
 
 async function createPurchase(payload: PurchasePayload): Promise<Purchase> {
   const { data } = await apiClient.post<Purchase>('/api/purchases', payload)

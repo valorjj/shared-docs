@@ -32,12 +32,13 @@ export const settlementKeys = {
   list: (yearMonth: string) => ['settlements', 'list', yearMonth] as const,
 }
 
-async function fetchList(yearMonth: string): Promise<SettlementRecord[]> {
+export async function fetchSettlementList(yearMonth: string): Promise<SettlementRecord[]> {
   const { data } = await apiClient.get<SettlementRecord[]>('/api/settlements', {
     params: { yearMonth },
   })
   return data
 }
+const fetchList = fetchSettlementList
 
 async function createSettlement(payload: CreateSettlementPayload): Promise<SettlementRecord> {
   const { data } = await apiClient.post<SettlementRecord>('/api/settlements', payload)
