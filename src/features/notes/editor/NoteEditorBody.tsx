@@ -7,6 +7,7 @@ import Link from '@tiptap/extension-link'
 import { TaskList } from '@tiptap/extension-task-list'
 import { TaskItem } from '@tiptap/extension-task-item'
 import { Table, TableRow, TableCell, TableHeader } from '@tiptap/extension-table'
+import { Highlight } from '@tiptap/extension-highlight'
 import { absoluteFileUrl, useNotes } from '../api'
 import { DataSnapshot } from '../../snapshots/DataSnapshot'
 import { Tag } from './extensions/Tag'
@@ -112,6 +113,7 @@ export default function NoteEditorBody({
       TableRow,
       TableHeader,
       TableCell,
+      Highlight,
       Tag,
       // eslint-disable-next-line react-hooks/refs
       NoteLink.configure({

@@ -1,6 +1,6 @@
 import { BubbleMenu } from '@tiptap/react/menus'
 import type { Editor } from '@tiptap/react'
-import { Bold, Italic, Strikethrough, Code, Link as LinkIcon } from 'lucide-react'
+import { Bold, Italic, Strikethrough, Highlighter, Code, Link as LinkIcon } from 'lucide-react'
 import { useIsTouch } from '../../../lib/useMediaQuery'
 import styles from './NoteEditorBubbleMenu.module.css'
 
@@ -34,6 +34,10 @@ export default function NoteEditorBubbleMenu({ editor, onRequestLinkDialog }: Pr
       <Btn active={editor.isActive('strike')} label="취소선"
         onClick={() => editor.chain().focus().toggleStrike().run()}>
         <Strikethrough size={14} strokeWidth={2} />
+      </Btn>
+      <Btn active={editor.isActive('highlight')} label="강조"
+        onClick={() => editor.chain().focus().toggleHighlight().run()}>
+        <Highlighter size={14} strokeWidth={2} />
       </Btn>
       <Btn active={editor.isActive('code')} label="코드"
         onClick={() => editor.chain().focus().toggleCode().run()}>

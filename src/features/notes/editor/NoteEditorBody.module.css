@@ -83,6 +83,14 @@
   text-underline-offset: 2px;
 }
 
+/* ── Highlight mark — single Bear-style swatch ── */
+.editor mark {
+  background: var(--c-highlight, #fff3a3);
+  color: inherit;
+  padding: 0 2px;
+  border-radius: var(--r-xs);
+}
+
 /* ── Hashtag mark ── */
 .editor :global(.memo-tag) {
   color: var(--c-accent);

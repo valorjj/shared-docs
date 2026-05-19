@@ -35,6 +35,9 @@
   --c-danger-border: #f1a8a3;
   --c-danger-bg: #fdecea;
 
+  /* Highlight mark — single warm-yellow swatch, Bear-style. */
+  --c-highlight: #fff3a3;
+
   --c-border: #e6e6e6;
   --c-border-strong: #d4d4d4;
   --c-border-dashed: #ededed;

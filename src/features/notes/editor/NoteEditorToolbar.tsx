@@ -3,6 +3,7 @@ import {
   Bold,
   Italic,
   Strikethrough,
+  Highlighter,
   Heading1,
   Heading2,
   Heading3,
@@ -59,6 +60,7 @@ export default function NoteEditorToolbar({
       {btn(editor.isActive('bold'), '굵게', () => editor.chain().focus().toggleBold().run(), Bold)}
       {btn(editor.isActive('italic'), '기울임', () => editor.chain().focus().toggleItalic().run(), Italic)}
       {btn(editor.isActive('strike'), '취소선', () => editor.chain().focus().toggleStrike().run(), Strikethrough)}
+      {btn(editor.isActive('highlight'), '강조', () => editor.chain().focus().toggleHighlight().run(), Highlighter)}
       <span className={styles.sep} aria-hidden="true" />
       {btn(editor.isActive('heading', { level: 1 }), '제목 1', () =>
         editor.chain().focus().toggleHeading({ level: 1 }).run(), Heading1)}
