@@ -1,6 +1,6 @@
 shared-docs — 프로젝트 지침서
 > Claude Code와 함께 이어가기 위한 컨텍스트 및 작업 가이드
-> 최근 업데이트: 2026-05-15 (메모 사이드바를 공유 AppSidebar로 통합 후)
+> 최근 업데이트: 2026-05-20 (메모 cross-entity 링킹 + 인라인 링크 카드 + 표 편집 + 사이드바 우클릭)
 
 ***프로젝트 개요
 진과 채연 두 사람을 위한 비공개 웹앱.
@@ -49,6 +49,7 @@ src/
 │   │   ├── Badge.tsx / Kbd.tsx / Modal.tsx / Tabs.tsx
 │   │   ├── ConfirmDialog.tsx       ← Radix Dialog 래퍼 (destructive variant)
 │   │   ├── Menu.tsx                ← Radix DropdownMenu 래퍼 + MenuItem + MenuSeparator
+│   │   ├── ContextMenu.tsx         ← 우클릭 포털 메뉴 (controlled, viewport clamp, outside-click) — 에디터/사이드바 공통
 │   │   └── index.ts
 │   └── common/                     ← 반응형 레이아웃 프리미티브
 │       ├── AppSidebar.tsx          ← Bear-풍 사이드바 셸 (brand/section/item) — Data + Calendar에서 사용
@@ -68,22 +69,27 @@ src/
 │   │   ├── list/
 │   │   │   ├── NoteList.tsx
 │   │   │   ├── NoteListHeader.tsx  ← 메모 N · + 새 메모 · 모바일 필터 chip (createDisabled 옵션)
-│   │   │   ├── NoteListItem.tsx
+│   │   │   ├── NoteListItem.tsx    ← onContextMenu prop으로 사이드바 우클릭 위임
+│   │   │   ├── NoteListContextMenu.tsx ← 행 우클릭 — 고정/제목변경/복제/링크복사/휴지통 + Rename Modal + ConfirmDialog
 │   │   │   ├── NoteListEmpty.tsx
 │   │   │   ├── TrashList.tsx       ← 휴지통 필터 활성 시 NoteList 대신 렌더
 │   │   │   └── TrashListItem.tsx   ← 행: 제목 + 본문 발췌 + 삭제됨 N일 전 + 복원/영구 삭제 pill
 │   │   ├── editor/
-│   │   │   ├── NoteEditor.tsx      ← 오케스트레이터 (autosave + pin/delete + uploads)
+│   │   │   ├── NoteEditor.tsx      ← 오케스트레이터 (autosave + pin/delete + uploads + LinkCard picker)
 │   │   │   ├── NoteEditorTitle.tsx ← serif 큰 제목 입력 (note id로 re-key)
 │   │   │   ├── NoteEditorMeta.tsx  ← 작성자·시간·저장 중 · 핀 표시 · 케밥 메뉴
-│   │   │   ├── NoteEditorToolbar.tsx ← B/I/S/H1/H2/리스트/체크리스트/인용/코드/표/링크/첨부
-│   │   │   ├── NoteEditorBody.tsx  ← Tiptap useEditor + 확장 등록 + 붙여넣기/드롭 핸들러
-│   │   │   ├── NoteEditorBubbleMenu.tsx ← 텍스트 선택 시 떠오르는 다크 풍선 (터치에선 숨김)
+│   │   │   ├── NoteEditorToolbar.tsx ← B/I/S/강조/H1-3/리스트/체크리스트/인용/코드/표/구분선/링크/링크카드/첨부
+│   │   │   ├── NoteEditorBody.tsx  ← Tiptap useEditor + 확장 등록 + 붙여넣기/드롭 + 링크 클릭 확인 다이얼로그
+│   │   │   ├── NoteEditorBubbleMenu.tsx ← 텍스트 선택 시 떠오르는 다크 풍선 (터치에선 숨김) — B/I/S/강조/코드/링크
 │   │   │   ├── NoteEditorEmpty.tsx
 │   │   │   ├── NoteEditorMobileBar.tsx ← 모바일 < 메모 뒤로가기
+│   │   │   ├── EditorContextMenu.tsx ← 본문 우클릭 — 링크/선택/빈본문/표 셀 4가지 컨텍스트
+│   │   │   ├── LinkDialog.tsx      ← 링크 추가/편집 모달 (window.prompt 대체)
+│   │   │   ├── LinkNavigateDialog.tsx ← 외부 링크 클릭 시 "열까요?" 확인 (Cmd/Ctrl-클릭은 통과)
+│   │   │   ├── LinkCardPicker.tsx  ← URL → OG 미리보기 → frozen 카드 삽입 Modal
 │   │   │   ├── SlashMenuPopup.tsx  ← '/' 명령 메뉴 (포털, 뷰포트 클램프)
-│   │   │   ├── slashItems.ts       ← 명령 리스트 (H1-3, lists, task, quote, code, table, file)
-│   │   │   ├── MentionMenuPopup.tsx ← '@' 멘션 팝업 (메모 후보 + 키보드 네비)
+│   │   │   ├── slashItems.ts       ← 명령 리스트 (H1-3, lists, task, quote, code, table, file, 링크 카드, 데이터 스냅샷)
+│   │   │   ├── MentionMenuPopup.tsx ← '@' 멘션 팝업 — /api/search/entities 호출 (180ms 디바운스)
 │   │   │   ├── NoteReferrers.tsx   ← 본문 위 '참조됨' 패널 (참조 0개면 숨김)
 │   │   │   ├── NoteAttachments.tsx ← 본문 아래 첨부 갤러리 섹션 (zero attachments면 숨김)
 │   │   │   ├── NoteAttachmentRow.tsx ← 썸네일(이미지) 또는 파일 아이콘 + 이름 + 사이즈 + 다운로드 + 케밥(삭제)
@@ -91,9 +97,11 @@ src/
 │   │   │   └── extensions/
 │   │   │       ├── Tag.ts          ← '#tag' 인라인 mark (trailing-space InputRule + markPasteRule)
 │   │   │       ├── SlashCommand.ts ← @tiptap/suggestion 래핑 확장
-│   │   │       ├── MentionCommand.ts ← '@' 멘션 — @tiptap/suggestion 래퍼, noteLink atom 삽입
-│   │   │       ├── NoteLink.ts     ← 인라인 atom 노드 (data-id 라운드트립) + '[[제목]]' InputRule
-│   │   │       └── NoteLinkChip.tsx ← React NodeView 칩 (캐시 라이브 제목 / 톰스톤 폴백)
+│   │   │       ├── MentionCommand.ts ← '@' 멘션 — @tiptap/suggestion 래퍼, entityLink atom 삽입 (서버 검색)
+│   │   │       ├── EntityLink.ts   ← 인라인 atom (kind + entityId + title) — 7종 cross-entity + '[[제목]]' InputRule (note only)
+│   │   │       ├── EntityLinkChip.tsx ← React NodeView — kind별 Lucide 아이콘 + 라우팅 (note/sheet는 라이브 캐시)
+│   │   │       ├── LinkCard.ts     ← frozen 인라인 OG 카드 block atom (data-url/title/description/image/favicon/site/captured)
+│   │   │       └── LinkCardView.tsx ← React NodeView 카드 (클릭=LinkNavigateDialog, 케밥=새로고침/삭제)
 │   │   └── shared/
 │   │       ├── PinButton.tsx       ← (현재 미사용; Menu의 핀 아이콘으로 흡수됨)
 │   │       ├── notePreview.ts      ← HTML → 평문 발췌, 제목 추출
@@ -204,25 +212,29 @@ src/
 ***공유 디자인 시스템 (`src/components/ui/`)
 - 모든 새 코드는 `src/components/ui` 또는 자체 피처 폴더의 컴포넌트에서 import.
 - 스타일링: **CSS Modules** (`*.module.css`) — 각 컴포넌트 옆에 위치. 글로벌 `tokens.css`의 변수 사용.
-- 토큰: `--c-primary` (navy, 액션/링크), `--c-accent` (Bear-red #e8434a, **희소하게** — 선택 레일·핀·해시태그), `--c-text/muted/subtle/placeholder`, `--c-bg` (웜 크림), `--c-surface` (흰), `--c-surface-tint`, `--c-border/strong/dashed`, `--sp-1..9`, `--r-xs/sm/md/lg/pill`, `--shadow-sm/md/lg/fab`, `--t-fast/base`.
+- 토큰: `--c-primary` (navy, 액션/링크), `--c-accent` (Bear-red #e8434a, **희소하게** — 선택 레일·핀·해시태그), `--c-highlight` (warm yellow swatch, mark 강조용 — light=#fff3a3, dark/dracula/monokai는 반투명), `--c-text/muted/subtle/placeholder`, `--c-bg` (웜 크림), `--c-surface` (흰), `--c-surface-tint`, `--c-border/strong/dashed`, `--sp-1..9`, `--r-xs/sm/md/lg/pill`, `--shadow-sm/md/lg/fab`, `--t-fast/base`.
 - 폰트: 본문 `Noto Sans KR`, 큰 제목 `Noto Serif KR`. 둘 다 `var(--font-sans/serif)`로.
 - Radix 프리미티브는 **선택적으로** 채택 — `ConfirmDialog`(=Dialog)와 `Menu`(=DropdownMenu)가 현재 두 도입처. 헤드리스만 가져와 CSS Modules로 입힘. Tailwind는 도입하지 않음.
 - **사이드바**는 `components/common/AppSidebar`로 통일 — `<AppSidebar brand>` + `<AppSidebarSection label>` + `<AppSidebarItem Icon label count active onClick>`. 모바일 미러는 `<AppSidebarSheet>` (Radix Dialog 슬라이드업). 데이터 / 캘린더 / 메모 전부 이 프리미티브 사용. 메모는 `NoteSidebarBody`라는 콘텐츠 컴포넌트로 데스크톱(AppSidebar)과 모바일(AppSidebarSheet) 양쪽에 같은 콘텐츠 주입.
 
 ***메모 (`/`) 핵심
 - **3-pane on desktop / 1-pane on mobile** — URL이 진실의 소스.
-- Tiptap v3 + StarterKit + Image + Link + Placeholder + TaskList + Table + 커스텀 **Tag** mark + 커스텀 **SlashCommand** 확장.
+- Tiptap v3 + StarterKit + Image + Link + Placeholder + TaskList + Table + **Highlight** mark + 커스텀 **Tag** mark + 커스텀 **EntityLink** atom + 커스텀 **LinkCard** block + 커스텀 **SlashCommand** + **MentionCommand** + **DataSnapshot** 확장.
 - **autosave**: 본문은 키 입력 후 600ms 디바운스 → PATCH `/api/notes/:id { body }`. 제목은 blur에 저장. 노트 전환/언마운트 시 flush.
 - **첨부**: 이미지 붙여넣기/드롭/툴바 클립 → `POST /api/notes/:id/attachments` (multipart) → 응답 URL을 `<img>`로 삽입. 비이미지 파일은 `📎 파일명` 링크로 삽입.
 - **태그**: 본문에 `#travel`/`#여행` 입력 후 **공백을 누르면** 인라인 mark로 변환 (Bear-red pill). 트리거는 trailing whitespace — `$`-anchored 규칙으로 매 키스트로크마다 발화시키면 문자가 사라지는 회귀가 있었음 (`Tag.ts`의 코멘트 참조). `shared/extractTags.ts`가 모든 노트의 HTML을 파스해 사이드바 태그 섹션을 만들고 카운트 표시 → 클릭 시 필터.
-- **slash menu**: `/` → 헤딩/리스트/체크리스트/인용/코드/표/파일첨부 명령 메뉴. 키보드 네비 (Up/Down/Enter/Tab/Esc), 뷰포트 클램프, 포털 렌더.
-- **bubble menu**: 텍스트 선택 시 뜨는 다크 풍선 (B/I/S/code/link). **터치 디바이스에선 숨김** — iOS 네이티브 선택 메뉴와 충돌하기 때문 (`useIsTouch`).
+- **slash menu**: `/` → 헤딩/리스트/체크리스트/인용/코드/표/파일첨부/링크 카드/데이터 스냅샷 명령 메뉴. 키보드 네비 (Up/Down/Enter/Tab/Esc), 뷰포트 클램프, 포털 렌더.
+- **bubble menu**: 텍스트 선택 시 뜨는 다크 풍선 (B/I/S/강조/code/link). **터치 디바이스에선 숨김** — iOS 네이티브 선택 메뉴와 충돌하기 때문 (`useIsTouch`).
+- **에디터 우클릭**: `EditorContextMenu`가 native 메뉴를 가로채고 4가지 컨텍스트 분기 — 링크(열기/편집/URL 복사/제거), 선택(복사/잘라내기/붙여넣기/링크 추가/모두 선택), 빈 본문(붙여넣기/모두 선택), 표 셀(행 추가 위/아래, 열 추가 좌/우, 셀 병합·분할, 머리글 토글, 행/열/표 삭제). 모두 공유 `ContextMenu` 프리미티브를 통해 렌더.
+- **사이드바 우클릭**: `NoteListItem`이 `onContextMenu`를 위로 위임하고 `NoteListContextMenu`가 행 우클릭에 — 고정/해제, 제목 변경(Modal), 복제, 링크 복사, 휴지통으로 이동(ConfirmDialog). 휴지통 행은 기존 복원/영구 삭제 pill 그대로.
+- **링크 클릭 확인**: `Link.openOnClick: false` + `containerRef`의 delegate 클릭 리스너가 외부 anchor를 `LinkNavigateDialog`(취소 / URL 복사 / 새 탭에서 열기)로 가로챔. Cmd/Ctrl/Shift/middle-click은 통과. 내부 `[data-type="entity-link"]` 칩은 React Router로 직접 네비게이트하므로 스킵.
+- **인라인 링크 카드 (frozen)**: 슬래시 메뉴 / 툴바 `링크 카드` → `LinkCardPicker`가 URL을 받아 `/api/links/preview`로 OG 미리보기를 가져온 뒤 `linkCard` 블록 노드를 삽입. 카드 attrs는 `{url, title, description, imageUrl, faviconUrl, siteName, capturedAt}`. **frozen** — 자동 refetch 없음. 케밥에서 `새로고침`(`updateAttributes`로 재캡처) / `삭제`(ConfirmDialog). 카드 클릭 = `LinkNavigateDialog`. DataSnapshot과 같은 아키텍처 (둘 다 frozen block atom — 한 패턴 두 소스).
 - **케밥 메뉴**: 메타 strip의 `…` → Radix DropdownMenu → 고정/해제 + 삭제 (ConfirmDialog).
 - **첨부 갤러리**: 본문 아래 `NoteAttachments` 섹션이 `useAttachments(noteId)`로 모든 첨부를 나열. 행 = 썸네일(이미지) / 파일 아이콘 + 이름 + `formatBytes()` 사이즈 + 다운로드 링크 + 케밥(삭제 → ConfirmDialog). 이미지 클릭 시 `NoteAttachmentLightbox` (Radix Dialog) 풀스크린 뷰어. 첨부가 0개면 섹션 자체가 숨겨짐. 본문에 삽입된 `<img>`/링크는 첨부 삭제와 독립 — 사용자가 본문에서도 함께 지워야 함 (ConfirmDialog 설명에 안내).
 - **이미지 첨부 크기 제한**: 클라이언트 게이트 `MAX_IMAGE_BYTES = 5MB` (`notes/api.ts`에서 export). `uploadAttachmentReq`가 `image/*` 타입의 5MB 초과 파일을 즉시 Korean Error로 reject — 네트워크 요청이 가지 않음. 서버 멀티파트 한도(20MB)는 백스톱. 에러 메시지는 `NoteEditor` / `NoteEditorBody`에서 `window.alert`로 노출. 비이미지 첨부에는 제한 없음 (서버 한도까지).
 - **데이터 스냅샷**: 슬래시 메뉴 `데이터 스냅샷` → `DataSnapshotPicker`(2-step Radix Dialog) → 본문에 `dataSnapshot` 블록 노드 삽입. 종류 4종: `purchase-total` / `settlement` / `todo-subset` / `anniversary`. 카드는 **frozen** 값을 그대로 렌더 — 자동 refetch 없음. 새로고침 버튼이 `queryClient.fetchQuery`로 재캡처 후 `updateAttributes({ frozen })`. JSON 필드는 `data-*` 속성에 stringify되어 라운드트립. 디자인 근거 → `REFERENCES_BLUEPRINT.md` Part 1.
-- **메모 백링크**: 본문에 `@`를 누르면 `MentionMenuPopup`이 열려 메모 후보를 보여주고 (제목 + `~분 전` 힌트, ↑/↓/Enter), 또는 `[[제목]]`을 타이핑해 닫는 `]]` 순간 InputRule이 같은 제목의 메모로 해석해서 칩으로 치환. 둘 다 인라인 atom `noteLink` 노드를 본문에 삽입 — 페이로드는 `noteId`만 보관. 칩의 표시 제목은 `useNotes()` 캐시에서 **라이브**로 읽음(이름 바꾸면 모든 참조 칩 자동 갱신). 활성 목록에 없는 id는 `useTombstoneNote(id)`(`?includeDeleted=true`)로 lazy hydrate → 회색 줄긋기 "삭제됨" 톰스톤 칩. 칩 클릭 시 `/?note=N` 네비. 본문 위에는 `NoteReferrers` 패널이 `useNoteReferrers(noteId)`로 "참조됨 N" 스트립을 렌더(참조 0개면 숨김). 백엔드는 `notes.deleted_at` + `note_links(from, to)` 조인 테이블 + `NoteLinkIndexer`(JSoup으로 `span[data-type="note-link"]` 추출)로 본문 저장 시점에 reverse index 갱신. `DELETE /api/notes/:id`는 soft delete로 바뀌었고 `/forever`가 hard delete. 디자인 근거 → `REFERENCES_BLUEPRINT.md` Part 2.
-- **휴지통**: 사이드바에 `휴지통 N` 항목(고정됨 다음). 활성화 시 NoteList 대신 `TrashList`가 행 단위로 삭제된 메모를 렌더 — 각 행에 **복원** / **영구 삭제** pill. 클릭으로 에디터를 열 수 없음(액션 전용). 복원은 `POST /api/notes/:id/restore` → `deleted_at` 클리어 + `NoteLinkIndexer.reindex()` 재실행(아웃바운드 링크 복귀). 영구 삭제는 `ConfirmDialog` 후 `DELETE /api/notes/:id/forever` → 첨부 파일 포함 완전 제거. 휴지통 카운트는 `useTrashNotes(filter.kind === 'trash')`로 지연 로드 — 한 번 열어야 카운트가 채워짐.
+- **Cross-entity 백링크 (2026-05-20 일반화)**: `@` → `MentionMenuPopup`이 열려 `/api/search/entities?q=...&perKind=6`을 180ms 디바운스로 호출. 결과는 7가지 kind 통합 — note / sheet / purchase / todo / anniversary / recipe / link. 픽한 항목은 인라인 atom `entityLink` 노드로 삽입 — attrs `{kind, entityId, title}`. `[[제목]]` InputRule은 **메모 전용**(Bear 원본 패턴 유지). 칩 (`EntityLinkChip`)은 kind별로 Lucide 아이콘 + 네비 타깃을 스위치 — `note`/`sheet`는 라이브 캐시(`useNotes`/`useSheets`)에서 제목 읽음(이름 바꾸면 모든 칩 자동 갱신, 삭제 시 톰스톤), 그 외 5종은 인서트 시점에 저장된 `data-title` 정적 표시(라이브가 필요해지면 per-kind `GET /api/<feature>/:id` 추가). 본문 위 `NoteReferrers` 패널은 `to_kind='note'`만 노출(메모↔메모 backlinks). **Wire 형식**: `<span data-type="entity-link" data-kind="..." data-id="..." data-title="...">`. 레거시 `data-type="note-link"`는 frontend/backend 양쪽에서 모두 파싱(기존 메모 무손실), 다음 본문 저장 시점에 새 형식으로 업그레이드됨. 백엔드는 `entity_refs(from_note_id, to_kind, to_id)` 조인 테이블 + `EntityRefIndexer`(JSoup, 두 셀렉터 모두 읽음, kind별 존재 검증)로 본문 저장 시점에 reverse index 갱신. `note_links` 레거시 테이블은 안전을 위해 유지 중 — 한 사이클 안정화 후 수동 `DROP TABLE`. 디자인 근거 → `REFERENCES_BLUEPRINT.md` Part 2 + Phase 1 generalization.
+- **휴지통**: 사이드바에 `휴지통 N` 항목(고정됨 다음). 활성화 시 NoteList 대신 `TrashList`가 행 단위로 삭제된 메모를 렌더 — 각 행에 **복원** / **영구 삭제** pill. 클릭으로 에디터를 열 수 없음(액션 전용). 복원은 `POST /api/notes/:id/restore` → `deleted_at` 클리어 + `EntityRefIndexer.reindex()` 재실행(아웃바운드 엣지 복귀). 영구 삭제는 `ConfirmDialog` 후 `DELETE /api/notes/:id/forever` → 첨부 파일 포함 완전 제거. 휴지통 카운트는 `useTrashNotes(filter.kind === 'trash')`로 지연 로드 — 한 번 열어야 카운트가 채워짐.
 
 ***시트 (`/sheets`) 핵심
 - **2-pane** (리스트 + 그리드). 모바일은 같은 단일-팬 드릴인 패턴.
@@ -236,7 +248,7 @@ src/
 | 엔티티 | 위치 | 권한 |
 |---|---|---|
 | `Note` (id, title?, body LONGTEXT HTML, pinned, createdBy, ts, **deletedAt?**) | `com.shareddocs.backend.note` | 읽기=인증 사용자 모두 / 수정=작성자 / 삭제=작성자 또는 ADMIN (soft delete: 기본은 `deleted_at` 세팅 / `DELETE /forever`만 hard delete) |
-| `NoteLink` (from_note_id, to_note_id, composite PK) | `note` 패키지 | `NoteLinkIndexer`가 본문 저장 시점에 자동 채움 — 직접 쓰기 없음 |
+| `EntityRef` (from_note_id, to_kind, to_id, composite PK) | `note` 패키지 | `EntityRefIndexer`가 본문 저장 시점에 자동 채움 — 직접 쓰기 없음. `to_kind`: note/sheet/purchase/todo/anniversary/recipe/link. 레거시 `note_links` 테이블은 안정화 후 수동 드롭 |
 | `Attachment` (id, note FK, originalFilename, contentType, sizeBytes, storedFilename UUID, uploadedBy) | 같음 | 작성자만 업로드 / 작성자·ADMIN 삭제 |
 | `Sheet` (id, title?, data LONGTEXT JSON, pinned, createdBy, ts) | `com.shareddocs.backend.sheet` | Note와 동일 |
 | `Purchase` / `Settlement` / `RecurringPurchase` | `purchase/` / `settlement/` / `recurring/` | 같은 패턴 |
@@ -322,7 +334,7 @@ src/
 ***백엔드 패키지 (현재)
 ```
 com.shareddocs.backend/
-├── note/           ← Note + Attachment + FileStorageService + FileController + 컨트롤러 5개
+├── note/           ← Note + Attachment + FileStorageService + FileController + EntityRef* (cross-entity 인덱스)
 ├── sheet/          ← Sheet + 컨트롤러
 ├── purchase/       ← Purchase + SplitMode + Category
 ├── settlement/     ← 정산 기록
@@ -330,6 +342,7 @@ com.shareddocs.backend/
 ├── anniversary/    ← + AnniversaryCategory
 ├── todo/           ← + TodoCategory
 ├── calendar/       ← 4-소스 집계 (anniversaries + todos due + purchases + settlements)
+├── search/         ← EntitySearchService + Controller (/api/search/entities 통합 LIKE 검색)
 ├── comment/        ← 댓글 (현재 메모/시트에는 미연결; 데이터 피처용)
 ├── user/ admin/ auth/ config/
 ```
@@ -352,10 +365,13 @@ com.shareddocs.backend/
 - 결과 클릭 시 `/?note=N` 또는 `/sheets?sheet=N`으로 라우팅.
 
 ***아직 안 한 것 (다음 작업 우선순위)
-🚧 1. **시트 셀 검색 서버 사이드** — 현재 ⌘K 팔레트는 시트는 제목만 검색.
-🚧 2. **설정 서버 동기화** — 현재 localStorage 기반. 디바이스 간 동기화하려면 `user_settings` 테이블 필요.
-🚧 3. **첨부와 본문 inline 참조 동기화** — 현재 첨부 삭제는 본문 `<img>`/링크를 건드리지 않음 (사용자가 수동 정리).
-🚧 4. **데이터 스냅샷 v2 — 시트 셀 / 메모 블록 스냅샷** — 현재 v1은 `/data` 4종만. 시트 셀 값 또는 메모 블록 transclusion은 후속.
+🚧 1. **캘린더 cross-entity 링크** — 캘린더 이벤트는 4개 소스 집계라 안정 ID 없음. Phase 3 계획: 평범한 `<a href="/calendar?date=YYYY-MM-DD">` 딥링크 + Calendar 아이콘으로 렌더, `entity_refs` 미사용. 멘션 팝업에 날짜 인식 케이스 추가.
+🚧 2. **non-note/sheet 칩 라이브 제목** — 현재 purchase/todo/anniversary/recipe/link 칩은 인서트 시점 `data-title` 정적 스냅샷. 라이브로 만들려면 per-feature `GET /api/<feature>/:id` 엔드포인트 + `useEntityTitle(kind, id)` 훅. 실제로 rename 후 칩이 stale해서 불편해질 때 도입.
+🚧 3. **레거시 `note_links` 테이블 드롭** — 새 `entity_refs`가 안정화되면 (한 사이클 정도 사용 후) 백엔드에 수동 `DROP TABLE note_links;`. `EntityRefBackfill`은 idempotent라 테이블 없어도 안전.
+🚧 4. **시트 셀 검색 서버 사이드** — 현재 ⌘K 팔레트는 시트는 제목만 검색. `/api/search/entities`의 sheet도 마찬가지.
+🚧 5. **설정 서버 동기화** — 현재 localStorage 기반. 디바이스 간 동기화하려면 `user_settings` 테이블 필요.
+🚧 6. **첨부와 본문 inline 참조 동기화** — 현재 첨부 삭제는 본문 `<img>`/링크를 건드리지 않음 (사용자가 수동 정리).
+🚧 7. **데이터 스냅샷 v2 — 시트 셀 / 메모 블록 스냅샷** — 현재 v1은 `/data` 4종만. 시트 셀 값 또는 메모 블록 transclusion은 후속.
 
 ***메모 (Claude용)
 - `npm run dev` → localhost:5173. 백엔드를 로컬에서 띄울 땐 `POST /api/auth/dev-login`으로 Google 없이 JWT.
