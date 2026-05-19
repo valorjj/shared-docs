@@ -11,7 +11,7 @@ import { Highlight } from '@tiptap/extension-highlight'
 import { absoluteFileUrl, useNotes } from '../api'
 import { DataSnapshot } from '../../snapshots/DataSnapshot'
 import { Tag } from './extensions/Tag'
-import { NoteLink } from './extensions/NoteLink'
+import { EntityLink } from './extensions/EntityLink'
 import { LinkCard } from './extensions/LinkCard'
 import {
   SlashCommand,
@@ -20,15 +20,14 @@ import {
 } from './extensions/SlashCommand'
 import {
   MentionCommand,
-  type MentionItem,
   type MentionKeyHandler,
   type MentionState,
 } from './extensions/MentionCommand'
+import type { NoteLinkLookupItem } from './extensions/EntityLink'
 import { buildSlashItems } from './slashItems'
 import NoteEditorBubbleMenu from './NoteEditorBubbleMenu'
 import SlashMenuPopup from './SlashMenuPopup'
 import MentionMenuPopup from './MentionMenuPopup'
-import LinkHoverPreview from './LinkHoverPreview'
 import LinkNavigateDialog from './LinkNavigateDialog'
 import EditorContextMenu from './EditorContextMenu'
 import styles from './NoteEditorBody.module.css'
@@ -73,16 +72,16 @@ export default function NoteEditorBody({
     [onPickFile, onPickSnapshot, onPickLinkCard],
   )
 
-  // @-mention state — same plumbing pattern as slash. The mention items
-  // are read live from the notes cache via refs so the Suggestion plugin
-  // (created once at editor mount) sees fresh data on every keystroke.
+  // @-mention state — popup owns search, this just plumbs trigger state.
   const [mentionState, setMentionState] = useState<MentionState | null>(null)
   const mentionKeyHandlerRef = useRef<MentionKeyHandler | null>(null)
-  const mentionItemsRef = useRef<MentionItem[]>([])
+  // Notes cache feeds the `[[title]]` input rule (note-only). The
+  // mention popup fetches results from /api/search/entities directly.
+  const noteLookupRef = useRef<NoteLinkLookupItem[]>([])
   const currentNoteIdRef = useRef<number | null>(noteId)
   const { data: notes } = useNotes()
   useEffect(() => {
-    mentionItemsRef.current =
+    noteLookupRef.current =
       notes?.map((n) => ({ id: n.id, title: n.title, updatedAt: n.updatedAt })) ?? []
   }, [notes])
   useEffect(() => { currentNoteIdRef.current = noteId }, [noteId])
@@ -116,8 +115,8 @@ export default function NoteEditorBody({
       Highlight,
       Tag,
       // eslint-disable-next-line react-hooks/refs
-      NoteLink.configure({
-        itemsRef: mentionItemsRef,
+      EntityLink.configure({
+        itemsRef: noteLookupRef,
         currentNoteIdRef,
       }),
       DataSnapshot,
@@ -134,7 +133,6 @@ export default function NoteEditorBody({
       }),
       // eslint-disable-next-line react-hooks/refs
       MentionCommand.configure({
-        itemsRef: mentionItemsRef,
         currentNoteIdRef,
         keyHandlerRef: mentionKeyHandlerRef,
         onOpen: setMentionState,
@@ -234,9 +232,11 @@ export default function NoteEditorBody({
       // to native behavior — power users keep their tab-open habit.
       if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return
       const target = e.target as HTMLElement | null
-      // Skip our internal entity-link chips — they navigate via React Router.
-      if (target?.closest('[data-type="note-link"]')) return
+      // Skip internal entity-link chips — they navigate via React Router.
+      // Accept the legacy selector too for old memos that haven't been
+      // re-saved into the new wire format yet.
       if (target?.closest('[data-type="entity-link"]')) return
+      if (target?.closest('[data-type="note-link"]')) return
       const anchor = target?.closest?.('a[href]') as HTMLAnchorElement | null
       if (!anchor) return
       const href = anchor.getAttribute('href') || ''
@@ -252,7 +252,6 @@ export default function NoteEditorBody({
     <div className={styles.wrapper} ref={containerRef}>
       <EditorContent editor={editor} />
       <NoteEditorBubbleMenu editor={editor} onRequestLinkDialog={onRequestLinkDialog} />
-      <LinkHoverPreview containerRef={containerRef} />
       <EditorContextMenu
         containerRef={containerRef}
         editor={editor}
@@ -267,7 +266,11 @@ export default function NoteEditorBody({
         <SlashMenuPopup state={slashState} keyHandlerRef={slashKeyHandlerRef} />
       )}
       {mentionState && (
-        <MentionMenuPopup state={mentionState} keyHandlerRef={mentionKeyHandlerRef} />
+        <MentionMenuPopup
+          state={mentionState}
+          keyHandlerRef={mentionKeyHandlerRef}
+          currentNoteId={noteId}
+        />
       )}
     </div>
   )

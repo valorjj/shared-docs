@@ -1,20 +1,27 @@
 import { Extension } from '@tiptap/core'
 import Suggestion from '@tiptap/suggestion'
 import { PluginKey } from '@tiptap/pm/state'
+import type { EntityKind } from './EntityLink'
 
 /** Distinct plugin key — see the equivalent comment in SlashCommand.ts.
  *  Two suggestion plugins sharing the default key crash the editor at
  *  mount with "Adding different instances of a keyed plugin (suggestion$)". */
 const MENTION_PLUGIN_KEY = new PluginKey('mentionCommand$')
 
+/**
+ * Picked item shape — mirrors backend's `EntityHit`. The popup fetches
+ * its own results from `/api/search/entities`; this extension only owns
+ * the trigger char + the command that inserts the chosen entity.
+ */
 export type MentionItem = {
+  kind: EntityKind
   id: number
-  title: string | null
-  updatedAt: string
+  title: string
+  hint?: string | null
 }
 
 export type MentionState = {
-  items: MentionItem[]
+  /** Selected index — owned by the popup, not by the suggestion plugin. */
   selected: number
   command: (item: MentionItem) => void
   clientRect: (() => DOMRect | null) | null
@@ -24,13 +31,7 @@ export type MentionState = {
 export type MentionKeyHandler = (event: KeyboardEvent) => boolean
 
 export interface MentionOptions {
-  /**
-   * Live, read-on-keystroke source of mention candidates. Stored as a ref
-   * so the Suggestion plugin (created once at editor mount) always sees
-   * fresh data when the user types `@`.
-   */
-  itemsRef: { current: MentionItem[] }
-  /** The note currently being edited — excluded to forbid self-references. */
+  /** Id of the note being edited — popup excludes self-mentions. */
   currentNoteIdRef: { current: number | null }
   onOpen: (state: MentionState) => void
   onUpdate: (state: MentionState) => void
@@ -39,16 +40,21 @@ export interface MentionOptions {
 }
 
 /**
- * `@`-mention popover that inserts a `noteLink` atom node into the editor.
- * Mirrors the structure of {@link SlashCommand} so the two suggestions
- * share their popup-state plumbing pattern.
+ * `@`-mention popover that inserts an `entityLink` atom node into the
+ * editor. Items are fetched from the backend by the popup component
+ * (see `MentionMenuPopup`) — this extension's `items` callback always
+ * returns `[]` because the popup owns the data flow.
+ *
+ * The `command` callback receives whichever `MentionItem` the popup
+ * passed to `state.command(...)`. Insert builds the entity-link node
+ * with `kind` / `entityId` / `title` attrs so the chip can resolve
+ * without an extra fetch.
  */
 export const MentionCommand = Extension.create<MentionOptions>({
-  name: 'noteMention',
+  name: 'entityMention',
 
   addOptions() {
     return {
-      itemsRef: { current: [] },
       currentNoteIdRef: { current: null },
       onOpen: () => {},
       onUpdate: () => {},
@@ -72,27 +78,25 @@ export const MentionCommand = Extension.create<MentionOptions>({
             .focus()
             .deleteRange(range)
             .insertContent([
-              { type: 'noteLink', attrs: { noteId: props.id } },
+              {
+                type: 'entityLink',
+                attrs: {
+                  kind: props.kind,
+                  entityId: props.id,
+                  title: props.title,
+                },
+              },
               { type: 'text', text: ' ' },
             ])
             .run()
         },
-        items: ({ query }) => {
-          const q = query.toLowerCase().trim()
-          const currentId = opts.currentNoteIdRef.current
-          const source = opts.itemsRef.current.filter((n) => n.id !== currentId)
-          const filtered = q
-            ? source.filter((n) => (n.title ?? '').toLowerCase().includes(q))
-            : source
-          return filtered
-            .slice()
-            .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
-            .slice(0, 8)
-        },
+        // Items fetched server-side by the popup. Return [] here so the
+        // Suggestion plugin doesn't filter or limit anything — the popup
+        // is the single source of truth for what's displayed.
+        items: () => [],
         render: () => ({
           onStart: (props) => {
             opts.onOpen({
-              items: props.items,
               selected: 0,
               command: (item) => props.command(item),
               clientRect: props.clientRect ?? null,
@@ -101,7 +105,6 @@ export const MentionCommand = Extension.create<MentionOptions>({
           },
           onUpdate: (props) => {
             opts.onUpdate({
-              items: props.items,
               selected: 0,
               command: (item) => props.command(item),
               clientRect: props.clientRect ?? null,
