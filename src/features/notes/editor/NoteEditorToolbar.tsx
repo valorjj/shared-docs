@@ -5,11 +5,14 @@ import {
   Strikethrough,
   Heading1,
   Heading2,
+  Heading3,
   List,
   ListOrdered,
   ListTodo,
   Quote,
   Code,
+  Minus,
+  Bookmark,
   Table as TableIcon,
   Link as LinkIcon,
   Paperclip,
@@ -23,12 +26,14 @@ type Props = {
    *  context menu (also inside the editor body) requests it via the
    *  same prop, so the dialog has a single source of truth. */
   onRequestLinkDialog: () => void
+  onPickLinkCard: () => void
 }
 
 export default function NoteEditorToolbar({
   editor,
   onPickFile,
   onRequestLinkDialog,
+  onPickLinkCard,
 }: Props) {
   if (!editor) return null
 
@@ -59,6 +64,8 @@ export default function NoteEditorToolbar({
         editor.chain().focus().toggleHeading({ level: 1 }).run(), Heading1)}
       {btn(editor.isActive('heading', { level: 2 }), '제목 2', () =>
         editor.chain().focus().toggleHeading({ level: 2 }).run(), Heading2)}
+      {btn(editor.isActive('heading', { level: 3 }), '제목 3', () =>
+        editor.chain().focus().toggleHeading({ level: 3 }).run(), Heading3)}
       <span className={styles.sep} aria-hidden="true" />
       {btn(editor.isActive('bulletList'), '글머리 기호', () =>
         editor.chain().focus().toggleBulletList().run(), List)}
@@ -72,8 +79,11 @@ export default function NoteEditorToolbar({
         editor.chain().focus().toggleCodeBlock().run(), Code)}
       {btn(editor.isActive('table'), '표', () =>
         editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run(), TableIcon)}
+      {btn(false, '구분선', () =>
+        editor.chain().focus().setHorizontalRule().run(), Minus)}
       <span className={styles.sep} aria-hidden="true" />
       {btn(editor.isActive('link'), '링크', onRequestLinkDialog, LinkIcon)}
+      {btn(false, '링크 카드', onPickLinkCard, Bookmark)}
       {btn(false, '파일 첨부 (이미지 5MB까지)', onPickFile, Paperclip)}
     </div>
   )

@@ -26,7 +26,14 @@ export interface NoteLinkOptions {
  * The backend's `NoteLinkIndexer` parses this exact selector to populate the
  * `note_links` join table. The inner text is only a fallback for SSR /
  * non-rich-view contexts; the React view ignores it.
+ *
+ * Phase 0 of cross-entity linking: a `kind` attribute is now stored on
+ * the node (default 'note'). It is *not* written to the wire format yet —
+ * `data-type="note-link"` stays the canonical selector for the backend
+ * indexer. Phase 1 will widen render/parse to `data-type="entity-link"`
+ * + `data-kind` once the backend's indexer is generalized.
  */
+export type EntityKind = 'note' // | 'sheet' | 'purchase' | 'todo' | ...
 /** Bracketed input pattern. Inner text 1-80 chars, no brackets/newlines.
  *  The `]$` anchor fires the rule when the user types the second `]`. */
 const BRACKET_PATTERN = /\[\[([^[\]\n]{1,80})\]\]$/
@@ -60,6 +67,14 @@ export const NoteLink = Node.create<NoteLinkOptions>({
           if (attrs.noteId == null) return {}
           return { 'data-id': String(attrs.noteId) }
         },
+      },
+      // Stored on the node but not yet written to the wire — see the
+      // header comment. Defaulting to 'note' makes Phase 1 a one-line
+      // serialization flip on this attribute.
+      kind: {
+        default: 'note' as EntityKind,
+        parseHTML: () => 'note' as EntityKind,
+        renderHTML: () => ({}),
       },
     }
   },

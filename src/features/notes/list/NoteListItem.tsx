@@ -8,9 +8,10 @@ type Props = {
   note: Note
   active: boolean
   onClick: () => void
+  onContextMenu?: (e: React.MouseEvent, note: Note) => void
 }
 
-export default function NoteListItem({ note, active, onClick }: Props) {
+export default function NoteListItem({ note, active, onClick, onContextMenu }: Props) {
   const title = noteDisplayTitle(note.title, note.body)
   const preview = notePreview(note.body, 90) || '내용 없음'
 
@@ -20,6 +21,7 @@ export default function NoteListItem({ note, active, onClick }: Props) {
         type="button"
         className={`${styles.row}${active ? ` ${styles.active}` : ''}`}
         onClick={onClick}
+        onContextMenu={onContextMenu ? (e) => onContextMenu(e, note) : undefined}
         aria-current={active ? 'true' : undefined}
       >
         <div className={styles.head}>

@@ -9,6 +9,8 @@ import {
 import type { Note } from '../types'
 import DataSnapshotPicker from '../../snapshots/DataSnapshotPicker'
 import type { SnapshotAttrs } from '../../snapshots/types'
+import LinkCardPicker from './LinkCardPicker'
+import type { LinkCardAttrs } from './extensions/LinkCard'
 import LinkDialog from './LinkDialog'
 import NoteAttachments from './NoteAttachments'
 import NoteEditorBody from './NoteEditorBody'
@@ -35,6 +37,7 @@ export default function NoteEditor({ note, onDeleted, onBack }: Props) {
   const [editor, setEditor] = useState<Editor | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const [snapshotOpen, setSnapshotOpen] = useState(false)
+  const [linkCardOpen, setLinkCardOpen] = useState(false)
   const [linkDialogOpen, setLinkDialogOpen] = useState(false)
   const openLinkDialog = useCallback(() => setLinkDialogOpen(true), [])
 
@@ -97,10 +100,16 @@ export default function NoteEditor({ note, onDeleted, onBack }: Props) {
 
   const onPickFile = useCallback(() => fileInputRef.current?.click(), [])
   const onPickSnapshot = useCallback(() => setSnapshotOpen(true), [])
+  const onPickLinkCard = useCallback(() => setLinkCardOpen(true), [])
 
   const handleInsertSnapshot = (attrs: SnapshotAttrs) => {
     if (!editor) return
     editor.chain().focus().insertContent({ type: 'dataSnapshot', attrs }).run()
+  }
+
+  const handleInsertLinkCard = (attrs: LinkCardAttrs) => {
+    if (!editor) return
+    editor.chain().focus().insertContent({ type: 'linkCard', attrs }).run()
   }
 
   const handlePickedFile = (file: File) => {
@@ -141,6 +150,7 @@ export default function NoteEditor({ note, onDeleted, onBack }: Props) {
         editor={editor}
         onPickFile={onPickFile}
         onRequestLinkDialog={openLinkDialog}
+        onPickLinkCard={onPickLinkCard}
       />
       <input
         ref={fileInputRef}
@@ -171,6 +181,7 @@ export default function NoteEditor({ note, onDeleted, onBack }: Props) {
             onUploadFile={onUploadFile}
             onPickFile={onPickFile}
             onPickSnapshot={onPickSnapshot}
+            onPickLinkCard={onPickLinkCard}
             registerEditor={setEditor}
             onRequestLinkDialog={openLinkDialog}
           />
@@ -181,6 +192,11 @@ export default function NoteEditor({ note, onDeleted, onBack }: Props) {
         open={snapshotOpen}
         onOpenChange={setSnapshotOpen}
         onInsert={handleInsertSnapshot}
+      />
+      <LinkCardPicker
+        open={linkCardOpen}
+        onClose={() => setLinkCardOpen(false)}
+        onInsert={handleInsertLinkCard}
       />
       <LinkDialog
         open={linkDialogOpen}

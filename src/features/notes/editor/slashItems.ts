@@ -8,20 +8,22 @@ import {
   Quote,
   Code,
   Database,
+  Link as LinkIcon,
   Table as TableIcon,
   Paperclip,
 } from 'lucide-react'
 import type { SlashItem } from './extensions/SlashCommand'
 
 /**
- * Slash menu command list. The `onPickFile` + `onPickSnapshot` handlers
- * are injected from the editor since they live outside the Tiptap chain
- * (file picking opens a hidden <input>; data-snapshot picking opens a
- * Radix Dialog owned by NoteEditor).
+ * Slash menu command list. The `onPickFile` / `onPickSnapshot` /
+ * `onPickLinkCard` handlers are injected from the editor since they
+ * live outside the Tiptap chain (file picking opens a hidden <input>;
+ * snapshot + link-card picking open Radix Dialogs owned by NoteEditor).
  */
 export function buildSlashItems(
   onPickFile: () => void,
   onPickSnapshot: () => void,
+  onPickLinkCard: () => void,
 ): SlashItem[] {
   return [
     {
@@ -109,6 +111,16 @@ export function buildSlashItems(
       run: (editor, range) => {
         editor.chain().focus().deleteRange(range).run()
         onPickFile()
+      },
+    },
+    {
+      id: 'link-card',
+      title: '링크 카드',
+      hint: 'link preview',
+      Icon: LinkIcon,
+      run: (editor, range) => {
+        editor.chain().focus().deleteRange(range).run()
+        onPickLinkCard()
       },
     },
     {

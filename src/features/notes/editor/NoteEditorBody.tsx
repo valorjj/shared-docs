@@ -11,6 +11,7 @@ import { absoluteFileUrl, useNotes } from '../api'
 import { DataSnapshot } from '../../snapshots/DataSnapshot'
 import { Tag } from './extensions/Tag'
 import { NoteLink } from './extensions/NoteLink'
+import { LinkCard } from './extensions/LinkCard'
 import {
   SlashCommand,
   type SlashKeyHandler,
@@ -27,6 +28,7 @@ import NoteEditorBubbleMenu from './NoteEditorBubbleMenu'
 import SlashMenuPopup from './SlashMenuPopup'
 import MentionMenuPopup from './MentionMenuPopup'
 import LinkHoverPreview from './LinkHoverPreview'
+import LinkNavigateDialog from './LinkNavigateDialog'
 import EditorContextMenu from './EditorContextMenu'
 import styles from './NoteEditorBody.module.css'
 
@@ -38,6 +40,7 @@ type Props = {
   onUploadFile: (file: File) => Promise<{ url: string; filename: string; sizeBytes: number }>
   onPickFile: () => void
   onPickSnapshot: () => void
+  onPickLinkCard: () => void
   registerEditor: (editor: Editor | null) => void
   /** Single source of truth for the link dialog lives in NoteEditor —
    *  both this body's context menu and the toolbar's link button
@@ -55,6 +58,7 @@ export default function NoteEditorBody({
   onUploadFile,
   onPickFile,
   onPickSnapshot,
+  onPickLinkCard,
   registerEditor,
   onRequestLinkDialog,
 }: Props) {
@@ -64,8 +68,8 @@ export default function NoteEditorBody({
   const [slashState, setSlashState] = useState<SlashState | null>(null)
   const slashKeyHandlerRef = useRef<SlashKeyHandler | null>(null)
   const slashItems = useMemo(
-    () => buildSlashItems(onPickFile, onPickSnapshot),
-    [onPickFile, onPickSnapshot],
+    () => buildSlashItems(onPickFile, onPickSnapshot, onPickLinkCard),
+    [onPickFile, onPickSnapshot, onPickLinkCard],
   )
 
   // @-mention state — same plumbing pattern as slash. The mention items
@@ -91,7 +95,10 @@ export default function NoteEditorBody({
       Image.configure({ inline: false, allowBase64: false }),
       Placeholder.configure({ placeholder: "내용을 입력하세요. '/' 를 누르면 메뉴가 열려요." }),
       Link.configure({
-        openOnClick: true,
+        // Plain clicks open the LinkNavigateDialog instead of navigating —
+        // we listen at the container ref below. Cmd/Ctrl-click still
+        // bypasses (handled in the delegate handler).
+        openOnClick: false,
         autolink: true,
         linkOnPaste: true,
         HTMLAttributes: {
@@ -112,6 +119,7 @@ export default function NoteEditorBody({
         currentNoteIdRef,
       }),
       DataSnapshot,
+      LinkCard,
       // Ref is stored on the extension and only read inside ProseMirror
       // keydown handlers — never during render.
       // eslint-disable-next-line react-hooks/refs
@@ -211,6 +219,33 @@ export default function NoteEditorBody({
   // delegate listeners — they hook into the editor's DOM via this node.
   const containerRef = useRef<HTMLDivElement | null>(null)
 
+  // Click-to-navigate confirm dialog. The Link extension has
+  // `openOnClick: false`; a delegate listener here promotes anchor
+  // clicks into a dialog so users can't accidentally jump out of the
+  // doc mid-edit. Cmd/Ctrl/middle-click bypasses (power-user escape).
+  const [pendingNavHref, setPendingNavHref] = useState<string | null>(null)
+  useEffect(() => {
+    const container = containerRef.current
+    if (!container) return
+    const onClick = (e: MouseEvent) => {
+      // Let modifier-clicks (cmd/ctrl/shift) and middle-clicks fall through
+      // to native behavior — power users keep their tab-open habit.
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return
+      const target = e.target as HTMLElement | null
+      // Skip our internal entity-link chips — they navigate via React Router.
+      if (target?.closest('[data-type="note-link"]')) return
+      if (target?.closest('[data-type="entity-link"]')) return
+      const anchor = target?.closest?.('a[href]') as HTMLAnchorElement | null
+      if (!anchor) return
+      const href = anchor.getAttribute('href') || ''
+      if (!/^https?:\/\//i.test(href) && !href.startsWith('/files/')) return
+      e.preventDefault()
+      setPendingNavHref(href)
+    }
+    container.addEventListener('click', onClick)
+    return () => container.removeEventListener('click', onClick)
+  }, [])
+
   return (
     <div className={styles.wrapper} ref={containerRef}>
       <EditorContent editor={editor} />
@@ -220,6 +255,11 @@ export default function NoteEditorBody({
         containerRef={containerRef}
         editor={editor}
         onRequestLinkDialog={onRequestLinkDialog}
+      />
+      <LinkNavigateDialog
+        open={pendingNavHref !== null}
+        href={pendingNavHref}
+        onClose={() => setPendingNavHref(null)}
       />
       {slashState && (
         <SlashMenuPopup state={slashState} keyHandlerRef={slashKeyHandlerRef} />

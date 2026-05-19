@@ -13,6 +13,7 @@ type Props = {
   onSelect: (id: number) => void
   onCreate: () => void
   onOpenFilters: () => void
+  onContextMenu?: (e: React.MouseEvent, note: Note) => void
 }
 
 export default function NoteList({
@@ -23,6 +24,7 @@ export default function NoteList({
   onSelect,
   onCreate,
   onOpenFilters,
+  onContextMenu,
 }: Props) {
   return (
     <div className={styles.root}>
@@ -55,6 +57,7 @@ export default function NoteList({
                 note={n}
                 active={n.id === activeId}
                 onClick={() => onSelect(n.id)}
+                onContextMenu={onContextMenu}
               />
             ))}
           </ul>

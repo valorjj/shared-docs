@@ -12,6 +12,9 @@ import { AppSidebarSheet } from '../../../components/common/AppSidebarSheet'
 import NoteEditor from '../editor/NoteEditor'
 import NoteEditorEmpty from '../editor/NoteEditorEmpty'
 import NoteList from '../list/NoteList'
+import NoteListContextMenu, {
+  type NoteListContextMenuState,
+} from '../list/NoteListContextMenu'
 import TrashList from '../list/TrashList'
 import NoteSidebarBody, { type SidebarFilter } from '../sidebar/NoteSidebarBody'
 import { buildTagCounts, noteHasTag } from '../shared/extractTags'
@@ -34,6 +37,7 @@ export default function NoteWorkspace() {
   const isMobile = useIsMobile()
   const [filter, setFilter] = useState<SidebarFilter>({ kind: 'all' })
   const [filtersSheetOpen, setFiltersSheetOpen] = useState(false)
+  const [rowMenu, setRowMenu] = useState<NoteListContextMenuState>(null)
 
   const noteParam = searchParams.get('note')
   const activeId = noteParam ? Number(noteParam) : null
@@ -133,6 +137,10 @@ export default function NoteWorkspace() {
               onSelect={selectNote}
               onCreate={handleCreate}
               onOpenFilters={() => setFiltersSheetOpen(true)}
+              onContextMenu={(e, note) => {
+                e.preventDefault()
+                setRowMenu({ note, x: e.clientX, y: e.clientY })
+              }}
             />
           )}
         </div>
@@ -161,6 +169,15 @@ export default function NoteWorkspace() {
           tags={tags}
         />
       </AppSidebarSheet>
+
+      <NoteListContextMenu
+        state={rowMenu}
+        onClose={() => setRowMenu(null)}
+        onAfterDuplicate={selectNote}
+        onAfterDelete={(id) => {
+          if (activeId === id) clearNote()
+        }}
+      />
     </div>
   )
 }

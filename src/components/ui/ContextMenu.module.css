@@ -29,16 +29,21 @@
   text-align: left;
 }
 
-.item:hover {
+.item:hover:not(:disabled) {
   background: var(--c-primary-soft);
   color: var(--c-primary);
+}
+
+.item:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .destructive {
   color: var(--c-danger);
 }
 
-.destructive:hover {
+.destructive:hover:not(:disabled) {
   background: var(--c-danger-soft);
   color: var(--c-danger);
 }

@@ -1,17 +1,36 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { createPortal } from 'react-dom'
+import { useCallback, useEffect, useState } from 'react'
 import type { Editor } from '@tiptap/react'
 import {
+  ArrowDownToLine,
+  ArrowLeftToLine,
+  ArrowRightToLine,
+  ArrowUpToLine,
   Clipboard,
+  Combine,
   Copy,
   ExternalLink,
+  Heading,
   Link as LinkIcon,
   Link2Off,
   MousePointer,
   Pencil,
+  Rows,
   Scissors,
+  Trash2,
+  X,
 } from 'lucide-react'
-import styles from './EditorContextMenu.module.css'
+import {
+  ContextMenu,
+  ContextMenuItem,
+  ContextMenuSeparator,
+} from '../../../components/ui'
+
+type MenuState = {
+  x: number
+  y: number
+  kind: 'link' | 'selection' | 'empty' | 'table'
+  href: string | null
+}
 
 /**
  * Bear-style custom context menu that fully replaces the browser's
@@ -21,8 +40,8 @@ import styles from './EditorContextMenu.module.css'
  * clicking on empty content offers paste / select all.
  *
  * The contextmenu event is captured at the editor's container ref —
- * we preventDefault so the OS menu never shows, then render our own
- * portaled menu at the cursor position.
+ * we preventDefault so the OS menu never shows, then drive the shared
+ * `ContextMenu` primitive in `components/ui`.
  */
 export default function EditorContextMenu({
   containerRef,
@@ -35,9 +54,7 @@ export default function EditorContextMenu({
   onRequestLinkDialog: () => void
 }) {
   const [state, setState] = useState<MenuState | null>(null)
-  const menuRef = useRef<HTMLDivElement | null>(null)
 
-  // Open on right-click anywhere inside the editor container.
   useEffect(() => {
     const container = containerRef.current
     if (!container || !editor) return
@@ -47,16 +64,14 @@ export default function EditorContextMenu({
       const target = e.target as HTMLElement | null
       const anchor = target?.closest?.('a[href]') as HTMLAnchorElement | null
       const href = anchor?.getAttribute('href') ?? null
+      const cell = !anchor ? target?.closest?.('td, th') : null
 
-      // For non-link right-clicks, mirror the editor's selection state.
       const sel = editor.state.selection
-      const hasSelection = !anchor && sel.from !== sel.to
+      const hasSelection = !anchor && !cell && sel.from !== sel.to
 
-      // If user right-clicked on a link without an explicit selection,
-      // make sure the cursor lands inside the link so subsequent commands
-      // (extendMarkRange) target the right range.
-      if (anchor && !hasSelection) {
-        // Find the ProseMirror position closest to the click point.
+      // Land the cursor inside the link/cell so subsequent commands
+      // (extendMarkRange, table actions) target the right range.
+      if ((anchor || cell) && !hasSelection) {
         const view = editor.view
         const pos = view.posAtCoords({ left: e.clientX, top: e.clientY })
         if (pos) {
@@ -65,59 +80,25 @@ export default function EditorContextMenu({
         }
       }
 
-      setState({
-        x: e.clientX,
-        y: e.clientY,
-        kind: anchor ? 'link' : hasSelection ? 'selection' : 'empty',
-        href,
-      })
+      const kind: MenuState['kind'] = anchor
+        ? 'link'
+        : cell
+          ? 'table'
+          : hasSelection
+            ? 'selection'
+            : 'empty'
+
+      setState({ x: e.clientX, y: e.clientY, kind, href })
     }
 
     container.addEventListener('contextmenu', onContext)
     return () => container.removeEventListener('contextmenu', onContext)
   }, [containerRef, editor])
 
-  // Close on outside click / scroll / Escape.
-  useEffect(() => {
-    if (!state) return
-    const onDown = (e: MouseEvent) => {
-      if (menuRef.current?.contains(e.target as Node)) return
-      setState(null)
-    }
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setState(null)
-    }
-    const onScroll = () => setState(null)
-    document.addEventListener('mousedown', onDown)
-    document.addEventListener('keydown', onKey)
-    window.addEventListener('scroll', onScroll, true)
-    return () => {
-      document.removeEventListener('mousedown', onDown)
-      document.removeEventListener('keydown', onKey)
-      window.removeEventListener('scroll', onScroll, true)
-    }
-  }, [state])
-
-  // Clamp the menu into the viewport after it renders so it never
-  // gets clipped at the right edge or bottom on narrow viewports.
-  useLayoutEffect(() => {
-    const el = menuRef.current
-    if (!el || !state) return
-    const PAD = 8
-    const w = el.offsetWidth
-    const h = el.offsetHeight
-    const left = Math.min(state.x, window.innerWidth - w - PAD)
-    const top = Math.min(state.y, window.innerHeight - h - PAD)
-    el.style.left = `${Math.max(PAD, left)}px`
-    el.style.top = `${Math.max(PAD, top)}px`
-    el.style.visibility = 'visible'
-  }, [state])
-
   const close = useCallback(() => setState(null), [])
 
   if (!state || !editor) return null
 
-  // ── command builders ───────────────────────────────────────────────
   const openLink = () => {
     if (state.href) window.open(state.href, '_blank', 'noopener,noreferrer')
     close()
@@ -158,8 +139,7 @@ export default function EditorContextMenu({
       const text = await navigator.clipboard.readText()
       if (text) editor.chain().focus().insertContent(text).run()
     } catch {
-      // The browser refused — usually because the document doesn't have
-      // focus or the clipboard-read permission was denied. Silent fail.
+      // Clipboard read denied (document not focused or permission off).
     }
     close()
   }
@@ -168,87 +148,111 @@ export default function EditorContextMenu({
     close()
   }
 
-  return createPortal(
-    <div
-      ref={menuRef}
-      className={styles.menu}
-      role="menu"
-      style={{ visibility: 'hidden' }}
-      onContextMenu={(e) => e.preventDefault()}
+  // ── table command builders ─────────────────────────────────────────
+  const tableCmd = (fn: (chain: ReturnType<Editor['chain']>) => ReturnType<Editor['chain']>) => () => {
+    fn(editor.chain().focus()).run()
+    close()
+  }
+  const addRowBefore = tableCmd((c) => c.addRowBefore())
+  const addRowAfter = tableCmd((c) => c.addRowAfter())
+  const deleteRow = tableCmd((c) => c.deleteRow())
+  const addColBefore = tableCmd((c) => c.addColumnBefore())
+  const addColAfter = tableCmd((c) => c.addColumnAfter())
+  const deleteCol = tableCmd((c) => c.deleteColumn())
+  const toggleHeaderRow = tableCmd((c) => c.toggleHeaderRow())
+  const mergeOrSplit = tableCmd((c) => c.mergeOrSplit())
+  const deleteTable = tableCmd((c) => c.deleteTable())
+
+  return (
+    <ContextMenu
+      open
+      position={{ x: state.x, y: state.y }}
+      onClose={close}
+      ariaLabel="에디터 메뉴"
     >
       {state.kind === 'link' && (
         <>
-          <MenuItem icon={<ExternalLink size={14} />} label="새 탭에서 열기" onSelect={openLink} />
-          <MenuItem icon={<Pencil size={14} />} label="링크 편집" onSelect={editLink} />
-          <MenuItem icon={<Copy size={14} />} label="URL 복사" onSelect={copyLinkUrl} />
-          <Separator />
-          <MenuItem
-            icon={<Link2Off size={14} />}
-            label="링크 제거"
-            destructive
-            onSelect={removeLink}
-          />
+          <ContextMenuItem icon={<ExternalLink size={14} />} onSelect={openLink}>
+            새 탭에서 열기
+          </ContextMenuItem>
+          <ContextMenuItem icon={<Pencil size={14} />} onSelect={editLink}>
+            링크 편집
+          </ContextMenuItem>
+          <ContextMenuItem icon={<Copy size={14} />} onSelect={copyLinkUrl}>
+            URL 복사
+          </ContextMenuItem>
+          <ContextMenuSeparator />
+          <ContextMenuItem icon={<Link2Off size={14} />} destructive onSelect={removeLink}>
+            링크 제거
+          </ContextMenuItem>
         </>
       )}
 
       {state.kind === 'selection' && (
         <>
-          <MenuItem icon={<Copy size={14} />} label="복사" onSelect={copySelection} />
-          <MenuItem icon={<Scissors size={14} />} label="잘라내기" onSelect={cutSelection} />
-          <MenuItem icon={<Clipboard size={14} />} label="붙여넣기" onSelect={pasteFromClipboard} />
-          <Separator />
-          <MenuItem icon={<LinkIcon size={14} />} label="링크 추가" onSelect={editLink} />
-          <MenuItem icon={<MousePointer size={14} />} label="모두 선택" onSelect={selectAll} />
+          <ContextMenuItem icon={<Copy size={14} />} onSelect={copySelection}>
+            복사
+          </ContextMenuItem>
+          <ContextMenuItem icon={<Scissors size={14} />} onSelect={cutSelection}>
+            잘라내기
+          </ContextMenuItem>
+          <ContextMenuItem icon={<Clipboard size={14} />} onSelect={pasteFromClipboard}>
+            붙여넣기
+          </ContextMenuItem>
+          <ContextMenuSeparator />
+          <ContextMenuItem icon={<LinkIcon size={14} />} onSelect={editLink}>
+            링크 추가
+          </ContextMenuItem>
+          <ContextMenuItem icon={<MousePointer size={14} />} onSelect={selectAll}>
+            모두 선택
+          </ContextMenuItem>
         </>
       )}
 
       {state.kind === 'empty' && (
         <>
-          <MenuItem icon={<Clipboard size={14} />} label="붙여넣기" onSelect={pasteFromClipboard} />
-          <MenuItem icon={<MousePointer size={14} />} label="모두 선택" onSelect={selectAll} />
+          <ContextMenuItem icon={<Clipboard size={14} />} onSelect={pasteFromClipboard}>
+            붙여넣기
+          </ContextMenuItem>
+          <ContextMenuItem icon={<MousePointer size={14} />} onSelect={selectAll}>
+            모두 선택
+          </ContextMenuItem>
         </>
       )}
-    </div>,
-    document.body,
+
+      {state.kind === 'table' && (
+        <>
+          <ContextMenuItem icon={<ArrowUpToLine size={14} />} onSelect={addRowBefore}>
+            위에 행 추가
+          </ContextMenuItem>
+          <ContextMenuItem icon={<ArrowDownToLine size={14} />} onSelect={addRowAfter}>
+            아래에 행 추가
+          </ContextMenuItem>
+          <ContextMenuItem icon={<ArrowLeftToLine size={14} />} onSelect={addColBefore}>
+            왼쪽에 열 추가
+          </ContextMenuItem>
+          <ContextMenuItem icon={<ArrowRightToLine size={14} />} onSelect={addColAfter}>
+            오른쪽에 열 추가
+          </ContextMenuItem>
+          <ContextMenuSeparator />
+          <ContextMenuItem icon={<Combine size={14} />} onSelect={mergeOrSplit}>
+            셀 병합 / 분할
+          </ContextMenuItem>
+          <ContextMenuItem icon={<Heading size={14} />} onSelect={toggleHeaderRow}>
+            머리글 행 토글
+          </ContextMenuItem>
+          <ContextMenuSeparator />
+          <ContextMenuItem icon={<Rows size={14} />} destructive onSelect={deleteRow}>
+            행 삭제
+          </ContextMenuItem>
+          <ContextMenuItem icon={<X size={14} />} destructive onSelect={deleteCol}>
+            열 삭제
+          </ContextMenuItem>
+          <ContextMenuItem icon={<Trash2 size={14} />} destructive onSelect={deleteTable}>
+            표 삭제
+          </ContextMenuItem>
+        </>
+      )}
+    </ContextMenu>
   )
-}
-
-type MenuState = {
-  x: number
-  y: number
-  kind: 'link' | 'selection' | 'empty'
-  href: string | null
-}
-
-function MenuItem({
-  icon,
-  label,
-  onSelect,
-  destructive = false,
-}: {
-  icon: React.ReactNode
-  label: string
-  onSelect: () => void
-  destructive?: boolean
-}) {
-  return (
-    <button
-      type="button"
-      role="menuitem"
-      className={`${styles.item}${destructive ? ` ${styles.destructive}` : ''}`}
-      onMouseDown={(e) => {
-        // Prevent stealing focus from the editor so editor commands run
-        // on the same selection that was active when the menu opened.
-        e.preventDefault()
-        onSelect()
-      }}
-    >
-      <span className={styles.itemIcon} aria-hidden="true">{icon}</span>
-      <span className={styles.itemLabel}>{label}</span>
-    </button>
-  )
-}
-
-function Separator() {
-  return <div className={styles.separator} role="separator" aria-hidden="true" />
 }
