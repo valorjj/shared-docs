@@ -27,10 +27,11 @@ export type NoteLinkLookupItem = {
 export interface EntityLinkOptions {
   /** Live source for the `[[title]]` input rule's lookup. Note-only;
    *  bracket shorthand exists for memos because that's the original
-   *  Bear pattern, but other kinds always go through `@`. */
-  itemsRef: { current: NoteLinkLookupItem[] }
+   *  Bear pattern, but other kinds always go through `@`.
+   *  Default `null` — see SlashCommand for the mergeDeep caveat. */
+  itemsRef: { current: NoteLinkLookupItem[] } | null
   /** Id of the note being edited — excluded so a note can't `[[link]]` to itself. */
-  currentNoteIdRef: { current: number | null }
+  currentNoteIdRef: { current: number | null } | null
 }
 
 /**
@@ -60,8 +61,8 @@ export const EntityLink = Node.create<EntityLinkOptions>({
 
   addOptions() {
     return {
-      itemsRef: { current: [] },
-      currentNoteIdRef: { current: null },
+      itemsRef: null,
+      currentNoteIdRef: null,
     }
   },
 
@@ -138,8 +139,10 @@ export const EntityLink = Node.create<EntityLinkOptions>({
         handler: ({ state, range, match }) => {
           const inner = match[1]?.trim()
           if (!inner) return null
-          const currentId = opts.currentNoteIdRef.current
-          const target = resolveByTitle(opts.itemsRef.current, inner, currentId)
+          const items = opts.itemsRef?.current
+          if (!items) return null
+          const currentId = opts.currentNoteIdRef?.current ?? null
+          const target = resolveByTitle(items, inner, currentId)
           if (!target) return null
           const node = type.create({ kind: 'note', entityId: target.id })
           state.tr.replaceWith(range.from, range.to, node)

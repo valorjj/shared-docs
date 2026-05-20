@@ -34,7 +34,13 @@ export interface SlashOptions {
   onOpen: (state: SlashState) => void
   onUpdate: (state: SlashState) => void
   onClose: () => void
-  keyHandlerRef: { current: SlashKeyHandler | null }
+  // Default is `null`, not `{ current: null }`. Tiptap's `configure()`
+  // calls `mergeDeep`, which recursively clones plain objects and would
+  // replace the caller's ref with a fresh `{ current: null }` clone —
+  // so popup writes (real ref) and bridge reads (cloned ref) would
+  // never see each other. Leaving the default non-plain-object keeps
+  // mergeDeep from recursing, so the caller's ref passes through.
+  keyHandlerRef: { current: SlashKeyHandler | null } | null
 }
 
 export const SlashCommand = Extension.create<SlashOptions>({
@@ -46,7 +52,7 @@ export const SlashCommand = Extension.create<SlashOptions>({
       onOpen: () => {},
       onUpdate: () => {},
       onClose: () => {},
-      keyHandlerRef: { current: null },
+      keyHandlerRef: null,
     }
   },
 
@@ -94,11 +100,7 @@ export const SlashCommand = Extension.create<SlashOptions>({
             })
           },
           onKeyDown: ({ event }) => {
-            const handler = keyHandlerRef.current
-            const handled = handler?.(event) ?? false
-            // eslint-disable-next-line no-console
-            console.log('[slash onKeyDown]', event.key, 'handler:', !!handler, 'handled:', handled)
-            return handled
+            return keyHandlerRef?.current?.(event) ?? false
           },
           onExit: () => {
             onClose()

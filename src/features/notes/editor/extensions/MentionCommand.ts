@@ -31,12 +31,15 @@ export type MentionState = {
 export type MentionKeyHandler = (event: KeyboardEvent) => boolean
 
 export interface MentionOptions {
-  /** Id of the note being edited — popup excludes self-mentions. */
-  currentNoteIdRef: { current: number | null }
+  /** Id of the note being edited — popup excludes self-mentions.
+   *  Default `null` because Tiptap's `configure()` deep-clones any
+   *  plain-object default and would silently swap the caller's ref
+   *  for a useless clone. See SlashCommand for the longer note. */
+  currentNoteIdRef: { current: number | null } | null
   onOpen: (state: MentionState) => void
   onUpdate: (state: MentionState) => void
   onClose: () => void
-  keyHandlerRef: { current: MentionKeyHandler | null }
+  keyHandlerRef: { current: MentionKeyHandler | null } | null
 }
 
 /**
@@ -55,11 +58,11 @@ export const MentionCommand = Extension.create<MentionOptions>({
 
   addOptions() {
     return {
-      currentNoteIdRef: { current: null },
+      currentNoteIdRef: null,
       onOpen: () => {},
       onUpdate: () => {},
       onClose: () => {},
-      keyHandlerRef: { current: null },
+      keyHandlerRef: null,
     }
   },
 
@@ -111,13 +114,7 @@ export const MentionCommand = Extension.create<MentionOptions>({
               query: props.query,
             })
           },
-          onKeyDown: ({ event }) => {
-            const handler = opts.keyHandlerRef.current
-            const handled = handler?.(event) ?? false
-            // eslint-disable-next-line no-console
-            console.log('[mention onKeyDown]', event.key, 'handler:', !!handler, 'handled:', handled)
-            return handled
-          },
+          onKeyDown: ({ event }) => opts.keyHandlerRef?.current?.(event) ?? false,
           onExit: () => opts.onClose(),
         }),
       }),
