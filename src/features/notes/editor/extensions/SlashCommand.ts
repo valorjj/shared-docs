@@ -94,7 +94,11 @@ export const SlashCommand = Extension.create<SlashOptions>({
             })
           },
           onKeyDown: ({ event }) => {
-            return keyHandlerRef.current?.(event) ?? false
+            const handler = keyHandlerRef.current
+            const handled = handler?.(event) ?? false
+            // eslint-disable-next-line no-console
+            console.log('[slash onKeyDown]', event.key, 'handler:', !!handler, 'handled:', handled)
+            return handled
           },
           onExit: () => {
             onClose()

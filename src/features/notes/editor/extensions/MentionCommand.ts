@@ -111,7 +111,13 @@ export const MentionCommand = Extension.create<MentionOptions>({
               query: props.query,
             })
           },
-          onKeyDown: ({ event }) => opts.keyHandlerRef.current?.(event) ?? false,
+          onKeyDown: ({ event }) => {
+            const handler = opts.keyHandlerRef.current
+            const handled = handler?.(event) ?? false
+            // eslint-disable-next-line no-console
+            console.log('[mention onKeyDown]', event.key, 'handler:', !!handler, 'handled:', handled)
+            return handled
+          },
           onExit: () => opts.onClose(),
         }),
       }),
