@@ -49,6 +49,8 @@ export default function SlashMenuPopup({ state, keyHandlerRef }: Props) {
   // cleanup→reinstall window per render that, under React 19, could
   // race ProseMirror's keydown read and leave the ref briefly null.
   useEffect(() => {
+    // eslint-disable-next-line no-console
+    console.log('[slash popup] effect install', { mounted: true })
     const handler: SlashKeyHandler = (event) => {
       const items = itemsRef.current
       if (items.length === 0) return false
@@ -72,6 +74,8 @@ export default function SlashMenuPopup({ state, keyHandlerRef }: Props) {
     }
     keyHandlerRef.current = handler
     return () => {
+      // eslint-disable-next-line no-console
+      console.log('[slash popup] effect cleanup', { wasOurs: keyHandlerRef.current === handler })
       if (keyHandlerRef.current === handler) keyHandlerRef.current = null
     }
   }, [keyHandlerRef])
