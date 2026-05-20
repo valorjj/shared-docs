@@ -75,6 +75,10 @@ export default function MentionMenuPopup({
     items.length === 0 ? 0 : Math.min(selected, items.length - 1)
   const itemsRef = useRef<MentionItem[]>(items)
   useEffect(() => { itemsRef.current = items }, [items])
+  // Mirror `state` into a ref so the keyboard handler can reach the
+  // latest `state.command` without re-installing on every keystroke.
+  const stateRef = useRef(state)
+  useEffect(() => { stateRef.current = state }, [state])
 
   useLayoutEffect(() => {
     const el = containerRef.current
@@ -92,6 +96,10 @@ export default function MentionMenuPopup({
     el.style.visibility = 'visible'
   }, [state, safeSelected, items])
 
+  // Install the keyboard handler once. Reading via refs avoids
+  // re-installing on every keystroke — the previous pattern had a
+  // cleanup→reinstall window per render that, under React 19, could
+  // race ProseMirror's keydown read and leave the ref briefly null.
   useEffect(() => {
     const handler: MentionKeyHandler = (event) => {
       const list = itemsRef.current
@@ -110,7 +118,7 @@ export default function MentionMenuPopup({
       if (event.key === 'Enter' || event.key === 'Tab') {
         const idx = Math.min(selectedRef.current, list.length - 1)
         const picked = list[idx] ?? list[0]
-        if (picked) state.command(picked)
+        if (picked) stateRef.current.command(picked)
         return true
       }
       if (event.key === 'Escape') return true
@@ -120,7 +128,7 @@ export default function MentionMenuPopup({
     return () => {
       if (keyHandlerRef.current === handler) keyHandlerRef.current = null
     }
-  }, [state, keyHandlerRef])
+  }, [keyHandlerRef])
 
   if (!queryEnabled) {
     return createPortal(

@@ -14,10 +14,12 @@ export default function SlashMenuPopup({ state, keyHandlerRef }: Props) {
   const itemsRef = useRef<SlashItem[]>(state.items)
   const selectedRef = useRef(selected)
 
-  // Mirror current items/selected into refs so the keyHandler can read
-  // fresh values without re-binding on every keystroke.
+  // Mirror current items/selected/state into refs so the keyHandler can
+  // read fresh values without re-binding on every keystroke.
   useEffect(() => { itemsRef.current = state.items }, [state.items])
   useEffect(() => { selectedRef.current = selected }, [selected])
+  const stateRef = useRef(state)
+  useEffect(() => { stateRef.current = state }, [state])
 
   // Clamp selected to a valid index during render — no syncing effect.
   const safeSelected =
@@ -42,7 +44,10 @@ export default function SlashMenuPopup({ state, keyHandlerRef }: Props) {
     el.style.visibility = 'visible'
   }, [state, safeSelected])
 
-  // Hook up keyboard navigation while the popup is open
+  // Install the keyboard handler once. Reading via refs avoids
+  // re-installing on every keystroke — the previous pattern had a
+  // cleanup→reinstall window per render that, under React 19, could
+  // race ProseMirror's keydown read and leave the ref briefly null.
   useEffect(() => {
     const handler: SlashKeyHandler = (event) => {
       const items = itemsRef.current
@@ -57,7 +62,7 @@ export default function SlashMenuPopup({ state, keyHandlerRef }: Props) {
       }
       if (event.key === 'Enter' || event.key === 'Tab') {
         const idx = Math.min(selectedRef.current, items.length - 1)
-        state.command(items[idx] ?? items[0])
+        stateRef.current.command(items[idx] ?? items[0])
         return true
       }
       if (event.key === 'Escape') {
@@ -69,7 +74,7 @@ export default function SlashMenuPopup({ state, keyHandlerRef }: Props) {
     return () => {
       if (keyHandlerRef.current === handler) keyHandlerRef.current = null
     }
-  }, [state, keyHandlerRef])
+  }, [keyHandlerRef])
 
   if (state.items.length === 0) return null
 
