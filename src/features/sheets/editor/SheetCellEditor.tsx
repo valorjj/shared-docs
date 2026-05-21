@@ -172,14 +172,8 @@ export default function SheetCellEditor({
   // pick mode.
   useEffect(() => {
     if (!onEditorApi) return
-    // eslint-disable-next-line no-console
-    console.log('[sheet] editor mount, publishing api')
     onEditorApi({ isPickReady, insertRef, replaceLastRef })
-    return () => {
-      // eslint-disable-next-line no-console
-      console.log('[sheet] editor unmount, clearing api')
-      onEditorApi(null)
-    }
+    return () => onEditorApi(null)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onEditorApi])
 

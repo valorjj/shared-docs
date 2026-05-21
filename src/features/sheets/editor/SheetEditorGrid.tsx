@@ -142,10 +142,7 @@ export default function SheetEditorGrid({ data, onChange }: Props) {
       // is focus shift); without it, the input blurs → rdg commits
       // the edit early.
       const api = editorApiRef.current
-      const ready = api?.isPickReady?.() ?? false
-      // eslint-disable-next-line no-console
-      console.log('[sheet] mousedown', { hasApi: !!api, pickReady: ready, cell: c })
-      if (api && ready) {
+      if (api && api.isPickReady()) {
         e.preventDefault()
         e.stopPropagation()
         api.insertRef(refFor(c.col, c.row))
@@ -323,6 +320,13 @@ export default function SheetEditorGrid({ data, onChange }: Props) {
       // Freeze the first column so it stays visible while scrolling
       // wide sheets. Common spreadsheet ergonomic — labels stay anchored.
       frozen: idx === 0,
+      // Turn off rdg's window-level commit-on-outside-click — it
+       // schedules a commit via `scheduler.postTask` *before* any of
+      // our capture-phase listeners run, which makes pick-mode
+      // impossible (the editor tears down before we can insert the
+      // ref). Our SheetCellEditor commits on its own blur, so this
+      // does NOT lose the "click outside to save" behavior.
+      editorOptions: { commitOnOutsideClick: false },
       cellClass: (row: GridRow) => {
         const ridx = Number(row._idx)
         const key = `${idx}:${ridx}`
