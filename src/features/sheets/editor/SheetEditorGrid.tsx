@@ -13,6 +13,12 @@ import {
   formatCellDisplay,
   isRightAligned,
 } from '../shared/sheetData'
+import {
+  buildFormulaResolver,
+  evaluateForDisplay,
+  isFormulaCell,
+  type FormulaResolver,
+} from '../shared/formula'
 import SheetStatusBar from './SheetStatusBar'
 import SheetHeaderMenu from './SheetHeaderMenu'
 import styles from './SheetEditorGrid.module.css'
@@ -50,6 +56,11 @@ export default function SheetEditorGrid({ data, onChange }: Props) {
     y: number
   } | null>(null)
 
+  // Per-render formula resolver. Memoized inside on the (column, row)
+  // coordinate so a chained ref (A1=B1+1, B1=C1*2) evaluates in linear
+  // time. Cycles surface as #CYCLE without infinite recursion.
+  const resolver = useMemo<FormulaResolver>(() => buildFormulaResolver(data), [data])
+
   const columns = useMemo<Column<GridRow>[]>(() => {
     return data.columns.map((col, idx) => ({
       key: col.key,
@@ -64,7 +75,11 @@ export default function SheetEditorGrid({ data, onChange }: Props) {
       cellClass: isRightAligned(col.kind) ? styles.cellRight : undefined,
       renderEditCell: renderTextEditor,
       renderCell: (p: RenderCellProps<GridRow>) => (
-        <DisplayCell value={String(p.row[col.key] ?? '')} kind={col.kind} />
+        <DisplayCell
+          raw={String(p.row[col.key] ?? '')}
+          kind={col.kind}
+          resolver={resolver}
+        />
       ),
       renderHeaderCell: (p: RenderHeaderCellProps<GridRow>) => (
         <HeaderCell
@@ -76,7 +91,7 @@ export default function SheetEditorGrid({ data, onChange }: Props) {
         />
       ),
     }))
-  }, [data.columns]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [data.columns, resolver]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function handleRowsChange(next: GridRow[]) {
     onChange({
@@ -149,7 +164,7 @@ export default function SheetEditorGrid({ data, onChange }: Props) {
         headerRowHeight={HEADER_HEIGHT}
         defaultColumnOptions={{ resizable: true }}
       />
-      <SheetStatusBar data={data} focusedColumnKey={focusedKey} />
+      <SheetStatusBar data={data} focusedColumnKey={focusedKey} resolver={resolver} />
       {headerMenuColumn && headerMenu && (
         <SheetHeaderMenu
           column={headerMenuColumn}
@@ -164,11 +179,27 @@ export default function SheetEditorGrid({ data, onChange }: Props) {
   )
 }
 
-function DisplayCell({ value, kind }: { value: string; kind: SheetColumnKind | undefined }) {
-  // Read the raw string from the row and run it through the kind-aware
-  // formatter. Edit mode bypasses this (react-data-grid uses
-  // `renderEditCell` instead), so the user always edits the raw value.
-  return <>{formatCellDisplay(value, kind)}</>
+function DisplayCell({
+  raw,
+  kind,
+  resolver,
+}: {
+  raw: string
+  kind: SheetColumnKind | undefined
+  resolver: FormulaResolver
+}) {
+  // Evaluate formulas (`=A1+B1`) before formatting. Errors render as
+  // their code (`#REF`, `#CYCLE`, …) — short enough that they don't
+  // wreck the column width. Edit mode bypasses this entirely via
+  // `renderEditCell`, so the user always edits the literal `=…` string.
+  if (isFormulaCell(raw)) {
+    const result = evaluateForDisplay(raw, resolver)
+    if (typeof result === 'number') {
+      return <>{formatCellDisplay(String(result), kind)}</>
+    }
+    return <>{String(result)}</>
+  }
+  return <>{formatCellDisplay(raw, kind)}</>
 }
 
 type HeaderCellProps = {
