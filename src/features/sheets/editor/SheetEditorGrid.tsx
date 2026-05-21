@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   DataGrid,
   type Column,
@@ -20,6 +20,7 @@ import {
   isFormulaCell,
   type FormulaResolver,
 } from '../shared/formula'
+import { parseCellNumber } from '../shared/sheetData'
 import SheetStatusBar from './SheetStatusBar'
 import SheetHeaderMenu from './SheetHeaderMenu'
 import SheetColumnRenameDialog from './SheetColumnRenameDialog'
@@ -71,10 +72,150 @@ export default function SheetEditorGrid({ data, onChange }: Props) {
   const [draft, setDraft] = useState<DraftFormula | null>(null)
   const onDraftChange = useCallback((d: DraftFormula | null) => setDraft(d), [])
 
+  // Drag-selection state for the floating sum/average bubble. We track
+  // the anchor (mousedown cell) and focus (current mouseover cell)
+  // separately so dragging upward / leftward still produces a
+  // well-ordered range. `null` means no selection (single click only).
+  const [selection, setSelection] = useState<{
+    anchorCol: number; anchorRow: number;
+    focusCol: number;  focusRow: number;
+  } | null>(null)
+  // Anchor refs for the document-level mousemove/mouseup listeners. We
+  // re-read these inside the handlers without rebinding, which keeps
+  // the drag cheap.
+  const dragAnchorRef = useRef<{ col: number; row: number } | null>(null)
+  const wrapperRef = useRef<HTMLDivElement | null>(null)
+
+  // Drag handlers — installed on the wrapper. We listen for mousedown
+  // on a cell, then watch window mousemove until mouseup. Cell coords
+  // are read from rdg's `aria-colindex` / `aria-rowindex` attrs (it
+  // sets them 1-based; we subtract one to get our 0-based indices).
+  useEffect(() => {
+    const wrapper = wrapperRef.current
+    if (!wrapper) return
+
+    const cellFromPoint = (x: number, y: number): { col: number; row: number } | null => {
+      const el = document.elementFromPoint(x, y) as HTMLElement | null
+      if (!el) return null
+      const cell = el.closest('[role="gridcell"]') as HTMLElement | null
+      if (!cell || !wrapper.contains(cell)) return null
+      const rawCol = cell.getAttribute('aria-colindex')
+      const rawRow = cell.parentElement?.getAttribute('aria-rowindex')
+      if (rawCol == null || rawRow == null) return null
+      // rdg counts the header row, so data rows start at 2. Our row
+      // index space is 0-based: subtract the header offset (1) and
+      // the 1-based aria index (1) → -2.
+      return { col: Number(rawCol) - 1, row: Number(rawRow) - 2 }
+    }
+
+    const onMouseDown = (e: MouseEvent) => {
+      if (e.button !== 0) return
+      const target = e.target as HTMLElement
+      // Skip header / editor / outside-grid clicks.
+      if (target.closest('[role="columnheader"]')) return
+      if (target.closest('input, textarea, select')) return
+      const c = cellFromPoint(e.clientX, e.clientY)
+      if (!c) return
+      dragAnchorRef.current = c
+      // Don't open a selection yet — single click is just a focus.
+      // Real selection blooms once the mouse moves into a *different* cell.
+    }
+
+    const onMouseMove = (e: MouseEvent) => {
+      const anchor = dragAnchorRef.current
+      if (!anchor) return
+      const c = cellFromPoint(e.clientX, e.clientY)
+      if (!c) return
+      if (c.col === anchor.col && c.row === anchor.row) {
+        // Mouse still inside the anchor — no selection yet.
+        setSelection(null)
+        return
+      }
+      setSelection({
+        anchorCol: anchor.col,
+        anchorRow: anchor.row,
+        focusCol: c.col,
+        focusRow: c.row,
+      })
+    }
+
+    const onMouseUp = () => {
+      dragAnchorRef.current = null
+    }
+
+    wrapper.addEventListener('mousedown', onMouseDown)
+    window.addEventListener('mousemove', onMouseMove)
+    window.addEventListener('mouseup', onMouseUp)
+    return () => {
+      wrapper.removeEventListener('mousedown', onMouseDown)
+      window.removeEventListener('mousemove', onMouseMove)
+      window.removeEventListener('mouseup', onMouseUp)
+    }
+  }, [])
+
   // Per-render formula resolver. Memoized inside on the (column, row)
   // coordinate so a chained ref (A1=B1+1, B1=C1*2) evaluates in linear
   // time. Cycles surface as #CYCLE without infinite recursion.
   const resolver = useMemo<FormulaResolver>(() => buildFormulaResolver(data), [data])
+
+  // Selected-cells map for cellClass lookup. Same `colIdx:rowIdx` key
+  // shape as `highlightMap` so the two can coexist on a single cell.
+  const selectionSet = useMemo<Set<string>>(() => {
+    if (!selection) return new Set()
+    const c0 = Math.min(selection.anchorCol, selection.focusCol)
+    const c1 = Math.max(selection.anchorCol, selection.focusCol)
+    const r0 = Math.min(selection.anchorRow, selection.focusRow)
+    const r1 = Math.max(selection.anchorRow, selection.focusRow)
+    const out = new Set<string>()
+    for (let r = r0; r <= r1; r++) {
+      for (let c = c0; c <= c1; c++) out.add(`${c}:${r}`)
+    }
+    return out
+  }, [selection])
+
+  // Sum / avg / count over numeric cells in the current selection.
+  // Reuses the formula resolver so a selected formula cell contributes
+  // its evaluated value, not the raw `=…` string.
+  const selectionStats = useMemo(() => {
+    if (!selection) return null
+    const c0 = Math.min(selection.anchorCol, selection.focusCol)
+    const c1 = Math.max(selection.anchorCol, selection.focusCol)
+    const r0 = Math.min(selection.anchorRow, selection.focusRow)
+    const r1 = Math.max(selection.anchorRow, selection.focusRow)
+    let sum = 0
+    let numericCount = 0
+    let filledCount = 0
+    let anyCurrency = false
+    for (let r = r0; r <= r1; r++) {
+      for (let c = c0; c <= c1; c++) {
+        const col = data.columns[c]
+        if (!col) continue
+        const raw = String(data.rows[r]?.[col.key] ?? '')
+        if (raw === '') continue
+        filledCount++
+        if (col.kind === 'currency') anyCurrency = true
+        const evaluated = resolver(c, r)
+        if (!evaluated.ok) continue
+        const v = evaluated.value
+        const n =
+          typeof v === 'number' ? v :
+          typeof v === 'string' ? parseCellNumber(v) :
+          typeof v === 'boolean' ? (v ? 1 : 0) :
+          null
+        if (n != null) { sum += n; numericCount++ }
+      }
+    }
+    return {
+      sum,
+      avg: numericCount > 0 ? sum / numericCount : null,
+      numericCount,
+      filledCount,
+      isCurrency: anyCurrency,
+      // Bottom-right corner of the selection — used to anchor the bubble.
+      anchorCol: c1,
+      anchorRow: r1,
+    }
+  }, [selection, data, resolver])
 
   // Precedent-highlight map: when the focused cell is a formula
   // (committed) OR the user is actively typing one, paint its
@@ -124,10 +265,14 @@ export default function SheetEditorGrid({ data, onChange }: Props) {
       frozen: idx === 0,
       cellClass: (row: GridRow) => {
         const ridx = Number(row._idx)
-        const refIdx = highlightMap.get(`${idx}:${ridx}`)
-        const align = rightAlign(col.kind)
-        if (refIdx == null) return align || undefined
-        return `${align} ${styles[`refColor${refIdx % 4}` as 'refColor0']}`.trim()
+        const key = `${idx}:${ridx}`
+        const refIdx = highlightMap.get(key)
+        const inSelection = selectionSet.has(key)
+        const parts = [rightAlign(col.kind)]
+        if (refIdx != null) parts.push(styles[`refColor${refIdx % 4}` as 'refColor0'])
+        if (inSelection) parts.push(styles.selectedCell)
+        const cls = parts.filter(Boolean).join(' ').trim()
+        return cls || undefined
       },
       renderEditCell: (p: RenderEditCellProps<GridRow>) => (
         <SheetCellEditor
@@ -154,7 +299,7 @@ export default function SheetEditorGrid({ data, onChange }: Props) {
         />
       ),
     }))
-  }, [data.columns, resolver, highlightMap]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [data.columns, resolver, highlightMap, selectionSet]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function handleRowsChange(next: GridRow[]) {
     onChange({
@@ -210,6 +355,7 @@ export default function SheetEditorGrid({ data, onChange }: Props) {
   return (
     <div
       className={styles.wrapper}
+      ref={wrapperRef}
       // Suppress the browser's default right-click menu everywhere
       // inside the grid. Header cells stop propagation in their own
       // handler and open the custom column menu; everywhere else just
@@ -238,6 +384,12 @@ export default function SheetEditorGrid({ data, onChange }: Props) {
         defaultColumnOptions={{ resizable: true }}
       />
       <SheetStatusBar data={data} focusedColumnKey={focusedKey} resolver={resolver} />
+      {selectionStats && selectionStats.filledCount > 0 && (
+        <SelectionAggregateBubble
+          wrapperRef={wrapperRef}
+          stats={selectionStats}
+        />
+      )}
       {headerMenuColumn && headerMenu && (
         <SheetHeaderMenu
           column={headerMenuColumn}
@@ -256,6 +408,90 @@ export default function SheetEditorGrid({ data, onChange }: Props) {
           onClose={() => setRenamingKey(null)}
         />
       )}
+    </div>
+  )
+}
+
+const KRW_FMT = new Intl.NumberFormat('ko-KR', { maximumFractionDigits: 2 })
+
+function SelectionAggregateBubble({
+  wrapperRef,
+  stats,
+}: {
+  wrapperRef: React.RefObject<HTMLDivElement | null>
+  stats: {
+    sum: number
+    avg: number | null
+    numericCount: number
+    filledCount: number
+    isCurrency: boolean
+    anchorCol: number
+    anchorRow: number
+  }
+}) {
+  // Position the bubble at the bottom-right of the selection range.
+  // The anchor cell's bounding rect is sourced from rdg's DOM via
+  // aria-* attrs — wrapping it in a state lets us reposition on
+  // scroll / window resize / cell width change. Falls back to a
+  // bottom-right corner anchor if the cell can't be found.
+  const [pos, setPos] = useState<{ left: number; top: number } | null>(null)
+
+  useEffect(() => {
+    const update = () => {
+      const wrapper = wrapperRef.current
+      if (!wrapper) return setPos(null)
+      const cell = wrapper.querySelector<HTMLElement>(
+        `[aria-rowindex="${stats.anchorRow + 2}"] > [aria-colindex="${stats.anchorCol + 1}"]`,
+      )
+      const wrapperRect = wrapper.getBoundingClientRect()
+      if (!cell) {
+        setPos({
+          left: wrapperRect.width - 16,
+          top: wrapperRect.height - 60,
+        })
+        return
+      }
+      const r = cell.getBoundingClientRect()
+      setPos({
+        left: r.right - wrapperRect.left,
+        top: r.bottom - wrapperRect.top,
+      })
+    }
+    update()
+    window.addEventListener('resize', update)
+    const wrapper = wrapperRef.current
+    wrapper?.addEventListener('scroll', update, true)
+    return () => {
+      window.removeEventListener('resize', update)
+      wrapper?.removeEventListener('scroll', update, true)
+    }
+  }, [stats.anchorCol, stats.anchorRow, wrapperRef])
+
+  if (!pos) return null
+
+  const fmt = (n: number) => (stats.isCurrency ? `₩${KRW_FMT.format(n)}` : KRW_FMT.format(n))
+
+  return (
+    <div
+      className={styles.selectionBubble}
+      style={{ left: pos.left, top: pos.top }}
+      role="status"
+      aria-label="선택 영역 집계"
+    >
+      <span className={styles.bubbleMetric}>
+        <span className={styles.bubbleLabel}>합</span>
+        <span className={styles.bubbleValue}>{fmt(stats.sum)}</span>
+      </span>
+      {stats.avg != null && (
+        <span className={styles.bubbleMetric}>
+          <span className={styles.bubbleLabel}>평균</span>
+          <span className={styles.bubbleValue}>{fmt(stats.avg)}</span>
+        </span>
+      )}
+      <span className={styles.bubbleMetric}>
+        <span className={styles.bubbleLabel}>개수</span>
+        <span className={styles.bubbleValue}>{stats.filledCount}</span>
+      </span>
     </div>
   )
 }

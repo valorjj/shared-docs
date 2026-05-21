@@ -7,6 +7,9 @@
   border: 1px solid var(--c-border-strong);
   border-radius: var(--r-md);
   overflow: hidden;
+  /* Pins absolute-positioned children (selection aggregate bubble)
+     to the grid area instead of the page. */
+  position: relative;
 }
 
 .grid {
@@ -97,3 +100,51 @@
 .grid :global(.rdg-cell).refColor1 { outline: 2px dashed #16a34a; outline-offset: -2px; }
 .grid :global(.rdg-cell).refColor2 { outline: 2px dashed #e8434a; outline-offset: -2px; }
 .grid :global(.rdg-cell).refColor3 { outline: 2px dashed #c026d3; outline-offset: -2px; }
+
+/* Drag-selection tint. A soft accent-tinted background, no border,
+   so the user sees the range without losing read of the values. */
+.grid :global(.rdg-cell).selectedCell {
+  background: color-mix(in srgb, var(--c-primary) 12%, transparent);
+}
+
+/* Floating aggregate pill — anchored to the bottom-right of the
+   current selection. `pointer-events: none` so it never blocks
+   further cell clicks. Sits above the status bar. */
+.selectionBubble {
+  position: absolute;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 6px 12px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--r-pill);
+  box-shadow: var(--shadow-md);
+  font-family: var(--font-sans);
+  font-size: var(--fs-xs);
+  color: var(--c-text);
+  /* `pos.left/top` from JS is the cell's bottom-right corner. Pull
+     the bubble slightly off the cell so it doesn't blanket-cover the
+     value the user just selected. */
+  transform: translate(-100%, 6px);
+  pointer-events: none;
+  z-index: 20;
+  white-space: nowrap;
+}
+
+.bubbleMetric {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.bubbleLabel {
+  color: var(--c-text-placeholder);
+  letter-spacing: 0.02em;
+}
+
+.bubbleValue {
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--fw-medium);
+  color: var(--c-text);
+}
