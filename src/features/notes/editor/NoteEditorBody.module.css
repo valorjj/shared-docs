@@ -224,3 +224,18 @@
   pointer-events: none;
   height: 0;
 }
+
+/* In-note search match highlights. Decorations from NoteSearch add
+   .nm-search-match to every hit and .nm-search-match-active to the
+   currently navigated one. Globals because Tiptap injects them
+   outside the CSS-modules scope. */
+.editor :global(.nm-search-match) {
+  background: color-mix(in srgb, var(--c-highlight) 60%, transparent);
+  border-radius: 2px;
+}
+
+.editor :global(.nm-search-match-active) {
+  background: var(--c-highlight);
+  outline: 1px solid color-mix(in srgb, var(--c-accent) 60%, transparent);
+  outline-offset: 0;
+}

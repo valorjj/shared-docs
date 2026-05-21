@@ -13,6 +13,8 @@ import { DataSnapshot } from '../../snapshots/DataSnapshot'
 import { Tag } from './extensions/Tag'
 import { EntityLink } from './extensions/EntityLink'
 import { LinkCard } from './extensions/LinkCard'
+import { NoteSearch } from './extensions/NoteSearch'
+import NoteSearchBar from './NoteSearchBar'
 import {
   SlashCommand,
   type SlashKeyHandler,
@@ -124,6 +126,7 @@ export default function NoteEditorBody({
       }),
       DataSnapshot,
       LinkCard,
+      NoteSearch,
       // Ref is stored on the extension and only read inside ProseMirror
       // keydown handlers — never during render.
       // eslint-disable-next-line react-hooks/refs
@@ -260,9 +263,27 @@ export default function NoteEditorBody({
     setPendingEntityNav({ kind, id })
   }, [])
 
+  // In-note search bar (Cmd+F). The keyboard handler is scoped to the
+  // body container — opening the bar while typing in some unrelated
+  // page input shouldn't hijack the browser's native find.
+  const [searchOpen, setSearchOpen] = useState(false)
+  useEffect(() => {
+    const node = containerRef.current
+    if (!node) return
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'f') {
+        e.preventDefault()
+        setSearchOpen(true)
+      }
+    }
+    node.addEventListener('keydown', onKey)
+    return () => node.removeEventListener('keydown', onKey)
+  }, [])
+
   return (
     <EntityNavigateCtx.Provider value={requestEntityNav}>
       <div className={styles.wrapper} ref={containerRef}>
+        <NoteSearchBar editor={editor} open={searchOpen} onClose={() => setSearchOpen(false)} />
         <EditorContent editor={editor} />
         <NoteEditorBubbleMenu editor={editor} onRequestLinkDialog={onRequestLinkDialog} />
         <EditorContextMenu
