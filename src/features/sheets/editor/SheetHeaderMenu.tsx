@@ -1,5 +1,7 @@
 import {
   AlignLeft,
+  ArrowDownAZ,
+  ArrowUpAZ,
   Calendar,
   CheckSquare,
   CircleDollarSign,
@@ -24,6 +26,7 @@ type Props = {
    *  decoupled from this component. */
   onRequestRename: () => void
   onSetKind: (kind: SheetColumnKind) => void
+  onSort: (direction: 'asc' | 'desc') => void
   onDelete: () => void
 }
 
@@ -43,6 +46,7 @@ export default function SheetHeaderMenu({
   onClose,
   onRequestRename,
   onSetKind,
+  onSort,
   onDelete,
 }: Props) {
   const currentKind = column.kind ?? 'text'
@@ -59,6 +63,19 @@ export default function SheetHeaderMenu({
         onSelect={onRequestRename}
       >
         이름 변경
+      </ContextMenuItem>
+      <ContextMenuSeparator />
+      <ContextMenuItem
+        icon={<ArrowUpAZ size={14} strokeWidth={1.75} />}
+        onSelect={() => onSort('asc')}
+      >
+        오름차순 정렬
+      </ContextMenuItem>
+      <ContextMenuItem
+        icon={<ArrowDownAZ size={14} strokeWidth={1.75} />}
+        onSelect={() => onSort('desc')}
+      >
+        내림차순 정렬
       </ContextMenuItem>
       <ContextMenuSeparator />
       {KINDS.map(({ kind, label, Icon }) => (

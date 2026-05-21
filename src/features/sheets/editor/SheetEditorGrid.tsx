@@ -400,6 +400,34 @@ export default function SheetEditorGrid({ data, onChange }: Props) {
     })
   }
 
+  function sortByColumn(key: string, direction: 'asc' | 'desc') {
+    const colIdx = data.columns.findIndex((c) => c.key === key)
+    if (colIdx < 0) return
+    const kind = data.columns[colIdx].kind
+    // Sort by *evaluated* values so a formula cell ranks by its
+    // computed result, not the literal `=A1+B1` string. The resolver
+    // we already build per render does this work for free.
+    type Ranked = { row: SheetRow; sortKey: number | string | boolean | null }
+    const ranked: Ranked[] = data.rows.map((row, idx) => {
+      const evaluated = resolver(colIdx, idx)
+      const v = evaluated.ok ? evaluated.value : ''
+      return { row, sortKey: Array.isArray(v) ? '' : v }
+    })
+    ranked.sort((a, b) => {
+      // Blanks always sink to the bottom, even on descending sort —
+      // matches Excel / Sheets. Caller-supplied direction only flips
+      // the *non-blank* comparison.
+      const aBlank = a.sortKey == null || a.sortKey === ''
+      const bBlank = b.sortKey == null || b.sortKey === ''
+      if (aBlank && bBlank) return 0
+      if (aBlank) return 1
+      if (bBlank) return -1
+      const cmp = compareSortKeys(a.sortKey, b.sortKey, kind)
+      return direction === 'asc' ? cmp : -cmp
+    })
+    onChange({ columns: data.columns, rows: ranked.map((r) => r.row) })
+  }
+
   function deleteColumn(key: string) {
     if (!window.confirm(`이 열을 삭제할까요?`)) return
     onChange({
@@ -462,6 +490,7 @@ export default function SheetEditorGrid({ data, onChange }: Props) {
           onClose={() => setHeaderMenu(null)}
           onRequestRename={() => setRenamingKey(headerMenuColumn.key)}
           onSetKind={(kind) => setColumnKind(headerMenuColumn.key, kind)}
+          onSort={(dir) => sortByColumn(headerMenuColumn.key, dir)}
           onDelete={() => deleteColumn(headerMenuColumn.key)}
         />
       )}
@@ -478,6 +507,39 @@ export default function SheetEditorGrid({ data, onChange }: Props) {
 }
 
 const KRW_FMT = new Intl.NumberFormat('ko-KR', { maximumFractionDigits: 2 })
+
+/**
+ * Compare two non-blank evaluated cell values. Caller deals with
+ * blanks separately so direction can flip the result safely.
+ * Numeric kinds force a numeric compare even if cells happen to hold
+ * strings; other kinds fall back to locale string compare.
+ */
+function compareSortKeys(
+  a: number | string | boolean | null,
+  b: number | string | boolean | null,
+  kind: SheetColumnKind | undefined,
+): number {
+  const tryNum = (v: number | string | boolean | null): number | null => {
+    if (typeof v === 'number') return v
+    if (typeof v === 'boolean') return v ? 1 : 0
+    if (typeof v === 'string') return parseCellNumber(v)
+    return null
+  }
+
+  const numericKind = kind === 'number' || kind === 'currency'
+  if (numericKind) {
+    const an = tryNum(a) ?? Number.POSITIVE_INFINITY
+    const bn = tryNum(b) ?? Number.POSITIVE_INFINITY
+    return an < bn ? -1 : an > bn ? 1 : 0
+  }
+
+  const an = tryNum(a)
+  const bn = tryNum(b)
+  if (an != null && bn != null) {
+    return an < bn ? -1 : an > bn ? 1 : 0
+  }
+  return String(a).localeCompare(String(b), 'ko')
+}
 
 function SelectionAggregateBubble({
   wrapperRef,
