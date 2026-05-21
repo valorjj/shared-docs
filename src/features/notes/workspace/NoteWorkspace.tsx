@@ -46,10 +46,11 @@ export default function NoteWorkspace() {
   const tags = useMemo(() => buildTagCounts(allNotes), [allNotes])
   const pinnedCount = useMemo(() => allNotes.filter((n) => n.pinned).length, [allNotes])
 
-  // Trash is fetched lazily — only after the user opens that filter for the
-  // first time. The count badge on the sidebar item also keys off this
-  // query, so it stays at 0 until activation. Fine for a 2-person app.
-  const trashQuery = useTrashNotes(filter.kind === 'trash')
+  // Trash list feeds both the sidebar count and the TrashList pane.
+  // We fetch it eagerly so the count badge stays current — previously
+  // it was gated on `filter.kind === 'trash'` and showed a stale "0"
+  // after a delete until the user opened trash.
+  const trashQuery = useTrashNotes()
   const trashNotes = useMemo(() => trashQuery.data ?? [], [trashQuery.data])
   const restoreNote = useRestoreNote()
   const deleteForever = useDeleteForever()

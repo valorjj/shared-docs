@@ -138,6 +138,9 @@ export function useDeleteNote() {
     mutationFn: (id: number) => deleteNoteReq(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: noteKeys.list() })
+      // Trash counter in the sidebar reflects this query — invalidate
+      // so the badge updates without waiting for a trash visit.
+      qc.invalidateQueries({ queryKey: noteKeys.trash() })
       // Soft-deleted notes survive as tombstones in referrer panels —
       // every existing referrer query may now show a different shell.
       qc.invalidateQueries({ queryKey: ['notes', 'referrers'] })
@@ -200,12 +203,14 @@ export function useNoteReferrers(id: number | null) {
   })
 }
 
-/** Soft-deleted notes — feeds the "휴지통" sidebar item and trash list. */
-export function useTrashNotes(enabled: boolean = true) {
+/** Soft-deleted notes — feeds the "휴지통" sidebar item and trash list.
+ *  Always enabled so the sidebar count updates instantly after a delete.
+ *  Previously gated on `filter.kind === 'trash'`, but the lazy version
+ *  showed a stale "0" on the badge until the user visited trash. */
+export function useTrashNotes() {
   return useQuery({
     queryKey: noteKeys.trash(),
     queryFn: fetchTrashReq,
-    enabled,
   })
 }
 
