@@ -28,7 +28,12 @@ type Props = {
 }
 
 const SEARCH_DEBOUNCE_MS = 180
-const PER_KIND = 6
+/** When the user hasn't typed yet, we still hit the endpoint so the
+ *  popup can show recent items per kind — but with a smaller cap so
+ *  14 rows don't dump on first open. Once the user starts typing,
+ *  bump up to surface more matches. */
+const PER_KIND_RECENT = 2
+const PER_KIND_SEARCH = 6
 
 export default function MentionMenuPopup({
   state,
@@ -49,27 +54,26 @@ export default function MentionMenuPopup({
   }, [state.query])
 
   const trimmed = debouncedQuery.trim()
-  const queryEnabled = trimmed.length > 0
+  const isRecent = trimmed.length === 0
+  const perKind = isRecent ? PER_KIND_RECENT : PER_KIND_SEARCH
 
   const { data: rawHits } = useQuery({
-    queryKey: ['mention-search', trimmed, PER_KIND],
+    queryKey: ['mention-search', trimmed, perKind],
     queryFn: async () => {
       const { data } = await apiClient.get<MentionItem[]>('/api/search/entities', {
-        params: { q: trimmed, perKind: PER_KIND },
+        params: { q: trimmed, perKind },
       })
       return data
     },
-    enabled: queryEnabled,
     staleTime: 30 * 1000,
     retry: false,
   })
 
   const items: MentionItem[] = useMemo(() => {
-    if (!queryEnabled) return []
     return (rawHits ?? []).filter(
       (h) => !(h.kind === 'note' && currentNoteId != null && h.id === currentNoteId),
     )
-  }, [rawHits, queryEnabled, currentNoteId])
+  }, [rawHits, currentNoteId])
 
   const safeSelected =
     items.length === 0 ? 0 : Math.min(selected, items.length - 1)
@@ -130,19 +134,12 @@ export default function MentionMenuPopup({
     }
   }, [keyHandlerRef])
 
-  if (!queryEnabled) {
-    return createPortal(
-      <div ref={containerRef} className={styles.popup} role="listbox">
-        <div className={styles.empty}>검색어를 입력하세요</div>
-      </div>,
-      document.body,
-    )
-  }
-
   if (items.length === 0) {
     return createPortal(
       <div ref={containerRef} className={styles.popup} role="listbox">
-        <div className={styles.empty}>일치하는 항목이 없어요</div>
+        <div className={styles.empty}>
+          {isRecent ? '최근 항목이 없어요' : '일치하는 항목이 없어요'}
+        </div>
       </div>,
       document.body,
     )
@@ -150,6 +147,7 @@ export default function MentionMenuPopup({
 
   return createPortal(
     <div ref={containerRef} className={styles.popup} role="listbox">
+      {isRecent && <div className={styles.sectionLabel}>최근</div>}
       {items.map((item, i) => {
         const Icon = iconFor(item.kind)
         return (
