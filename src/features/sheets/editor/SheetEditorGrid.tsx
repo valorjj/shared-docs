@@ -1,9 +1,9 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import {
   DataGrid,
-  renderTextEditor,
   type Column,
   type RenderCellProps,
+  type RenderEditCellProps,
   type RenderHeaderCellProps,
 } from 'react-data-grid'
 import { X } from 'lucide-react'
@@ -23,6 +23,7 @@ import {
 import SheetStatusBar from './SheetStatusBar'
 import SheetHeaderMenu from './SheetHeaderMenu'
 import SheetColumnRenameDialog from './SheetColumnRenameDialog'
+import SheetCellEditor, { type DraftFormula } from './SheetCellEditor'
 import styles from './SheetEditorGrid.module.css'
 
 type Props = {
@@ -64,23 +65,37 @@ export default function SheetEditorGrid({ data, onChange }: Props) {
   // Header rename dialog state. Open via dblclick-on-header or menu.
   const [renamingKey, setRenamingKey] = useState<string | null>(null)
 
+  // Draft formula state: the live in-progress text in the active edit
+  // cell. Feeds highlights *while typing*, not only on commit — so
+  // refs in `=A1+B1` light up as you type, the spreadsheet way.
+  const [draft, setDraft] = useState<DraftFormula | null>(null)
+  const onDraftChange = useCallback((d: DraftFormula | null) => setDraft(d), [])
+
   // Per-render formula resolver. Memoized inside on the (column, row)
   // coordinate so a chained ref (A1=B1+1, B1=C1*2) evaluates in linear
   // time. Cycles surface as #CYCLE without infinite recursion.
   const resolver = useMemo<FormulaResolver>(() => buildFormulaResolver(data), [data])
 
-  // Precedent-highlight map: when the focused cell is a formula, paint
-  // its referenced cells with cycling colors (Excel-style). The map is
+  // Precedent-highlight map: when the focused cell is a formula
+  // (committed) OR the user is actively typing one, paint its
+  // referenced cells with cycling colors (Excel-style). The map is
   // keyed `colIdx:rowIdx → refIndex` so the column's cellClass can
   // cheaply look up whether to add a highlight.
+  //
+  // Source of truth: prefer the live `draft` (mid-edit text), fall
+  // back to the committed cell value. The mid-edit path is what makes
+  // refs light up *as you type* `=A1+B1`, not only after Enter.
   const highlightMap = useMemo<Map<string, number>>(() => {
     const out = new Map<string, number>()
-    if (focusedKey == null || focusedRowIdx == null) return out
-    const colIdx = data.columns.findIndex((c) => c.key === focusedKey)
-    if (colIdx < 0) return out
-    const raw = String(data.rows[focusedRowIdx]?.[focusedKey] ?? '')
-    if (!isFormulaCell(raw)) return out
-    for (const ref of extractRefs(raw)) {
+    let source: string | null = null
+    if (draft && isFormulaCell(draft.text)) {
+      source = draft.text
+    } else if (focusedKey != null && focusedRowIdx != null) {
+      const raw = String(data.rows[focusedRowIdx]?.[focusedKey] ?? '')
+      if (isFormulaCell(raw)) source = raw
+    }
+    if (!source) return out
+    for (const ref of extractRefs(source)) {
       if (ref.kind === 'cell') {
         out.set(`${ref.col}:${ref.row}`, ref.refIndex)
       } else {
@@ -92,7 +107,7 @@ export default function SheetEditorGrid({ data, onChange }: Props) {
       }
     }
     return out
-  }, [focusedKey, focusedRowIdx, data])
+  }, [draft, focusedKey, focusedRowIdx, data])
 
   const columns = useMemo<Column<GridRow>[]>(() => {
     const rightAlign = (kind: SheetColumnKind | undefined) =>
@@ -114,7 +129,14 @@ export default function SheetEditorGrid({ data, onChange }: Props) {
         if (refIdx == null) return align || undefined
         return `${align} ${styles[`refColor${refIdx % 4}` as 'refColor0']}`.trim()
       },
-      renderEditCell: renderTextEditor,
+      renderEditCell: (p: RenderEditCellProps<GridRow>) => (
+        <SheetCellEditor
+          {...p}
+          columnKey={col.key}
+          colIdx={idx}
+          onDraftChange={onDraftChange}
+        />
+      ),
       renderCell: (p: RenderCellProps<GridRow>) => (
         <DisplayCell
           raw={String(p.row[col.key] ?? '')}

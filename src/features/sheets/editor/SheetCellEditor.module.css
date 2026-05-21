@@ -1,0 +1,21 @@
+.input {
+  appearance: none;
+  width: 100%;
+  height: 100%;
+  padding: 0 8px;
+  background: var(--c-surface);
+  border: 0;
+  border-radius: 0;
+  color: var(--c-text);
+  font-family: inherit;
+  font-size: inherit;
+  outline: 2px solid var(--c-primary);
+  outline-offset: -2px;
+}
+
+/* Soft tint while typing a formula so the cell looks distinct from a
+   plain text edit. Echoes Excel/Sheets' light-blue formula tone. */
+.formulaInput {
+  background: var(--c-surface-tint);
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, monospace);
+}
