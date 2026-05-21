@@ -52,7 +52,7 @@ export function nextColumnLabel(existing: SheetColumn[]): string {
   return ''
 }
 
-function toExcelLabel(index: number): string {
+export function toExcelLabel(index: number): string {
   let n = index + 1
   let s = ''
   while (n > 0) {

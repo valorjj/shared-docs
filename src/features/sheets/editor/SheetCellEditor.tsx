@@ -12,10 +12,32 @@ export type DraftFormula = {
   text: string
 }
 
+/**
+ * Imperative handle exposed to the grid so it can drive the formula
+ * editor without lifting all of its state up. The grid stashes this in
+ * a ref and consults it on mousedown when the user is mid-formula:
+ *
+ *   isPickReady()    → true when the cursor is in a spot that can
+ *                       accept a cell ref (right after `=`, `(`, `,`,
+ *                       or an arithmetic operator).
+ *   insertRef(text)  → inserts at the current cursor position, leaves
+ *                       focus + a fresh insertion point behind.
+ *   replaceLastRef(text) → replaces the most recent ref/range token
+ *                       (used during drag to grow `H34` into `H34:H36`).
+ */
+export type EditorApi = {
+  isPickReady: () => boolean
+  insertRef: (text: string) => void
+  replaceLastRef: (text: string) => void
+}
+
 type Props = RenderEditCellProps<GridRow> & {
   columnKey: string
   colIdx: number
   onDraftChange: (draft: DraftFormula | null) => void
+  /** Wired by the grid: receives the editor's imperative API on
+   *  mount, gets `null` on unmount. */
+  onEditorApi?: (api: EditorApi | null) => void
 }
 
 /**
@@ -29,6 +51,11 @@ type Props = RenderEditCellProps<GridRow> & {
  * stays a tiny leaf — rdg mounts and unmounts it sharply, and the
  * cleanup naturally clears the draft on commit/abort.
  */
+/** Chars that can precede a cell ref in pick mode. After typing any
+ *  of these (or at the very start after `=`), clicking a cell should
+ *  insert its address. `:` extends a range; `=` covers `=A1`-style. */
+const REF_TRIGGERS = new Set(['=', '(', ',', '+', '-', '*', '/', ':', ' '])
+
 export default function SheetCellEditor({
   row,
   column,
@@ -38,11 +65,22 @@ export default function SheetCellEditor({
   onRowChange,
   onClose,
   onDraftChange,
+  onEditorApi,
 }: Props) {
   const initial = String(row[columnKey] ?? '')
   const [text, setText] = useState(initial)
   const inputRef = useRef<HTMLInputElement | null>(null)
   const committedRef = useRef(false)
+  // Cursor offsets we maintain ourselves — onChange clobbers
+  // selectionStart, and the grid's pick-mode inserts run *outside*
+  // the input's onChange path. We rewrite the input value imperatively
+  // and restore the selection from these.
+  const textRef = useRef(initial)
+  const selRef = useRef<{ start: number; end: number }>({ start: 0, end: initial.length })
+  // Tracks the [start, end] of the most-recently-inserted ref so a
+  // drag can grow it from `H34` into `H34:H36` by overwriting the
+  // same slice.
+  const lastRefRangeRef = useRef<{ start: number; end: number } | null>(null)
 
   // Push the initial draft as soon as we mount so the very first paint
   // already highlights any precedents. Cleanup pushes `null` so the
@@ -61,11 +99,89 @@ export default function SheetCellEditor({
     if (!el) return
     el.focus()
     el.select()
+    selRef.current = { start: 0, end: initial.length }
   }, [])
 
+  /** Apply a new text + selection synchronously. Used by both the
+   *  controlled onChange path and the grid's pick-mode inserts. */
+  const applyText = (next: string, selStart: number, selEnd: number) => {
+    textRef.current = next
+    selRef.current = { start: selStart, end: selEnd }
+    setText(next)
+    onDraftChange({ colIdx, rowIdx, text: next })
+    // Schedule the selection restore — React will re-render with the
+    // new value first; we set the caret immediately after.
+    queueMicrotask(() => {
+      const el = inputRef.current
+      if (!el) return
+      el.focus()
+      el.setSelectionRange(selStart, selEnd)
+    })
+  }
+
   const handleChange = (v: string) => {
+    const el = inputRef.current
+    const caret = el?.selectionStart ?? v.length
+    textRef.current = v
+    selRef.current = { start: caret, end: caret }
+    // Manual typing clears any "we just inserted this ref" memory —
+    // a drag immediately after would otherwise overwrite the user's
+    // hand-typed text.
+    lastRefRangeRef.current = null
     setText(v)
     onDraftChange({ colIdx, rowIdx, text: v })
+  }
+
+  /** True when the character immediately before the caret is a
+   *  ref-trigger (operator / `(` / `,` / `:` / start of formula). */
+  const isPickReady = (): boolean => {
+    const t = textRef.current
+    if (!isFormulaCell(t)) return false
+    const caret = selRef.current.start
+    if (caret <= 0) return false
+    if (caret === 1 && t.startsWith('=')) return true
+    const prev = t[caret - 1]
+    return REF_TRIGGERS.has(prev)
+  }
+
+  /** Insert `ref` at the current caret. Records the inserted slice so
+   *  a subsequent drag can grow it into a range. Keeps editor focus. */
+  const insertRef = (ref: string) => {
+    const t = textRef.current
+    const { start, end } = selRef.current
+    const next = t.slice(0, start) + ref + t.slice(end)
+    const after = start + ref.length
+    lastRefRangeRef.current = { start, end: after }
+    applyText(next, after, after)
+  }
+
+  /** Replace the most-recently-inserted ref with a new one (used
+   *  while dragging to extend a single cell into a range). */
+  const replaceLastRef = (ref: string) => {
+    const range = lastRefRangeRef.current
+    if (!range) return insertRef(ref)
+    const t = textRef.current
+    const next = t.slice(0, range.start) + ref + t.slice(range.end)
+    const after = range.start + ref.length
+    lastRefRangeRef.current = { start: range.start, end: after }
+    applyText(next, after, after)
+  }
+
+  // Publish the editor handle to the grid. The grid stores it in a
+  // ref and consults it on mousedown to decide whether to enter
+  // pick mode.
+  useEffect(() => {
+    if (!onEditorApi) return
+    onEditorApi({ isPickReady, insertRef, replaceLastRef })
+    return () => onEditorApi(null)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onEditorApi])
+
+  // Track caret position so isPickReady knows where we are.
+  const handleSelect = () => {
+    const el = inputRef.current
+    if (!el) return
+    selRef.current = { start: el.selectionStart ?? 0, end: el.selectionEnd ?? 0 }
   }
 
   const commit = () => {
@@ -115,6 +231,9 @@ export default function SheetCellEditor({
       onChange={(e) => handleChange(e.target.value)}
       onBlur={handleBlur}
       onKeyDown={handleKeyDown}
+      onSelect={handleSelect}
+      onKeyUp={handleSelect}
+      onClick={handleSelect}
     />
   )
 }

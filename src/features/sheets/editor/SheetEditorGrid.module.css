@@ -35,6 +35,12 @@
 
 .grid :global(.rdg-cell) {
   border-color: var(--c-border);
+  /* No browser text-selection inside cells. Drag-select draws its own
+     tint on top, and trying to "select text" inside a cell doubles up
+     a blue overlay we don't want. Editing happens in an <input> which
+     keeps its own selection. */
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 /* Body-row hover — pointer devices only; touch doesn't have hover. */

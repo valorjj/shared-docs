@@ -20,11 +20,11 @@ import {
   isFormulaCell,
   type FormulaResolver,
 } from '../shared/formula'
-import { parseCellNumber } from '../shared/sheetData'
+import { parseCellNumber, toExcelLabel } from '../shared/sheetData'
 import SheetStatusBar from './SheetStatusBar'
 import SheetHeaderMenu from './SheetHeaderMenu'
 import SheetColumnRenameDialog from './SheetColumnRenameDialog'
-import SheetCellEditor, { type DraftFormula } from './SheetCellEditor'
+import SheetCellEditor, { type DraftFormula, type EditorApi } from './SheetCellEditor'
 import styles from './SheetEditorGrid.module.css'
 
 type Props = {
@@ -84,7 +84,18 @@ export default function SheetEditorGrid({ data, onChange }: Props) {
   // re-read these inside the handlers without rebinding, which keeps
   // the drag cheap.
   const dragAnchorRef = useRef<{ col: number; row: number } | null>(null)
+  // Pick-mode drag anchor: when the user is mid-formula and clicks/
+  // drags on other cells, we insert refs into the editor instead of
+  // running the visual drag-select. Tracked separately so the two
+  // modes never tangle.
+  const pickAnchorRef = useRef<{ col: number; row: number } | null>(null)
   const wrapperRef = useRef<HTMLDivElement | null>(null)
+  // Imperative handle into the active cell editor (if any). The
+  // editor publishes / withdraws this on mount / unmount.
+  const editorApiRef = useRef<EditorApi | null>(null)
+  const onEditorApi = useCallback((api: EditorApi | null) => {
+    editorApiRef.current = api
+  }, [])
 
   // Drag handlers — installed on the wrapper. We listen for mousedown
   // on a cell, then watch window mousemove until mouseup. Cell coords
@@ -108,26 +119,66 @@ export default function SheetEditorGrid({ data, onChange }: Props) {
       return { col: Number(rawCol) - 1, row: Number(rawRow) - 2 }
     }
 
+    const refFor = (col: number, row: number) => `${toExcelLabel(col)}${row + 1}`
+
     const onMouseDown = (e: MouseEvent) => {
       if (e.button !== 0) return
       const target = e.target as HTMLElement
-      // Skip header / editor / outside-grid clicks.
-      if (target.closest('[role="columnheader"]')) return
+      // The active formula editor is itself an <input>; clicking it
+      // should do normal text-input things, not enter pick mode.
       if (target.closest('input, textarea, select')) return
+      // Skip header clicks — they have their own context menu.
+      if (target.closest('[role="columnheader"]')) return
+
       const c = cellFromPoint(e.clientX, e.clientY)
       if (!c) return
+
+      // ── Pick mode ──────────────────────────────────────────────────
+      // When the editor is open and its caret is positioned right
+      // after `=`, `(`, `,`, or an operator, clicks on other cells
+      // insert the clicked cell's address into the formula text
+      // instead of focusing the cell. preventDefault on mousedown
+      // keeps the editor input focused (mousedown's default action
+      // is focus shift); without it, the input blurs → rdg commits
+      // the edit early.
+      const api = editorApiRef.current
+      if (api && api.isPickReady()) {
+        e.preventDefault()
+        api.insertRef(refFor(c.col, c.row))
+        pickAnchorRef.current = c
+        return
+      }
+
+      // ── Normal drag-select ────────────────────────────────────────
       dragAnchorRef.current = c
       // Don't open a selection yet — single click is just a focus.
       // Real selection blooms once the mouse moves into a *different* cell.
     }
 
     const onMouseMove = (e: MouseEvent) => {
+      // Pick-mode drag: extend the most-recently-inserted ref into a
+      // range as the mouse moves over more cells. The editor's
+      // `replaceLastRef` rewrites the same slice each tick, so the
+      // formula text grows from `A1` to `A1:B5` without piling up.
+      const pickAnchor = pickAnchorRef.current
+      const api = editorApiRef.current
+      if (pickAnchor && api) {
+        const c = cellFromPoint(e.clientX, e.clientY)
+        if (!c) return
+        const sameCell = c.col === pickAnchor.col && c.row === pickAnchor.row
+        const text = sameCell
+          ? refFor(pickAnchor.col, pickAnchor.row)
+          : `${refFor(pickAnchor.col, pickAnchor.row)}:${refFor(c.col, c.row)}`
+        api.replaceLastRef(text)
+        return
+      }
+
+      // Plain drag-select.
       const anchor = dragAnchorRef.current
       if (!anchor) return
       const c = cellFromPoint(e.clientX, e.clientY)
       if (!c) return
       if (c.col === anchor.col && c.row === anchor.row) {
-        // Mouse still inside the anchor — no selection yet.
         setSelection(null)
         return
       }
@@ -141,13 +192,18 @@ export default function SheetEditorGrid({ data, onChange }: Props) {
 
     const onMouseUp = () => {
       dragAnchorRef.current = null
+      pickAnchorRef.current = null
     }
 
-    wrapper.addEventListener('mousedown', onMouseDown)
+    // Capture phase so we win the race against rdg's React synthetic
+    // mousedown handler. In pick mode we need to `preventDefault`
+    // *before* the input loses focus, otherwise rdg commits the edit
+    // and tears down the editor before we can insert anything.
+    wrapper.addEventListener('mousedown', onMouseDown, true)
     window.addEventListener('mousemove', onMouseMove)
     window.addEventListener('mouseup', onMouseUp)
     return () => {
-      wrapper.removeEventListener('mousedown', onMouseDown)
+      wrapper.removeEventListener('mousedown', onMouseDown, true)
       window.removeEventListener('mousemove', onMouseMove)
       window.removeEventListener('mouseup', onMouseUp)
     }
@@ -280,6 +336,7 @@ export default function SheetEditorGrid({ data, onChange }: Props) {
           columnKey={col.key}
           colIdx={idx}
           onDraftChange={onDraftChange}
+          onEditorApi={onEditorApi}
         />
       ),
       renderCell: (p: RenderCellProps<GridRow>) => (
