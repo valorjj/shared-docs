@@ -142,8 +142,12 @@ export default function SheetEditorGrid({ data, onChange }: Props) {
       // is focus shift); without it, the input blurs → rdg commits
       // the edit early.
       const api = editorApiRef.current
-      if (api && api.isPickReady()) {
+      const ready = api?.isPickReady?.() ?? false
+      // eslint-disable-next-line no-console
+      console.log('[sheet] mousedown', { hasApi: !!api, pickReady: ready, cell: c })
+      if (api && ready) {
         e.preventDefault()
+        e.stopPropagation()
         api.insertRef(refFor(c.col, c.row))
         pickAnchorRef.current = c
         return
