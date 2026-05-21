@@ -20,7 +20,7 @@ import {
   isFormulaCell,
   type FormulaResolver,
 } from '../shared/formula'
-import { parseCellNumber, toExcelLabel } from '../shared/sheetData'
+import { makeEmptyRow, parseCellNumber, toExcelLabel } from '../shared/sheetData'
 import SheetStatusBar from './SheetStatusBar'
 import SheetHeaderMenu from './SheetHeaderMenu'
 import SheetColumnRenameDialog from './SheetColumnRenameDialog'
@@ -96,6 +96,22 @@ export default function SheetEditorGrid({ data, onChange }: Props) {
   const onEditorApi = useCallback((api: EditorApi | null) => {
     editorApiRef.current = api
   }, [])
+
+  // Latest-value refs mirroring state + props. The wrapper-level
+  // mouse / clipboard listeners attach once with `[]` deps and read
+  // current values through these. (Re-attaching on every state change
+  // would be wasteful and would also clobber rdg's window-listener
+  // ordering we depend on.)
+  const selectionRef = useRef(selection)
+  useEffect(() => { selectionRef.current = selection }, [selection])
+  const focusedKeyRef = useRef(focusedKey)
+  useEffect(() => { focusedKeyRef.current = focusedKey }, [focusedKey])
+  const focusedRowIdxRef = useRef(focusedRowIdx)
+  useEffect(() => { focusedRowIdxRef.current = focusedRowIdx }, [focusedRowIdx])
+  const dataRef = useRef(data)
+  useEffect(() => { dataRef.current = data }, [data])
+  const onChangeRef = useRef(onChange)
+  useEffect(() => { onChangeRef.current = onChange }, [onChange])
 
   // Drag handlers — installed on the wrapper. We listen for mousedown
   // on a cell, then watch window mousemove until mouseup. Cell coords
@@ -196,6 +212,88 @@ export default function SheetEditorGrid({ data, onChange }: Props) {
       pickAnchorRef.current = null
     }
 
+    // ── Copy: serialize the selected range to TSV (tab between cells,
+    // newline between rows) so Excel / Sheets / plain text editors all
+    // accept it. We only intercept when the user has a real multi-cell
+    // selection going — single-cell click falls through to the
+    // browser's default copy (copies the cell's display text). The
+    // wrapper guard `target.closest('input')` lets the formula editor
+    // keep its own clipboard behavior.
+    const onCopy = (e: ClipboardEvent) => {
+      const target = e.target as HTMLElement | null
+      if (target?.closest?.('input, textarea')) return
+      const d = dataRef.current
+      // Single-cell fallback: no drag selection, but a focused cell —
+      // copy that one cell's raw text. Without this Cmd+C on a single
+      // cell would silently do nothing (we disabled user-select on
+      // cells, so the browser has no text selection to copy).
+      let c0: number, c1: number, r0: number, r1: number
+      const sel = selectionRef.current
+      if (sel) {
+        c0 = Math.min(sel.anchorCol, sel.focusCol)
+        c1 = Math.max(sel.anchorCol, sel.focusCol)
+        r0 = Math.min(sel.anchorRow, sel.focusRow)
+        r1 = Math.max(sel.anchorRow, sel.focusRow)
+      } else if (focusedKeyRef.current != null && focusedRowIdxRef.current != null) {
+        const colIdx = d.columns.findIndex((c) => c.key === focusedKeyRef.current)
+        if (colIdx < 0) return
+        c0 = c1 = colIdx
+        r0 = r1 = focusedRowIdxRef.current
+      } else {
+        return
+      }
+      const lines: string[] = []
+      for (let r = r0; r <= r1; r++) {
+        const row = d.rows[r] ?? {}
+        const cells: string[] = []
+        for (let c = c0; c <= c1; c++) {
+          const col = d.columns[c]
+          cells.push(col ? String(row[col.key] ?? '') : '')
+        }
+        lines.push(cells.join('\t'))
+      }
+      e.clipboardData?.setData('text/plain', lines.join('\n'))
+      e.preventDefault()
+    }
+
+    // ── Paste: split TSV and write into the focused cell, expanding
+    // rows if the paste runs off the bottom (columns are NOT auto-
+    // grown — sheets typically have a fixed schema). Single-cell paste
+    // is a normal text drop into one cell. Skips when target is an
+    // input so the formula editor keeps default paste-into-text.
+    const onPaste = (e: ClipboardEvent) => {
+      const target = e.target as HTMLElement | null
+      if (target?.closest?.('input, textarea')) return
+      if (focusedKeyRef.current == null || focusedRowIdxRef.current == null) return
+      const text = e.clipboardData?.getData('text/plain')
+      if (text == null) return
+      const rows = text.replace(/\r/g, '').split('\n').map((line) => line.split('\t'))
+      // Empty trailing newline → drop a phantom empty row to avoid
+      // overwriting the cell *after* the paste with "".
+      if (rows.length > 1 && rows[rows.length - 1].length === 1 && rows[rows.length - 1][0] === '') {
+        rows.pop()
+      }
+      if (rows.length === 0) return
+      const d = dataRef.current
+      const startCol = d.columns.findIndex((c) => c.key === focusedKeyRef.current)
+      if (startCol < 0) return
+      const startRow = focusedRowIdxRef.current
+      const nextRows: SheetRow[] = d.rows.map((r) => ({ ...r }))
+      // Grow rows downward if needed.
+      while (nextRows.length < startRow + rows.length) {
+        nextRows.push(makeEmptyRow(d.columns))
+      }
+      for (let r = 0; r < rows.length; r++) {
+        for (let c = 0; c < rows[r].length; c++) {
+          const col = d.columns[startCol + c]
+          if (!col) continue
+          nextRows[startRow + r] = { ...nextRows[startRow + r], [col.key]: rows[r][c] }
+        }
+      }
+      onChangeRef.current({ columns: d.columns, rows: nextRows })
+      e.preventDefault()
+    }
+
     // Capture phase so we win the race against rdg's React synthetic
     // mousedown handler. In pick mode we need to `preventDefault`
     // *before* the input loses focus, otherwise rdg commits the edit
@@ -203,10 +301,14 @@ export default function SheetEditorGrid({ data, onChange }: Props) {
     wrapper.addEventListener('mousedown', onMouseDown, true)
     window.addEventListener('mousemove', onMouseMove)
     window.addEventListener('mouseup', onMouseUp)
+    wrapper.addEventListener('copy', onCopy)
+    wrapper.addEventListener('paste', onPaste)
     return () => {
       wrapper.removeEventListener('mousedown', onMouseDown, true)
       window.removeEventListener('mousemove', onMouseMove)
       window.removeEventListener('mouseup', onMouseUp)
+      wrapper.removeEventListener('copy', onCopy)
+      wrapper.removeEventListener('paste', onPaste)
     }
   }, [])
 
