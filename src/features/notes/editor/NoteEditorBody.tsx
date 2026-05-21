@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useEditor, EditorContent, type Editor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Image from '@tiptap/extension-image'
@@ -29,7 +29,10 @@ import NoteEditorBubbleMenu from './NoteEditorBubbleMenu'
 import SlashMenuPopup from './SlashMenuPopup'
 import MentionMenuPopup from './MentionMenuPopup'
 import LinkNavigateDialog from './LinkNavigateDialog'
+import EntityNavigateDialog from './EntityNavigateDialog'
+import { EntityNavigateCtx } from './entityNavigateContext'
 import EditorContextMenu from './EditorContextMenu'
+import type { EntityKind } from './extensions/EntityLink'
 import styles from './NoteEditorBody.module.css'
 
 type Props = {
@@ -248,30 +251,47 @@ export default function NoteEditorBody({
     return () => container.removeEventListener('click', onClick)
   }, [])
 
+  // Entity-link chip click-confirm dialog. `EntityLinkChip` consumes
+  // `EntityNavigateCtx` and calls this setter on plain click; Cmd/Ctrl
+  // -click on the chip skips this and navigates directly.
+  const [pendingEntityNav, setPendingEntityNav] =
+    useState<{ kind: EntityKind; id: number } | null>(null)
+  const requestEntityNav = useCallback((kind: EntityKind, id: number) => {
+    setPendingEntityNav({ kind, id })
+  }, [])
+
   return (
-    <div className={styles.wrapper} ref={containerRef}>
-      <EditorContent editor={editor} />
-      <NoteEditorBubbleMenu editor={editor} onRequestLinkDialog={onRequestLinkDialog} />
-      <EditorContextMenu
-        containerRef={containerRef}
-        editor={editor}
-        onRequestLinkDialog={onRequestLinkDialog}
-      />
-      <LinkNavigateDialog
-        open={pendingNavHref !== null}
-        href={pendingNavHref}
-        onClose={() => setPendingNavHref(null)}
-      />
-      {slashState && (
-        <SlashMenuPopup state={slashState} keyHandlerRef={slashKeyHandlerRef} />
-      )}
-      {mentionState && (
-        <MentionMenuPopup
-          state={mentionState}
-          keyHandlerRef={mentionKeyHandlerRef}
-          currentNoteId={noteId}
+    <EntityNavigateCtx.Provider value={requestEntityNav}>
+      <div className={styles.wrapper} ref={containerRef}>
+        <EditorContent editor={editor} />
+        <NoteEditorBubbleMenu editor={editor} onRequestLinkDialog={onRequestLinkDialog} />
+        <EditorContextMenu
+          containerRef={containerRef}
+          editor={editor}
+          onRequestLinkDialog={onRequestLinkDialog}
         />
-      )}
-    </div>
+        <LinkNavigateDialog
+          open={pendingNavHref !== null}
+          href={pendingNavHref}
+          onClose={() => setPendingNavHref(null)}
+        />
+        <EntityNavigateDialog
+          open={pendingEntityNav !== null}
+          kind={pendingEntityNav?.kind ?? null}
+          id={pendingEntityNav?.id ?? null}
+          onClose={() => setPendingEntityNav(null)}
+        />
+        {slashState && (
+          <SlashMenuPopup state={slashState} keyHandlerRef={slashKeyHandlerRef} />
+        )}
+        {mentionState && (
+          <MentionMenuPopup
+            state={mentionState}
+            keyHandlerRef={mentionKeyHandlerRef}
+            currentNoteId={noteId}
+          />
+        )}
+      </div>
+    </EntityNavigateCtx.Provider>
   )
 }

@@ -1,5 +1,6 @@
 import { NodeViewWrapper, type NodeViewProps } from '@tiptap/react'
 import { useNavigate } from 'react-router-dom'
+import { type MouseEvent as ReactMouseEvent } from 'react'
 import {
   Cake,
   ChefHat,
@@ -13,6 +14,7 @@ import {
 } from 'lucide-react'
 import { useNotes, useTombstoneNote } from '../../api'
 import { useSheets } from '../../../sheets/api'
+import { useEntityNavigate } from '../entityNavigateContext'
 import type { EntityKind } from './EntityLink'
 import styles from './EntityLinkChip.module.css'
 
@@ -34,6 +36,21 @@ export default function EntityLinkChip({ node }: NodeViewProps) {
   const entityId = node.attrs.entityId as number | null
   const storedTitle = (node.attrs.title as string | null) ?? null
   const navigate = useNavigate()
+  const requestEntityNav = useEntityNavigate()
+
+  // Regular click → confirm dialog (with kind/title/snippet preview).
+  // Modifier-clicks (Cmd/Ctrl/Shift, middle button) skip the dialog and
+  // go straight to navigate — mirrors the external-link convention in
+  // NoteEditorBody, so power users keep their tab-open habits.
+  const handleClick = (e: ReactMouseEvent, id: number) => {
+    e.preventDefault()
+    const bypass = e.metaKey || e.ctrlKey || e.shiftKey
+    if (!bypass && requestEntityNav) {
+      requestEntityNav(kind, id)
+      return
+    }
+    navigate(navTarget(kind, id))
+  }
 
   // ── live caches for the two kinds that have list-query coverage ──
   const notesQuery = useNotes()
@@ -71,10 +88,7 @@ export default function EntityLinkChip({ node }: NodeViewProps) {
           <button
             type="button"
             className={styles.button}
-            onClick={(e) => {
-              e.preventDefault()
-              navigate(`/?note=${entityId}`)
-            }}
+            onClick={(e) => handleClick(e, entityId)}
             title={activeNote.title ?? '제목 없음'}
           >
             <Icon size={12} strokeWidth={2} aria-hidden="true" />
@@ -103,7 +117,6 @@ export default function EntityLinkChip({ node }: NodeViewProps) {
   // ── sheet: live cache → static fallback ──
   if (kind === 'sheet') {
     const title = activeSheet?.title ?? storedTitle ?? `시트 #${entityId}`
-    const navHref = navTarget(kind, entityId)
     const deleted = sheetsQuery.data !== undefined && activeSheet === undefined
     if (deleted) {
       return (
@@ -119,10 +132,7 @@ export default function EntityLinkChip({ node }: NodeViewProps) {
         <button
           type="button"
           className={styles.button}
-          onClick={(e) => {
-            e.preventDefault()
-            navigate(navHref)
-          }}
+          onClick={(e) => handleClick(e, entityId)}
           title={title}
         >
           <Icon size={12} strokeWidth={2} aria-hidden="true" />
@@ -139,10 +149,7 @@ export default function EntityLinkChip({ node }: NodeViewProps) {
       <button
         type="button"
         className={styles.button}
-        onClick={(e) => {
-          e.preventDefault()
-          navigate(navTarget(kind, entityId))
-        }}
+        onClick={(e) => handleClick(e, entityId)}
         title={title}
       >
         <Icon size={12} strokeWidth={2} aria-hidden="true" />
