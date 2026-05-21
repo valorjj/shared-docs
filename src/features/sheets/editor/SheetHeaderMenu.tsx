@@ -19,7 +19,10 @@ type Props = {
   column: SheetColumn
   position: { x: number; y: number } | null
   onClose: () => void
-  onRename: (name: string) => void
+  /** Open the rename dialog. The menu doesn't own the dialog state —
+   *  the parent does, so closing the menu + opening the dialog stays
+   *  decoupled from this component. */
+  onRequestRename: () => void
   onSetKind: (kind: SheetColumnKind) => void
   onDelete: () => void
 }
@@ -38,7 +41,7 @@ export default function SheetHeaderMenu({
   column,
   position,
   onClose,
-  onRename,
+  onRequestRename,
   onSetKind,
   onDelete,
 }: Props) {
@@ -53,13 +56,7 @@ export default function SheetHeaderMenu({
     >
       <ContextMenuItem
         icon={<Pencil size={14} strokeWidth={1.75} />}
-        onSelect={() => {
-          // window.prompt is the same minimal affordance the header
-          // dblclick uses. Replace with a proper inline editor later
-          // if it becomes a friction point.
-          const next = window.prompt('열 이름', column.name)
-          if (next !== null) onRename(next)
-        }}
+        onSelect={onRequestRename}
       >
         이름 변경
       </ContextMenuItem>

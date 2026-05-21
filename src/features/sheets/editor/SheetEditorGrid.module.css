@@ -87,3 +87,13 @@
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
+
+/* Precedent highlights — when the focused cell is a formula, the cells
+   it references get a colored dashed outline. Four colors cycle per
+   top-level reference so users can tell range A1:A5 apart from cell B1
+   in `=SUM(A1:A5)+B1`. Hairline / dashed keeps it Bear-quiet — no
+   solid backgrounds. */
+.grid :global(.rdg-cell).refColor0 { outline: 2px dashed #2563eb; outline-offset: -2px; }
+.grid :global(.rdg-cell).refColor1 { outline: 2px dashed #16a34a; outline-offset: -2px; }
+.grid :global(.rdg-cell).refColor2 { outline: 2px dashed #e8434a; outline-offset: -2px; }
+.grid :global(.rdg-cell).refColor3 { outline: 2px dashed #c026d3; outline-offset: -2px; }

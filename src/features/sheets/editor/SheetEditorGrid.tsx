@@ -16,11 +16,13 @@ import {
 import {
   buildFormulaResolver,
   evaluateForDisplay,
+  extractRefs,
   isFormulaCell,
   type FormulaResolver,
 } from '../shared/formula'
 import SheetStatusBar from './SheetStatusBar'
 import SheetHeaderMenu from './SheetHeaderMenu'
+import SheetColumnRenameDialog from './SheetColumnRenameDialog'
 import styles from './SheetEditorGrid.module.css'
 
 type Props = {
@@ -47,6 +49,10 @@ export default function SheetEditorGrid({ data, onChange }: Props) {
   const [focusedKey, setFocusedKey] = useState<string | null>(
     data.columns[0]?.key ?? null,
   )
+  // Row index of the focused cell. Combined with `focusedKey` it lets
+  // us check whether the focused cell is a formula and, if so, paint
+  // its referenced cells. null until the user clicks something.
+  const [focusedRowIdx, setFocusedRowIdx] = useState<number | null>(null)
 
   // Right-click on header opens this menu (rename / kind / delete).
   // Anchor position is the cursor at the moment of the contextmenu event.
@@ -55,13 +61,42 @@ export default function SheetEditorGrid({ data, onChange }: Props) {
     x: number
     y: number
   } | null>(null)
+  // Header rename dialog state. Open via dblclick-on-header or menu.
+  const [renamingKey, setRenamingKey] = useState<string | null>(null)
 
   // Per-render formula resolver. Memoized inside on the (column, row)
   // coordinate so a chained ref (A1=B1+1, B1=C1*2) evaluates in linear
   // time. Cycles surface as #CYCLE without infinite recursion.
   const resolver = useMemo<FormulaResolver>(() => buildFormulaResolver(data), [data])
 
+  // Precedent-highlight map: when the focused cell is a formula, paint
+  // its referenced cells with cycling colors (Excel-style). The map is
+  // keyed `colIdx:rowIdx → refIndex` so the column's cellClass can
+  // cheaply look up whether to add a highlight.
+  const highlightMap = useMemo<Map<string, number>>(() => {
+    const out = new Map<string, number>()
+    if (focusedKey == null || focusedRowIdx == null) return out
+    const colIdx = data.columns.findIndex((c) => c.key === focusedKey)
+    if (colIdx < 0) return out
+    const raw = String(data.rows[focusedRowIdx]?.[focusedKey] ?? '')
+    if (!isFormulaCell(raw)) return out
+    for (const ref of extractRefs(raw)) {
+      if (ref.kind === 'cell') {
+        out.set(`${ref.col}:${ref.row}`, ref.refIndex)
+      } else {
+        for (let r = ref.fromRow; r <= ref.toRow; r++) {
+          for (let c = ref.fromCol; c <= ref.toCol; c++) {
+            out.set(`${c}:${r}`, ref.refIndex)
+          }
+        }
+      }
+    }
+    return out
+  }, [focusedKey, focusedRowIdx, data])
+
   const columns = useMemo<Column<GridRow>[]>(() => {
+    const rightAlign = (kind: SheetColumnKind | undefined) =>
+      isRightAligned(kind) ? styles.cellRight : ''
     return data.columns.map((col, idx) => ({
       key: col.key,
       name: col.name,
@@ -72,7 +107,13 @@ export default function SheetEditorGrid({ data, onChange }: Props) {
       // Freeze the first column so it stays visible while scrolling
       // wide sheets. Common spreadsheet ergonomic — labels stay anchored.
       frozen: idx === 0,
-      cellClass: isRightAligned(col.kind) ? styles.cellRight : undefined,
+      cellClass: (row: GridRow) => {
+        const ridx = Number(row._idx)
+        const refIdx = highlightMap.get(`${idx}:${ridx}`)
+        const align = rightAlign(col.kind)
+        if (refIdx == null) return align || undefined
+        return `${align} ${styles[`refColor${refIdx % 4}` as 'refColor0']}`.trim()
+      },
       renderEditCell: renderTextEditor,
       renderCell: (p: RenderCellProps<GridRow>) => (
         <DisplayCell
@@ -85,13 +126,13 @@ export default function SheetEditorGrid({ data, onChange }: Props) {
         <HeaderCell
           column={col}
           rdgColumn={p.column}
-          onRename={(newName) => renameColumn(col.key, newName)}
+          onRename={() => setRenamingKey(col.key)}
           onDelete={() => deleteColumn(col.key)}
           onContextMenu={(x, y) => setHeaderMenu({ columnKey: col.key, x, y })}
         />
       ),
     }))
-  }, [data.columns, resolver]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [data.columns, resolver, highlightMap]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function handleRowsChange(next: GridRow[]) {
     onChange({
@@ -145,19 +186,29 @@ export default function SheetEditorGrid({ data, onChange }: Props) {
   )
 
   return (
-    <div className={styles.wrapper}>
+    <div
+      className={styles.wrapper}
+      // Suppress the browser's default right-click menu everywhere
+      // inside the grid. Header cells stop propagation in their own
+      // handler and open the custom column menu; everywhere else just
+      // gets quiet (we may grow a cell-level menu later).
+      onContextMenu={(e) => e.preventDefault()}
+    >
       <DataGrid<GridRow>
         className={`rdg-light ${styles.grid}`}
         columns={columns}
         rows={gridRows}
         onRowsChange={handleRowsChange}
         onColumnResize={handleColumnResize}
-        onSelectedCellChange={({ column }) => {
+        onSelectedCellChange={({ column, rowIdx }) => {
           // `SelectColumn` (none here) or padding cells may yield a key
           // we don't know — fall back gracefully so the bar doesn't
           // freeze on a stale column.
           const k = column?.key
-          if (k && data.columns.some((c) => c.key === k)) setFocusedKey(k)
+          if (k && data.columns.some((c) => c.key === k)) {
+            setFocusedKey(k)
+            setFocusedRowIdx(rowIdx)
+          }
         }}
         rowKeyGetter={(r) => String(r._idx)}
         rowHeight={ROW_HEIGHT}
@@ -170,9 +221,17 @@ export default function SheetEditorGrid({ data, onChange }: Props) {
           column={headerMenuColumn}
           position={{ x: headerMenu.x, y: headerMenu.y }}
           onClose={() => setHeaderMenu(null)}
-          onRename={(name) => renameColumn(headerMenuColumn.key, name)}
+          onRequestRename={() => setRenamingKey(headerMenuColumn.key)}
           onSetKind={(kind) => setColumnKind(headerMenuColumn.key, kind)}
           onDelete={() => deleteColumn(headerMenuColumn.key)}
+        />
+      )}
+      {renamingKey != null && (
+        <SheetColumnRenameDialog
+          open
+          currentName={data.columns.find((c) => c.key === renamingKey)?.name ?? ''}
+          onSubmit={(name) => renameColumn(renamingKey, name)}
+          onClose={() => setRenamingKey(null)}
         />
       )}
     </div>
@@ -205,7 +264,7 @@ function DisplayCell({
 type HeaderCellProps = {
   column: SheetColumn
   rdgColumn: { name: React.ReactNode }
-  onRename: (name: string) => void
+  onRename: () => void
   onDelete: () => void
   onContextMenu: (x: number, y: number) => void
 }
@@ -216,8 +275,7 @@ function HeaderCell({ column, onRename, onDelete, onContextMenu }: HeaderCellPro
       className={styles.header}
       onDoubleClick={(e) => {
         e.stopPropagation()
-        const next = window.prompt('열 이름', column.name)
-        if (next !== null) onRename(next)
+        onRename()
       }}
       onContextMenu={(e) => {
         e.preventDefault()

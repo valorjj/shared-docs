@@ -530,6 +530,51 @@ function minMaxOver(args: EvalValue[], max: boolean): number {
   return best
 }
 
+/**
+ * Cheap regex-based extraction of cell + range references from a
+ * formula string, used by the grid to paint precedent highlights when
+ * a formula cell is focused. Doesn't fully parse — just finds tokens
+ * shaped like `A1` and `A1:B5`. Good enough for the highlight UI; the
+ * canonical evaluator runs separately.
+ */
+export type ExtractedRef =
+  | { kind: 'cell'; col: number; row: number; refIndex: number }
+  | { kind: 'range'; fromCol: number; fromRow: number; toCol: number; toRow: number; refIndex: number }
+
+const REF_OR_RANGE_RE = /([A-Za-z]+)(\d+)(?::([A-Za-z]+)(\d+))?/g
+
+export function extractRefs(formula: string): ExtractedRef[] {
+  if (!isFormulaCell(formula)) return []
+  const body = formula.replace(/^\s*=/, '')
+  // Strip strings so `"A1"` inside the formula doesn't get matched.
+  const stripped = body.replace(/"[^"]*"/g, '')
+  const out: ExtractedRef[] = []
+  let m: RegExpExecArray | null
+  let i = 0
+  REF_OR_RANGE_RE.lastIndex = 0
+  while ((m = REF_OR_RANGE_RE.exec(stripped)) !== null) {
+    const fromCol = columnLetterToIndex(m[1])
+    const fromRow = parseInt(m[2], 10) - 1
+    if (fromCol < 0 || fromRow < 0) continue
+    if (m[3] != null && m[4] != null) {
+      const toCol = columnLetterToIndex(m[3])
+      const toRow = parseInt(m[4], 10) - 1
+      if (toCol < 0 || toRow < 0) continue
+      out.push({
+        kind: 'range',
+        fromCol: Math.min(fromCol, toCol),
+        fromRow: Math.min(fromRow, toRow),
+        toCol: Math.max(fromCol, toCol),
+        toRow: Math.max(fromRow, toRow),
+        refIndex: i++,
+      })
+    } else {
+      out.push({ kind: 'cell', col: fromCol, row: fromRow, refIndex: i++ })
+    }
+  }
+  return out
+}
+
 /** Convenience for callers that just want a final display value.
  *  Returns the evaluated number / string / boolean, or the error code
  *  (e.g. "#REF") if evaluation failed. */
