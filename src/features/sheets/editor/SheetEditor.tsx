@@ -26,6 +26,8 @@ type Props = {
 }
 
 const AUTOSAVE_MS = 800
+const SNAPSHOT_DEBOUNCE_MS = 500
+const MAX_HISTORY = 50
 
 /**
  * Parent re-keys this component on sheet change, so lazy `useState` reads
@@ -67,11 +69,84 @@ export default function SheetEditor({ sheet, onDeleted, onBack }: Props) {
     }
   }, [sheet.id, flush])
 
+  // Cmd+Z / Cmd+Shift+Z / Cmd+Y keyboard shortcuts. Scoped to the
+  // editor's root via the wrapper ref — so undo elsewhere on the page
+  // doesn't roll back the sheet. Skips when focus is inside a text
+  // input so the cell editor / title field keep their own native
+  // undo stacks. (Listener attaches after `undo`/`redo` are declared
+  // below — JS reads top-to-bottom in component bodies.)
+  const rootRef = useRef<HTMLDivElement | null>(null)
+
+  // Undo / redo. Snapshots are debounced — a burst of keystrokes
+  // within `SNAPSHOT_DEBOUNCE_MS` collapses into a single undo step,
+  // so Cmd+Z doesn't roll back letter-by-letter. The redo stack
+  // clears on any fresh edit (standard text-editor behavior).
+  const historyRef = useRef<SheetData[]>([])
+  const redoRef = useRef<SheetData[]>([])
+  const lastSnapshotRef = useRef<SheetData>(localData)
+  const snapshotTimer = useRef<number | null>(null)
+
+  const scheduleSnapshot = useCallback((newData: SheetData) => {
+    if (snapshotTimer.current) window.clearTimeout(snapshotTimer.current)
+    snapshotTimer.current = window.setTimeout(() => {
+      if (isEqualData(lastSnapshotRef.current, newData)) return
+      historyRef.current.push(lastSnapshotRef.current)
+      if (historyRef.current.length > MAX_HISTORY) historyRef.current.shift()
+      lastSnapshotRef.current = newData
+      // New edit invalidates any pending redos.
+      redoRef.current = []
+    }, SNAPSHOT_DEBOUNCE_MS)
+  }, [])
+
+  const undo = useCallback(() => {
+    if (historyRef.current.length === 0) return
+    // Flush any pending snapshot first so the undo target is current.
+    if (snapshotTimer.current) {
+      window.clearTimeout(snapshotTimer.current)
+      snapshotTimer.current = null
+    }
+    const prev = historyRef.current.pop()!
+    redoRef.current.push(lastSnapshotRef.current)
+    lastSnapshotRef.current = prev
+    setLocalData(prev)
+    scheduleSave()
+  }, [scheduleSave])
+
+  const redo = useCallback(() => {
+    if (redoRef.current.length === 0) return
+    const next = redoRef.current.pop()!
+    historyRef.current.push(lastSnapshotRef.current)
+    lastSnapshotRef.current = next
+    setLocalData(next)
+    scheduleSave()
+  }, [scheduleSave])
+
   const handleDataChange = (next: SheetData) => {
     if (isEqualData(next, localData)) return
     setLocalData(next)
+    scheduleSnapshot(next)
     scheduleSave()
   }
+
+  useEffect(() => {
+    const root = rootRef.current
+    if (!root) return
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.metaKey || e.ctrlKey)) return
+      const target = e.target as HTMLElement | null
+      if (target?.closest?.('input, textarea')) return
+      const key = e.key.toLowerCase()
+      if (key === 'z' && !e.shiftKey) {
+        e.preventDefault()
+        undo()
+      } else if ((key === 'z' && e.shiftKey) || key === 'y') {
+        e.preventDefault()
+        redo()
+      }
+    }
+    root.addEventListener('keydown', onKey)
+    return () => root.removeEventListener('keydown', onKey)
+  }, [undo, redo])
 
   const handleAddRow = () => {
     handleDataChange({
@@ -102,7 +177,7 @@ export default function SheetEditor({ sheet, onDeleted, onBack }: Props) {
   }
 
   return (
-    <div className={styles.root}>
+    <div className={styles.root} ref={rootRef} tabIndex={-1}>
       <SheetEditorMobileBar onBack={onBack} />
       <div className={styles.headerArea}>
         <SheetEditorTitle key={sheet.id} initialValue={sheet.title} onCommit={handleTitleCommit} />
