@@ -3,8 +3,16 @@ import { useState } from 'react'
 import { Plus, Trash2 } from 'lucide-react'
 import ConfirmDialog from '../../../components/ui/ConfirmDialog'
 import { nextColumnKey, nextColumnLabel } from '../shared/sheetData'
-import type { SheetColumn, SheetData } from '../types'
+import type { SheetColumn, SheetColumnKind, SheetData } from '../types'
 import styles from './SheetColumnSheet.module.css'
+
+const KIND_OPTIONS: ReadonlyArray<{ value: SheetColumnKind; label: string }> = [
+  { value: 'text', label: '텍스트' },
+  { value: 'number', label: '숫자' },
+  { value: 'currency', label: '통화 (₩)' },
+  { value: 'date', label: '날짜' },
+  { value: 'check', label: '체크박스' },
+]
 
 type Props = {
   open: boolean
@@ -47,6 +55,13 @@ function ColumnList({ data, onChange }: { data: SheetData; onChange: (n: SheetDa
     })
   }
 
+  const setKind = (key: string, kind: SheetColumnKind) => {
+    onChange({
+      columns: columns.map((c) => (c.key === key ? { ...c, kind } : c)),
+      rows,
+    })
+  }
+
   const deleteColumn = (key: string) => {
     onChange({
       columns: columns.filter((c) => c.key !== key),
@@ -74,7 +89,13 @@ function ColumnList({ data, onChange }: { data: SheetData; onChange: (n: SheetDa
       ) : (
         <ul className={styles.list}>
           {columns.map((c) => (
-            <ColumnRow key={c.key} column={c} onRename={renameColumn} onDelete={deleteColumn} />
+            <ColumnRow
+              key={c.key}
+              column={c}
+              onRename={renameColumn}
+              onSetKind={setKind}
+              onDelete={deleteColumn}
+            />
           ))}
         </ul>
       )}
@@ -89,16 +110,17 @@ function ColumnList({ data, onChange }: { data: SheetData; onChange: (n: SheetDa
 type RowProps = {
   column: SheetColumn
   onRename: (key: string, name: string) => void
+  onSetKind: (key: string, kind: SheetColumnKind) => void
   onDelete: (key: string) => void
 }
 
-function ColumnRow({ column, onRename, onDelete }: RowProps) {
+function ColumnRow(props: RowProps) {
   // Wrapper-keyed inner pattern: parent keys this by column.key so we never
   // sync `column.name` into state. Local state owns the in-flight edit.
-  return <ColumnRowInner key={column.key} column={column} onRename={onRename} onDelete={onDelete} />
+  return <ColumnRowInner key={props.column.key} {...props} />
 }
 
-function ColumnRowInner({ column, onRename, onDelete }: RowProps) {
+function ColumnRowInner({ column, onRename, onSetKind, onDelete }: RowProps) {
   const [name, setName] = useState(column.name)
   const [confirmOpen, setConfirmOpen] = useState(false)
 
@@ -126,6 +148,16 @@ function ColumnRowInner({ column, onRename, onDelete }: RowProps) {
         }}
         aria-label={`${column.name} 열 이름`}
       />
+      <select
+        className={styles.kindSelect}
+        value={column.kind ?? 'text'}
+        onChange={(e) => onSetKind(column.key, e.target.value as SheetColumnKind)}
+        aria-label={`${column.name} 열 종류`}
+      >
+        {KIND_OPTIONS.map((o) => (
+          <option key={o.value} value={o.value}>{o.label}</option>
+        ))}
+      </select>
       <button
         type="button"
         className={styles.del}

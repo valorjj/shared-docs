@@ -1,4 +1,4 @@
-import type { SheetColumn, SheetData, SheetRow } from '../types'
+import type { SheetColumn, SheetColumnKind, SheetData, SheetRow } from '../types'
 
 const EMPTY_DATA: SheetData = { columns: [], rows: [] }
 
@@ -89,3 +89,67 @@ export function isEqualData(a: SheetData, b: SheetData): boolean {
 }
 
 export const EMPTY_SHEET_DATA = EMPTY_DATA
+
+/** Parse a cell string into a number, tolerating comma thousand
+ *  separators and a leading currency symbol (₩, $, etc.).
+ *  Returns null if the cell isn't numerically meaningful. */
+export function parseCellNumber(raw: string | undefined | null): number | null {
+  if (raw == null) return null
+  const s = String(raw).trim()
+  if (s === '') return null
+  const cleaned = s.replace(/[₩$€£¥,\s]/g, '')
+  if (cleaned === '' || cleaned === '-' || cleaned === '.') return null
+  const n = Number(cleaned)
+  return Number.isFinite(n) ? n : null
+}
+
+const KRW_FMT = new Intl.NumberFormat('ko-KR', { maximumFractionDigits: 2 })
+
+/** Render a cell value for display. Edit mode always sees the raw
+ *  string (react-data-grid's renderEditCell). Number/currency cells
+ *  with a parseable value render with thousand separators; check cells
+ *  collapse truthy/falsy strings into ☑ / ☐ glyphs; everything else
+ *  passes through. */
+export function formatCellDisplay(raw: string, kind: SheetColumnKind | undefined): string {
+  if (raw === '' || raw == null) {
+    return kind === 'check' ? '☐' : ''
+  }
+  switch (kind) {
+    case 'number': {
+      const n = parseCellNumber(raw)
+      return n == null ? raw : KRW_FMT.format(n)
+    }
+    case 'currency': {
+      const n = parseCellNumber(raw)
+      return n == null ? raw : `₩${KRW_FMT.format(n)}`
+    }
+    case 'check':
+      return isTruthyCellValue(raw) ? '☑' : '☐'
+    case 'date':
+    case 'text':
+    case undefined:
+    default:
+      return raw
+  }
+}
+
+/** Loose truthy parsing for checkbox columns. `true`, `1`, `yes`, `y`,
+ *  `o`, `✓`, `o`, Korean `예`/`참` all count as checked. Anything else
+ *  (including empty string) reads as unchecked. */
+export function isTruthyCellValue(raw: string): boolean {
+  const s = raw.trim().toLowerCase()
+  return s === 'true' || s === '1' || s === 'yes' || s === 'y'
+    || s === 'o' || s === '✓' || s === '✔'
+    || s === '예' || s === '참' || s === 'on'
+}
+
+/** True if a kind right-aligns its rendered value. Numeric & currency
+ *  align right so columns of figures line up cleanly. */
+export function isRightAligned(kind: SheetColumnKind | undefined): boolean {
+  return kind === 'number' || kind === 'currency'
+}
+
+/** True if a kind participates in status-bar aggregation. */
+export function isNumericKind(kind: SheetColumnKind | undefined): boolean {
+  return kind === 'number' || kind === 'currency'
+}

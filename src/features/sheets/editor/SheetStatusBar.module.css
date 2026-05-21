@@ -1,0 +1,44 @@
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 6px 14px;
+  border-top: 1px solid var(--c-border);
+  background: var(--c-surface-tint);
+  font-family: var(--font-sans);
+  font-size: var(--fs-xs);
+  color: var(--c-text-muted);
+  min-height: 32px;
+}
+
+.hint {
+  font-style: italic;
+  color: var(--c-text-placeholder);
+}
+
+.col {
+  font-weight: var(--fw-semi);
+  color: var(--c-text);
+}
+
+.sep {
+  color: var(--c-border-strong);
+}
+
+.metric {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.metricLabel {
+  color: var(--c-text-placeholder);
+  letter-spacing: 0.02em;
+}
+
+.metricValue {
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--fw-medium);
+  color: var(--c-text);
+}

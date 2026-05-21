@@ -107,6 +107,26 @@
   color: var(--c-danger);
 }
 
+.kindSelect {
+  appearance: none;
+  height: 44px;
+  padding: 0 10px;
+  background: var(--c-surface-tint);
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+  color: var(--c-text);
+  font-family: inherit;
+  font-size: var(--fs-sm);
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.kindSelect:focus {
+  outline: none;
+  background: var(--c-surface);
+  border-color: var(--c-border-strong);
+}
+
 .addBtn {
   align-self: stretch;
   display: inline-flex;

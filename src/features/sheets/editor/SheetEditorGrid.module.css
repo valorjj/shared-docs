@@ -80,3 +80,10 @@
   background: var(--c-danger-soft);
   color: var(--c-danger);
 }
+
+/* Numeric / currency cells right-align so columns of figures line up.
+   :global applies through react-data-grid's class scoping. */
+.grid :global(.rdg-cell).cellRight {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}

@@ -1,13 +1,20 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import {
   DataGrid,
   renderTextEditor,
   type Column,
+  type RenderCellProps,
   type RenderHeaderCellProps,
 } from 'react-data-grid'
 import { X } from 'lucide-react'
 import 'react-data-grid/lib/styles.css'
-import type { SheetColumn, SheetData, SheetRow } from '../types'
+import type { SheetColumn, SheetColumnKind, SheetData, SheetRow } from '../types'
+import {
+  formatCellDisplay,
+  isRightAligned,
+} from '../shared/sheetData'
+import SheetStatusBar from './SheetStatusBar'
+import SheetHeaderMenu from './SheetHeaderMenu'
 import styles from './SheetEditorGrid.module.css'
 
 type Props = {
@@ -27,21 +34,45 @@ export default function SheetEditorGrid({ data, onChange }: Props) {
     [data.rows],
   )
 
+  // Focused-cell column key feeds the status bar. Click any cell to
+  // pin a column; selection persists until another column is clicked
+  // or the sheet is replaced. Initial value is the first column so the
+  // bar shows useful aggregates immediately.
+  const [focusedKey, setFocusedKey] = useState<string | null>(
+    data.columns[0]?.key ?? null,
+  )
+
+  // Right-click on header opens this menu (rename / kind / delete).
+  // Anchor position is the cursor at the moment of the contextmenu event.
+  const [headerMenu, setHeaderMenu] = useState<{
+    columnKey: string
+    x: number
+    y: number
+  } | null>(null)
+
   const columns = useMemo<Column<GridRow>[]>(() => {
-    return data.columns.map((col) => ({
+    return data.columns.map((col, idx) => ({
       key: col.key,
       name: col.name,
       width: col.width ?? 160,
       minWidth: MIN_COL_WIDTH,
       resizable: true,
       editable: true,
+      // Freeze the first column so it stays visible while scrolling
+      // wide sheets. Common spreadsheet ergonomic — labels stay anchored.
+      frozen: idx === 0,
+      cellClass: isRightAligned(col.kind) ? styles.cellRight : undefined,
       renderEditCell: renderTextEditor,
+      renderCell: (p: RenderCellProps<GridRow>) => (
+        <DisplayCell value={String(p.row[col.key] ?? '')} kind={col.kind} />
+      ),
       renderHeaderCell: (p: RenderHeaderCellProps<GridRow>) => (
         <HeaderCell
           column={col}
           rdgColumn={p.column}
           onRename={(newName) => renameColumn(col.key, newName)}
           onDelete={() => deleteColumn(col.key)}
+          onContextMenu={(x, y) => setHeaderMenu({ columnKey: col.key, x, y })}
         />
       ),
     }))
@@ -74,6 +105,13 @@ export default function SheetEditorGrid({ data, onChange }: Props) {
     })
   }
 
+  function setColumnKind(key: string, kind: SheetColumnKind) {
+    onChange({
+      columns: data.columns.map((c) => (c.key === key ? { ...c, kind } : c)),
+      rows: data.rows,
+    })
+  }
+
   function deleteColumn(key: string) {
     if (!window.confirm(`이 열을 삭제할까요?`)) return
     onChange({
@@ -86,6 +124,11 @@ export default function SheetEditorGrid({ data, onChange }: Props) {
     })
   }
 
+  const headerMenuColumn = useMemo(
+    () => (headerMenu ? data.columns.find((c) => c.key === headerMenu.columnKey) ?? null : null),
+    [headerMenu, data.columns],
+  )
+
   return (
     <div className={styles.wrapper}>
       <DataGrid<GridRow>
@@ -94,13 +137,38 @@ export default function SheetEditorGrid({ data, onChange }: Props) {
         rows={gridRows}
         onRowsChange={handleRowsChange}
         onColumnResize={handleColumnResize}
+        onSelectedCellChange={({ column }) => {
+          // `SelectColumn` (none here) or padding cells may yield a key
+          // we don't know — fall back gracefully so the bar doesn't
+          // freeze on a stale column.
+          const k = column?.key
+          if (k && data.columns.some((c) => c.key === k)) setFocusedKey(k)
+        }}
         rowKeyGetter={(r) => String(r._idx)}
         rowHeight={ROW_HEIGHT}
         headerRowHeight={HEADER_HEIGHT}
         defaultColumnOptions={{ resizable: true }}
       />
+      <SheetStatusBar data={data} focusedColumnKey={focusedKey} />
+      {headerMenuColumn && headerMenu && (
+        <SheetHeaderMenu
+          column={headerMenuColumn}
+          position={{ x: headerMenu.x, y: headerMenu.y }}
+          onClose={() => setHeaderMenu(null)}
+          onRename={(name) => renameColumn(headerMenuColumn.key, name)}
+          onSetKind={(kind) => setColumnKind(headerMenuColumn.key, kind)}
+          onDelete={() => deleteColumn(headerMenuColumn.key)}
+        />
+      )}
     </div>
   )
+}
+
+function DisplayCell({ value, kind }: { value: string; kind: SheetColumnKind | undefined }) {
+  // Read the raw string from the row and run it through the kind-aware
+  // formatter. Edit mode bypasses this (react-data-grid uses
+  // `renderEditCell` instead), so the user always edits the raw value.
+  return <>{formatCellDisplay(value, kind)}</>
 }
 
 type HeaderCellProps = {
@@ -108,9 +176,10 @@ type HeaderCellProps = {
   rdgColumn: { name: React.ReactNode }
   onRename: (name: string) => void
   onDelete: () => void
+  onContextMenu: (x: number, y: number) => void
 }
 
-function HeaderCell({ column, onRename, onDelete }: HeaderCellProps) {
+function HeaderCell({ column, onRename, onDelete, onContextMenu }: HeaderCellProps) {
   return (
     <div
       className={styles.header}
@@ -119,7 +188,12 @@ function HeaderCell({ column, onRename, onDelete }: HeaderCellProps) {
         const next = window.prompt('열 이름', column.name)
         if (next !== null) onRename(next)
       }}
-      title="더블클릭으로 이름 변경"
+      onContextMenu={(e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        onContextMenu(e.clientX, e.clientY)
+      }}
+      title="더블클릭으로 이름 변경 · 우클릭으로 종류 설정"
     >
       <span className={styles.headerName}>{column.name}</span>
       <button
