@@ -1,7 +1,14 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { RenderEditCellProps } from 'react-data-grid'
 import type { SheetRow } from '../types'
-import { isFormulaCell } from '../shared/formula'
+import {
+  getAutocompleteContext,
+  isFormulaCell,
+  matchFunctions,
+  type AutocompleteContext,
+  type FunctionMeta,
+} from '../shared/formula'
+import SheetFunctionAutocomplete from './SheetFunctionAutocomplete'
 import styles from './SheetCellEditor.module.css'
 
 type GridRow = SheetRow & { _idx?: number | string }
@@ -130,6 +137,7 @@ export default function SheetCellEditor({
     lastRefRangeRef.current = null
     setText(v)
     onDraftChange({ colIdx, rowIdx, text: v })
+    refreshAutocomplete(v, caret)
   }
 
   /** True when the character immediately before the caret is a
@@ -177,11 +185,40 @@ export default function SheetCellEditor({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onEditorApi])
 
+  // Function autocomplete — appears as soon as the user types `=`, and
+  // narrows as they keep typing a function name. Owned by the editor
+  // so the picker is naturally tied to one cell's edit session.
+  const [autocomplete, setAutocomplete] =
+    useState<{ ctx: AutocompleteContext; matches: FunctionMeta[] } | null>(null)
+  const [autocompleteIdx, setAutocompleteIdx] = useState(0)
+
+  const refreshAutocomplete = (newText: string, newCaret: number) => {
+    const ctx = getAutocompleteContext(newText, newCaret)
+    if (!ctx) return setAutocomplete(null)
+    const matches = matchFunctions(ctx.query)
+    if (matches.length === 0) return setAutocomplete(null)
+    setAutocomplete({ ctx, matches })
+    setAutocompleteIdx(0)
+  }
+
+  const pickFunction = (fn: FunctionMeta) => {
+    const ctx = autocomplete?.ctx
+    if (!ctx) return
+    const t = textRef.current
+    const next = t.slice(0, ctx.start) + fn.name + '(' + t.slice(ctx.end)
+    const caret = ctx.start + fn.name.length + 1
+    setAutocomplete(null)
+    // Use applyText to keep the controlled state, caret restore, and
+    // draft broadcast all in sync.
+    applyText(next, caret, caret)
+  }
+
   // Track caret position so isPickReady knows where we are.
   const handleSelect = () => {
     const el = inputRef.current
     if (!el) return
     selRef.current = { start: el.selectionStart ?? 0, end: el.selectionEnd ?? 0 }
+    refreshAutocomplete(textRef.current, selRef.current.start)
   }
 
   const commit = () => {
@@ -203,6 +240,31 @@ export default function SheetCellEditor({
   const handleBlur = () => commit()
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    // Autocomplete owns these keys when its popup is open.
+    if (autocomplete && autocomplete.matches.length > 0) {
+      const count = autocomplete.matches.length
+      if (e.key === 'ArrowDown') {
+        e.preventDefault()
+        setAutocompleteIdx((i) => (i + 1) % count)
+        return
+      }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault()
+        setAutocompleteIdx((i) => (i - 1 + count) % count)
+        return
+      }
+      if (e.key === 'Enter' || e.key === 'Tab') {
+        e.preventDefault()
+        const pick = autocomplete.matches[Math.min(autocompleteIdx, count - 1)]
+        if (pick) pickFunction(pick)
+        return
+      }
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        setAutocomplete(null)
+        return
+      }
+    }
     if (e.key === 'Enter') {
       e.preventDefault()
       commit()
@@ -223,17 +285,28 @@ export default function SheetCellEditor({
   const isFormula = isFormulaCell(text)
 
   return (
-    <input
-      ref={inputRef}
-      className={`${styles.input} ${isFormula ? styles.formulaInput : ''}`}
-      type="text"
-      value={text}
-      onChange={(e) => handleChange(e.target.value)}
-      onBlur={handleBlur}
-      onKeyDown={handleKeyDown}
-      onSelect={handleSelect}
-      onKeyUp={handleSelect}
-      onClick={handleSelect}
-    />
+    <>
+      <input
+        ref={inputRef}
+        className={`${styles.input} ${isFormula ? styles.formulaInput : ''}`}
+        type="text"
+        value={text}
+        onChange={(e) => handleChange(e.target.value)}
+        onBlur={handleBlur}
+        onKeyDown={handleKeyDown}
+        onSelect={handleSelect}
+        onKeyUp={handleSelect}
+        onClick={handleSelect}
+      />
+      {autocomplete && (
+        <SheetFunctionAutocomplete
+          anchor={inputRef.current}
+          matches={autocomplete.matches}
+          activeIndex={autocompleteIdx}
+          onHover={setAutocompleteIdx}
+          onPick={pickFunction}
+        />
+      )}
+    </>
   )
 }
