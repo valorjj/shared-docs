@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { MoreHorizontal, Pin, PinOff, Trash2 } from 'lucide-react'
+import { MoreHorizontal, Pin, PinOff, Share2, Trash2 } from 'lucide-react'
 import ConfirmDialog from '../../../components/ui/ConfirmDialog'
 import { Menu, MenuItem, MenuSeparator } from '../../../components/ui/Menu'
+import ShareDialog from '../../share/ShareDialog'
 import { formatRelativeTime } from '../shared/formatRelativeTime'
 import type { Note } from '../types'
 import styles from './NoteEditorMeta.module.css'
@@ -15,6 +16,7 @@ type Props = {
 
 export default function NoteEditorMeta({ note, saving, onTogglePin, onDelete }: Props) {
   const [confirming, setConfirming] = useState(false)
+  const [sharing, setSharing] = useState(false)
 
   return (
     <div className={styles.bar}>
@@ -48,6 +50,13 @@ export default function NoteEditorMeta({ note, saving, onTogglePin, onDelete }: 
           }
         >
           <MenuItem
+            onSelect={() => setSharing(true)}
+            icon={<Share2 size={14} strokeWidth={1.75} />}
+          >
+            공유
+          </MenuItem>
+          <MenuSeparator />
+          <MenuItem
             onSelect={onTogglePin}
             icon={note.pinned ? <PinOff size={14} strokeWidth={1.75} /> : <Pin size={14} strokeWidth={1.75} />}
           >
@@ -73,6 +82,13 @@ export default function NoteEditorMeta({ note, saving, onTogglePin, onDelete }: 
         cancelLabel="취소"
         destructive
         onConfirm={onDelete}
+      />
+
+      <ShareDialog
+        kind="notes"
+        resourceId={note.id}
+        open={sharing}
+        onClose={() => setSharing(false)}
       />
     </div>
   )

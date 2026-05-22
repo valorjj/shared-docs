@@ -14,6 +14,8 @@ type Props = {
   onCreate: () => void
   onOpenFilters: () => void
   onContextMenu?: (e: React.MouseEvent, note: Note) => void
+  /** Pass when the current filter (e.g. 공유받음) cannot accept new memos. */
+  createDisabled?: boolean
 }
 
 export default function NoteList({
@@ -25,6 +27,7 @@ export default function NoteList({
   onCreate,
   onOpenFilters,
   onContextMenu,
+  createDisabled,
 }: Props) {
   return (
     <div className={styles.root}>
@@ -33,6 +36,7 @@ export default function NoteList({
         filterLabel={filterLabel}
         onCreate={onCreate}
         onOpenFilters={onOpenFilters}
+        createDisabled={createDisabled}
       />
       <div className={styles.scroll}>
         {loading && notes.length === 0 ? (

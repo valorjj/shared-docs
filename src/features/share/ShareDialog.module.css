@@ -1,0 +1,268 @@
+/* ── Invite form (top section) ───────────────────────────────────────── */
+
+.invite {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.inviteLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  color: var(--c-text-muted);
+}
+
+.inviteRow {
+  display: flex;
+  gap: var(--sp-2);
+  align-items: stretch;
+}
+
+.inviteInput {
+  flex: 1;
+  min-width: 0;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  background: var(--c-surface);
+  color: var(--c-text);
+  font: inherit;
+  font-size: var(--fs-base);
+  transition: border-color var(--t-fast), box-shadow var(--t-fast);
+}
+
+.inviteInput:focus-visible {
+  outline: none;
+  border-color: var(--c-primary);
+  box-shadow: 0 0 0 3px var(--c-primary-soft);
+}
+
+.inviteInput::placeholder {
+  color: var(--c-text-placeholder);
+}
+
+.inviteAdd {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--c-accent);
+  border-radius: var(--r-md);
+  background: var(--c-surface);
+  color: var(--c-accent);
+  font: inherit;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  cursor: pointer;
+  transition: background var(--t-fast), color var(--t-fast);
+  white-space: nowrap;
+}
+
+.inviteAdd:hover:not(:disabled) {
+  background: var(--c-accent-soft);
+}
+
+.inviteAdd:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.inviteAdd:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--c-accent-soft-strong);
+}
+
+/* Two-pill permission picker (Bear-style segmented) */
+.permRow {
+  display: inline-flex;
+  gap: 4px;
+  padding: 2px;
+  background: var(--c-surface-tint);
+  border-radius: var(--r-pill);
+  align-self: flex-start;
+}
+
+.permPill {
+  padding: 4px 12px;
+  border: none;
+  background: transparent;
+  border-radius: var(--r-pill);
+  font: inherit;
+  font-size: var(--fs-sm);
+  color: var(--c-text-muted);
+  cursor: pointer;
+  transition: background var(--t-fast), color var(--t-fast);
+}
+
+.permPill:hover {
+  color: var(--c-text);
+}
+
+.permPillActive {
+  background: var(--c-surface);
+  color: var(--c-text);
+  font-weight: var(--fw-medium);
+}
+
+.error {
+  margin: 0;
+  font-size: var(--fs-sm);
+  color: var(--c-danger);
+}
+
+/* ── Divider with embedded label ─────────────────────────────────────── */
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-top: var(--sp-2);
+  font-size: var(--fs-sm);
+  color: var(--c-text-subtle);
+  text-transform: none;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--c-border-dashed);
+}
+
+/* ── Share list (bottom section) ─────────────────────────────────────── */
+
+.empty {
+  margin: 0;
+  padding: var(--sp-3) 0;
+  text-align: center;
+  font-size: var(--fs-sm);
+  color: var(--c-text-muted);
+}
+
+.shareList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.shareRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-2) 0;
+  border-bottom: 1px solid var(--c-border-dashed);
+}
+
+.shareRow:last-child {
+  border-bottom: none;
+}
+
+.shareWho {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-width: 0;
+  flex: 1;
+}
+
+.shareAvatar {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--r-pill);
+  object-fit: cover;
+  background: var(--c-surface-tint);
+}
+
+.shareAvatarInitial {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--r-pill);
+  background: var(--c-surface-tint);
+  color: var(--c-text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+}
+
+.shareIdentity {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.shareName {
+  font-size: var(--fs-sm);
+  color: var(--c-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shareEmail {
+  font-size: var(--fs-xs);
+  color: var(--c-text-subtle);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sharePending {
+  font-size: var(--fs-xs);
+  color: var(--c-accent);
+  margin-top: 2px;
+}
+
+.shareActions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-shrink: 0;
+}
+
+.sharePerm {
+  border: 1px solid var(--c-border);
+  background: var(--c-surface);
+  color: var(--c-text);
+  font-size: var(--fs-sm);
+  padding: 4px 8px;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+}
+
+.sharePerm:focus-visible {
+  outline: none;
+  border-color: var(--c-primary);
+  box-shadow: 0 0 0 3px var(--c-primary-soft);
+}
+
+.shareRevoke {
+  border: none;
+  background: transparent;
+  color: var(--c-text-subtle);
+  padding: 4px 6px;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: color var(--t-fast), background var(--t-fast);
+}
+
+.shareRevoke:hover {
+  color: var(--c-danger);
+  background: var(--c-surface-tint);
+}
+
+.shareRevoke:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--c-danger-soft);
+}

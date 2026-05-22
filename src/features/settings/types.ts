@@ -14,7 +14,7 @@ export type AppSettings = {
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
-  theme: 'light',
+  theme: 'dracula',
   font: 'sans',
   lineHeight: 'normal',
 }

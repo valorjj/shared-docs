@@ -5,6 +5,7 @@ import {
   useDeleteForever,
   useNotes,
   useRestoreNote,
+  useSharedNotes,
   useTrashNotes,
 } from '../api'
 import { AppSidebar } from '../../../components/common/AppSidebar'
@@ -23,10 +24,11 @@ import styles from './NoteWorkspace.module.css'
 
 function describeFilter(f: SidebarFilter): string {
   switch (f.kind) {
-    case 'all':    return '모든 메모'
-    case 'pinned': return '고정됨'
-    case 'trash':  return '휴지통'
-    case 'tag':    return f.value
+    case 'all':           return '모든 메모'
+    case 'pinned':        return '고정됨'
+    case 'sharedWithMe':  return '공유받음'
+    case 'trash':         return '휴지통'
+    case 'tag':           return f.value
   }
 }
 
@@ -52,6 +54,10 @@ export default function NoteWorkspace() {
   // after a delete until the user opened trash.
   const trashQuery = useTrashNotes()
   const trashNotes = useMemo(() => trashQuery.data ?? [], [trashQuery.data])
+  // Shared-with-me feeds both the sidebar count (hidden if 0) and the
+  // "공유받음" list view. Eagerly fetched for the same reason as trash.
+  const sharedQuery = useSharedNotes()
+  const sharedNotes = useMemo(() => sharedQuery.data ?? [], [sharedQuery.data])
   const restoreNote = useRestoreNote()
   const deleteForever = useDeleteForever()
 
@@ -61,14 +67,24 @@ export default function NoteWorkspace() {
         return allNotes
       case 'pinned':
         return allNotes.filter((n) => n.pinned)
+      case 'sharedWithMe':
+        return sharedNotes
       case 'trash':
         return [] // Trash is rendered through TrashList, not NoteList — guard.
       case 'tag':
         return allNotes.filter((n) => noteHasTag(n, filter.value))
     }
-  }, [allNotes, filter])
+  }, [allNotes, sharedNotes, filter])
 
-  const activeNote = activeId !== null ? allNotes.find((n) => n.id === activeId) ?? null : null
+  // The active note may live in `allNotes` (mine) or `sharedNotes`
+  // (shared with me). When the user opens a shared-with-me note its row
+  // isn't in `allNotes`, so we look up across both pools.
+  const activeNote =
+    activeId !== null
+      ? allNotes.find((n) => n.id === activeId)
+        ?? sharedNotes.find((n) => n.id === activeId)
+        ?? null
+      : null
 
   const selectNote = (id: number) => {
     const next = new URLSearchParams(searchParams)
@@ -98,6 +114,7 @@ export default function NoteWorkspace() {
   const counts = {
     all: allNotes.length,
     pinned: pinnedCount,
+    sharedWithMe: sharedNotes.length,
     trash: trashNotes.length,
   }
 
@@ -138,6 +155,10 @@ export default function NoteWorkspace() {
               onSelect={selectNote}
               onCreate={handleCreate}
               onOpenFilters={() => setFiltersSheetOpen(true)}
+              // Creating a new memo from the "공유받음" view would land it
+              // in the caller's own workspace and immediately vanish from
+              // the visible list — disable to keep the affordance honest.
+              createDisabled={filter.kind === 'sharedWithMe'}
               onContextMenu={(e, note) => {
                 e.preventDefault()
                 setRowMenu({ note, x: e.clientX, y: e.clientY })

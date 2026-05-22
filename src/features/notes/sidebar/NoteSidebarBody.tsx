@@ -1,4 +1,4 @@
-import { Hash, NotebookText, Pin, Trash2 } from 'lucide-react'
+import { Hash, NotebookText, Pin, Share2, Trash2 } from 'lucide-react'
 import {
   AppSidebarItem,
   AppSidebarSection,
@@ -10,13 +10,14 @@ import type { TagWithCount } from '../shared/extractTags'
 export type SidebarFilter =
   | { kind: 'all' }
   | { kind: 'pinned' }
+  | { kind: 'sharedWithMe' }
   | { kind: 'trash' }
   | { kind: 'tag'; value: string }
 
 type Props = {
   filter: SidebarFilter
   onFilterChange: (f: SidebarFilter) => void
-  counts: { all: number; pinned: number; trash: number }
+  counts: { all: number; pinned: number; sharedWithMe: number; trash: number }
   tags: TagWithCount[]
 }
 
@@ -24,6 +25,9 @@ type Props = {
  * Shared content for memo's left-rail sidebar. Used by AppSidebar on
  * desktop and AppSidebarSheet on mobile so both surfaces stay in lock
  * step — adding a new filter only touches this file.
+ *
+ * "공유받음" is hidden when count == 0 so a brand-new user doesn't see
+ * an empty rail item competing with their own notes.
  */
 export default function NoteSidebarBody({
   filter,
@@ -48,6 +52,15 @@ export default function NoteSidebarBody({
           active={filter.kind === 'pinned'}
           onClick={() => onFilterChange({ kind: 'pinned' })}
         />
+        {counts.sharedWithMe > 0 && (
+          <AppSidebarItem
+            Icon={Share2}
+            label="공유받음"
+            count={counts.sharedWithMe}
+            active={filter.kind === 'sharedWithMe'}
+            onClick={() => onFilterChange({ kind: 'sharedWithMe' })}
+          />
+        )}
         <AppSidebarItem
           Icon={Trash2}
           label="휴지통"

@@ -23,9 +23,10 @@ shared-docs-root/
 └── shared-docs-backend/   ← 별도 레포 (Spring Boot, GitHub Actions self-hosted runner)
     ├── docker-compose.yml ← uploads 볼륨 마운트 포함
     └── docs/
-        ├── AUTH_BLUEPRINT.md       ← Google OAuth + JWT 설계
-        ├── SCALING_BLUEPRINT.md    ← 로드맵 + 구현 로그 (메모/시트/검색/설정 등)
-        └── REFERENCES_BLUEPRINT.md ← 데이터 스냅샷 + 메모 백링크 설계 (다음 작업 2건)
+        ├── CSS_ARCHITECTURE.md      ← 디자인 시스템 + Bear/Notion 미감 규칙 (Dracula 기본)
+        ├── PUBLIC_LAUNCH_BLUEPRINT.md ← 2-person allowlist → 공개 앱 + 문서 공유 (in-flight)
+        ├── SCALING_BLUEPRINT.md     ← 로드맵 + 구현 로그 (메모/시트/검색/설정 등)
+        └── REFERENCES_BLUEPRINT.md  ← 데이터 스냅샷 + 메모 백링크 설계
 ```
 
 ***src/ 폴더 구조 (현재)
@@ -349,7 +350,7 @@ com.shareddocs.backend/
 
 ***외형 설정 (`src/features/settings/`)
 - `SettingsProvider`가 `SearchPaletteProvider` 바깥에서 `MobileShell`을 감쌈. `theme` / `font` / `lineHeight` 3개 키를 `localStorage`(`shared-docs:settings:v1`)에 영속화 + `<html>`에 `data-theme` / `data-font` / `data-line-height` 속성 반영. 크로스탭 동기화는 `storage` 이벤트로.
-- 테마 4종: `light`(기본), `dark`, `dracula`, `monokai`. 각각 `themes.css`의 `:root[data-theme="X"]` 블록에서 `--c-*` / `--shadow-*` 토큰 전체 재정의. 변수명은 동일 — 피처 CSS는 그대로.
+- 테마 4종: `dracula`(**기본, 2026-05-22 변경**), `dark`, `light`, `monokai`. 각각 `themes.css`의 `:root[data-theme="X"]` 블록에서 `--c-*` / `--shadow-*` 토큰 전체 재정의. 변수명은 동일 — 피처 CSS는 그대로. 기본값은 `index.html`의 `<html data-theme="dracula">` + `DEFAULT_SETTINGS.theme`에서 합의 — 둘이 어긋나면 FOUC 발생. 자세한 규칙은 `CSS_ARCHITECTURE.md` 참조.
 - 글꼴 3종: `sans`(기본, Noto Sans KR), `serif`(Noto Serif KR — 본문도 세리프 "독서 모드"), `mono`(시스템 모노). `--font-sans`만 갈아끼움 — 큰 제목은 항상 `--font-serif`로 고정.
 - 줄 간격 3단: `compact`(1.45) / `normal`(1.65, 기본) / `relaxed`(1.85). `--lh-body` 변수 → `NoteEditorBody.module.css`의 `.editor`에서 사용.
 - 트리거 두 곳: 데스크톱 `TopNav`의 `Settings2` 아이콘 버튼, 모바일 `BottomNav`의 6번째 `설정` 버튼 (검색과 동일하게 NavLink 아닌 `<button>`).
