@@ -8,11 +8,14 @@ import styles from './NoteAttachments.module.css'
 
 type Props = {
   noteId: number
+  /** When false, attachment delete is hidden — VIEW recipients see the
+   *  gallery but can't mutate it. */
+  canEdit?: boolean
 }
 
 /** Renders the attachment gallery below the editor body. Hidden when
  *  the note has no attachments (it would only add visual noise). */
-export default function NoteAttachments({ noteId }: Props) {
+export default function NoteAttachments({ noteId, canEdit = true }: Props) {
   const attachmentsQuery = useAttachments(noteId)
   const deleteAttachment = useDeleteAttachment()
   const [lightboxId, setLightboxId] = useState<number | null>(null)
@@ -40,7 +43,7 @@ export default function NoteAttachments({ noteId }: Props) {
             onOpenLightbox={
               a.contentType.startsWith('image/') ? () => setLightboxId(a.id) : undefined
             }
-            onDelete={() => deleteAttachment.mutate({ id: a.id, noteId })}
+            onDelete={canEdit ? () => deleteAttachment.mutate({ id: a.id, noteId }) : undefined}
           />
         ))}
       </ul>

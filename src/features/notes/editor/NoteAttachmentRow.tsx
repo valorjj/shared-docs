@@ -10,7 +10,8 @@ import styles from './NoteAttachments.module.css'
 type Props = {
   attachment: Attachment
   onOpenLightbox?: () => void
-  onDelete: () => void
+  /** Undefined for VIEW recipients — hides the kebab/delete affordance. */
+  onDelete?: () => void
 }
 
 export default function NoteAttachmentRow({ attachment, onOpenLightbox, onDelete }: Props) {
@@ -58,26 +59,30 @@ export default function NoteAttachmentRow({ attachment, onOpenLightbox, onDelete
       >
         <Download size={15} strokeWidth={1.75} />
       </a>
-      <Menu
-        trigger={
-          <button type="button" className={styles.action} aria-label={`${attachment.originalFilename} 메뉴`}>
-            <MoreHorizontal size={16} strokeWidth={2} />
-          </button>
-        }
-      >
-        <MenuItem onSelect={() => setConfirmOpen(true)} icon={<Trash2 size={14} />} destructive>
-          첨부 삭제
-        </MenuItem>
-      </Menu>
-      <ConfirmDialog
-        open={confirmOpen}
-        onOpenChange={setConfirmOpen}
-        title={`${attachment.originalFilename}을(를) 삭제할까요?`}
-        description="본문에 삽입된 이미지/링크는 그대로 남으니, 본문에서도 함께 지워주세요."
-        confirmLabel="삭제"
-        destructive
-        onConfirm={onDelete}
-      />
+      {onDelete && (
+        <>
+          <Menu
+            trigger={
+              <button type="button" className={styles.action} aria-label={`${attachment.originalFilename} 메뉴`}>
+                <MoreHorizontal size={16} strokeWidth={2} />
+              </button>
+            }
+          >
+            <MenuItem onSelect={() => setConfirmOpen(true)} icon={<Trash2 size={14} />} destructive>
+              첨부 삭제
+            </MenuItem>
+          </Menu>
+          <ConfirmDialog
+            open={confirmOpen}
+            onOpenChange={setConfirmOpen}
+            title={`${attachment.originalFilename}을(를) 삭제할까요?`}
+            description="본문에 삽입된 이미지/링크는 그대로 남으니, 본문에서도 함께 지워주세요."
+            confirmLabel="삭제"
+            destructive
+            onConfirm={onDelete}
+          />
+        </>
+      )}
     </li>
   )
 }

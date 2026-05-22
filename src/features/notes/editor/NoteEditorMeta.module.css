@@ -31,6 +31,17 @@
   font-style: italic;
 }
 
+/* "보기만" indicator for VIEW recipients — same row as the meta strip,
+   subtle so it reads as state, not chrome. The eye glyph nods at Bear's
+   sparing use of icons. */
+.viewOnly {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--c-text-muted);
+  font-style: normal;
+}
+
 .right {
   display: inline-flex;
   align-items: center;

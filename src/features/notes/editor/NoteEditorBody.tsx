@@ -40,6 +40,8 @@ import styles from './NoteEditorBody.module.css'
 type Props = {
   noteId: number
   initialBody: string
+  /** When false, the editor is read-only (Tiptap editable=false). */
+  canEdit?: boolean
   onBodyChange: (html: string) => void
   onUploadImage: (file: File) => Promise<string>
   onUploadFile: (file: File) => Promise<{ url: string; filename: string; sizeBytes: number }>
@@ -58,6 +60,7 @@ const IMAGE_MIME = /^image\//
 export default function NoteEditorBody({
   noteId,
   initialBody,
+  canEdit = true,
   onBodyChange,
   onUploadImage,
   onUploadFile,
@@ -147,6 +150,7 @@ export default function NoteEditorBody({
       }),
     ],
     content: initialBody || '',
+    editable: canEdit,
     editorProps: {
       attributes: { class: styles.editor },
       handlePaste(_view, event) {
@@ -220,6 +224,17 @@ export default function NoteEditorBody({
       editor.commands.setContent(initialBody || '', { emitUpdate: false })
     }
   }, [noteId, initialBody, editor])
+
+  // Keep Tiptap's editable flag in sync when the caller's permission
+  // changes (e.g. owner revokes EDIT mid-session). The initial value
+  // is set via useEditor's `editable` option above; this effect handles
+  // every subsequent flip without re-mounting the editor.
+  useEffect(() => {
+    if (!editor) return
+    if (editor.isEditable !== canEdit) {
+      editor.setEditable(canEdit)
+    }
+  }, [editor, canEdit])
 
   // Container ref for the LinkHoverPreview + EditorContextMenu
   // delegate listeners — they hook into the editor's DOM via this node.

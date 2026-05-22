@@ -22,14 +22,25 @@ import styles from './EntityLinkChip.module.css'
  * React node view for the `entityLink` atom node. Switches on `kind`
  * for the icon and the navigation target. Title resolution:
  *
- *   - `note`  → live from `useNotes()` cache, tombstone fallback via
- *               `useTombstoneNote()` (the same path the old note-only
- *               chip used).
- *   - `sheet` → live from `useSheets()` cache.
+ *   - `note`  → live from `useNotes()` cache, with a tombstone fallback
+ *               via `useTombstoneNote()` that ONLY marks the chip as
+ *               "삭제됨" when we have positive evidence of deletion
+ *               (the tombstone fetch returned a row with deletedAt set).
+ *               If the caller simply doesn't have read access, the chip
+ *               falls back to the stored title without strikethrough —
+ *               the recipient may still click through and let the
+ *               target's own page show the access error.
+ *   - `sheet` → same: live from `useSheets()` cache, otherwise the
+ *               stored title. No sheet-tombstone endpoint exists so we
+ *               can't ever assert "deleted" with confidence; treat
+ *               missing-from-cache as "not in my workspace" instead.
  *   - others  → render the stored `data-title` attr (snapshot at insert).
- *               Renames in the source feature won't auto-propagate, but
- *               adding live lookups would need per-feature detail
- *               endpoints we don't have yet.
+ *
+ * Before Phase B the assumption was "if it's not in my list, it must
+ * be deleted" — true for a single-user app. Phase B's per-user privacy
+ * filter broke that: a perfectly alive note shared from another user
+ * never lands in the recipient's `useNotes()` list, so the old logic
+ * marked it as "삭제됨" incorrectly.
  */
 export default function EntityLinkChip({ node }: NodeViewProps) {
   const kind = (node.attrs.kind as EntityKind | undefined) ?? 'note'
@@ -38,10 +49,6 @@ export default function EntityLinkChip({ node }: NodeViewProps) {
   const navigate = useNavigate()
   const requestEntityNav = useEntityNavigate()
 
-  // Regular click → confirm dialog (with kind/title/snippet preview).
-  // Modifier-clicks (Cmd/Ctrl/Shift, middle button) skip the dialog and
-  // go straight to navigate — mirrors the external-link convention in
-  // NoteEditorBody, so power users keep their tab-open habits.
   const handleClick = (e: ReactMouseEvent, id: number) => {
     e.preventDefault()
     const bypass = e.metaKey || e.ctrlKey || e.shiftKey
@@ -52,7 +59,6 @@ export default function EntityLinkChip({ node }: NodeViewProps) {
     navigate(navTarget(kind, id))
   }
 
-  // ── live caches for the two kinds that have list-query coverage ──
   const notesQuery = useNotes()
   const sheetsQuery = useSheets()
   const activeNote =
@@ -80,7 +86,7 @@ export default function EntityLinkChip({ node }: NodeViewProps) {
 
   const Icon = iconFor(kind)
 
-  // ── note: live cache → tombstone → loading ──
+  // ── note: live cache → confirmed tombstone → unknown (static fallback) ──
   if (kind === 'note') {
     if (activeNote) {
       return (
@@ -104,29 +110,41 @@ export default function EntityLinkChip({ node }: NodeViewProps) {
         </NodeViewWrapper>
       )
     }
-    const ghostTitle = tombstone.data?.title ?? storedTitle ?? `메모 #${entityId}`
-    return (
-      <NodeViewWrapper as="span" className={styles.tombstone} contentEditable={false} data-type="entity-link">
-        <Trash2 size={12} strokeWidth={2} aria-hidden="true" />
-        <span className={styles.tombstoneTitle}>{ghostTitle}</span>
-        <span className={styles.tombstoneLabel}>삭제됨</span>
-      </NodeViewWrapper>
-    )
-  }
-
-  // ── sheet: live cache → static fallback ──
-  if (kind === 'sheet') {
-    const title = activeSheet?.title ?? storedTitle ?? `시트 #${entityId}`
-    const deleted = sheetsQuery.data !== undefined && activeSheet === undefined
-    if (deleted) {
+    // Positive evidence of deletion: the tombstone endpoint returned a
+    // row whose deletedAt is set. Any other outcome (403 because we
+    // can't read it, 404 because it really doesn't exist any more, or
+    // a non-deleted row that simply wasn't in our active list) falls
+    // through to the static-title chip below.
+    const confirmedDeleted = tombstone.data?.deletedAt != null
+    if (confirmedDeleted) {
+      const ghostTitle = tombstone.data?.title ?? storedTitle ?? `메모 #${entityId}`
       return (
         <NodeViewWrapper as="span" className={styles.tombstone} contentEditable={false} data-type="entity-link">
           <Trash2 size={12} strokeWidth={2} aria-hidden="true" />
-          <span className={styles.tombstoneTitle}>{title}</span>
+          <span className={styles.tombstoneTitle}>{ghostTitle}</span>
           <span className={styles.tombstoneLabel}>삭제됨</span>
         </NodeViewWrapper>
       )
     }
+    const title = storedTitle ?? `메모 #${entityId}`
+    return (
+      <NodeViewWrapper as="span" className={styles.chip} contentEditable={false} data-type="entity-link">
+        <button
+          type="button"
+          className={styles.button}
+          onClick={(e) => handleClick(e, entityId)}
+          title={title}
+        >
+          <Icon size={12} strokeWidth={2} aria-hidden="true" />
+          {title}
+        </button>
+      </NodeViewWrapper>
+    )
+  }
+
+  // ── sheet: live cache → static fallback (no false tombstone) ──
+  if (kind === 'sheet') {
+    const title = activeSheet?.title ?? storedTitle ?? `시트 #${entityId}`
     return (
       <NodeViewWrapper as="span" className={styles.chip} contentEditable={false} data-type="entity-link">
         <button

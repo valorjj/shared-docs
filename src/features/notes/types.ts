@@ -4,6 +4,12 @@ export type NoteUserRef = {
   pictureUrl: string | null
 }
 
+/** Caller's effective access on a single note, set server-side from
+ *  `AccessControl.permissionFor`. Drives the editor's read-only switch.
+ *  OWNER = creator; EDIT = share with EDIT permission; VIEW = share
+ *  with VIEW permission (read-only). */
+export type NotePermission = 'OWNER' | 'EDIT' | 'VIEW'
+
 export type Note = {
   id: number
   title: string | null
@@ -13,6 +19,7 @@ export type Note = {
   createdAt: string
   updatedAt: string
   deletedAt?: string | null
+  myPermission: NotePermission
 }
 
 export type NoteSummary = {

@@ -4,16 +4,21 @@ import styles from './NoteEditorTitle.module.css'
 type Props = {
   initialValue: string | null
   onCommit: (value: string | null) => void
+  readOnly?: boolean
 }
 
 /**
  * The parent re-keys this component on note change, so we read `initialValue`
  * once via lazy `useState` and never sync via effect.
+ *
+ * `readOnly` is set by the editor for VIEW recipients — the input becomes
+ * a static-looking field that can't be focused or typed into.
  */
-export default function NoteEditorTitle({ initialValue, onCommit }: Props) {
+export default function NoteEditorTitle({ initialValue, onCommit, readOnly = false }: Props) {
   const [value, setValue] = useState(() => initialValue ?? '')
 
   const commit = () => {
+    if (readOnly) return
     const next = value.trim()
     const normalized = next.length === 0 ? null : next
     const prev = (initialValue ?? '').trim()
@@ -26,7 +31,8 @@ export default function NoteEditorTitle({ initialValue, onCommit }: Props) {
       className={styles.input}
       type="text"
       value={value}
-      placeholder="제목"
+      placeholder={readOnly ? '제목 없음' : '제목'}
+      readOnly={readOnly}
       onChange={(e) => setValue(e.target.value)}
       onBlur={commit}
       onKeyDown={(e) => {

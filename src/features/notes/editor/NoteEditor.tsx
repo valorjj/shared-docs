@@ -34,6 +34,12 @@ export default function NoteEditor({ note, onDeleted, onBack }: Props) {
   const deleteNote = useDeleteNote()
   const uploadAttachment = useUploadAttachment()
 
+  // Server-issued read-only switch. VIEW recipients see the body but
+  // cannot type, save, upload, share, pin, or delete. Title input is
+  // also locked. Toolbar is hidden entirely (rather than greyed out)
+  // so the page reads as a document, not a disabled form.
+  const canEdit = note.myPermission !== 'VIEW'
+
   const [editor, setEditor] = useState<Editor | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const [snapshotOpen, setSnapshotOpen] = useState(false)
@@ -56,12 +62,16 @@ export default function NoteEditor({ note, onDeleted, onBack }: Props) {
 
   const scheduleBodySave = useCallback(
     (html: string) => {
+      // Defensive — VIEW recipients shouldn't reach this since Tiptap
+      // is editable={false}, but if a custom keystroke handler ever
+      // bypasses that flag we still refuse to schedule the save.
+      if (!canEdit) return
       pendingBody.current = html
       setBodyDirty(true)
       if (autosaveTimer.current) window.clearTimeout(autosaveTimer.current)
       autosaveTimer.current = window.setTimeout(flushBody, AUTOSAVE_MS)
     },
-    [flushBody],
+    [canEdit, flushBody],
   )
 
   // Flush on unmount / note switch
@@ -76,6 +86,7 @@ export default function NoteEditor({ note, onDeleted, onBack }: Props) {
   }, [note.id, flushBody])
 
   const handleTitleCommit = (title: string | null) => {
+    if (!canEdit) return
     if (title === note.title) return
     updateNote.mutate({ id: note.id, payload: { title } })
   }
@@ -146,12 +157,14 @@ export default function NoteEditor({ note, onDeleted, onBack }: Props) {
   return (
     <div className={styles.root}>
       <NoteEditorMobileBar onBack={onBack} />
-      <NoteEditorToolbar
-        editor={editor}
-        onPickFile={onPickFile}
-        onRequestLinkDialog={openLinkDialog}
-        onPickLinkCard={onPickLinkCard}
-      />
+      {canEdit && (
+        <NoteEditorToolbar
+          editor={editor}
+          onPickFile={onPickFile}
+          onRequestLinkDialog={openLinkDialog}
+          onPickLinkCard={onPickLinkCard}
+        />
+      )}
       <input
         ref={fileInputRef}
         type="file"
@@ -165,10 +178,16 @@ export default function NoteEditor({ note, onDeleted, onBack }: Props) {
 
       <div className={styles.scroll}>
         <div className={styles.inner}>
-          <NoteEditorTitle key={note.id} initialValue={note.title} onCommit={handleTitleCommit} />
+          <NoteEditorTitle
+            key={note.id}
+            initialValue={note.title}
+            onCommit={handleTitleCommit}
+            readOnly={!canEdit}
+          />
           <NoteEditorMeta
             note={note}
             saving={bodyDirty || updateNote.isPending}
+            canEdit={canEdit}
             onTogglePin={handleTogglePin}
             onDelete={handleDelete}
           />
@@ -176,6 +195,7 @@ export default function NoteEditor({ note, onDeleted, onBack }: Props) {
           <NoteEditorBody
             noteId={note.id}
             initialBody={note.body}
+            canEdit={canEdit}
             onBodyChange={scheduleBodySave}
             onUploadImage={onUploadImage}
             onUploadFile={onUploadFile}
@@ -185,7 +205,7 @@ export default function NoteEditor({ note, onDeleted, onBack }: Props) {
             registerEditor={setEditor}
             onRequestLinkDialog={openLinkDialog}
           />
-          <NoteAttachments noteId={note.id} />
+          <NoteAttachments noteId={note.id} canEdit={canEdit} />
         </div>
       </div>
       <DataSnapshotPicker
