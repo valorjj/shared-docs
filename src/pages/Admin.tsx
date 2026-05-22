@@ -15,7 +15,20 @@ import { ErrorState, Spinner } from '../components/ui'
 import type { Role } from '../auth/authContext'
 import './Admin.css'
 
+/** Roles that an admin can ASSIGN to another user via the picker.
+ *  SUPER_ADMIN is intentionally absent — that role is controlled by
+ *  `app.auth.bootstrap-admins` in the backend config + forced on every
+ *  login by `OAuth2SuccessHandler`. The picker still RENDERS
+ *  SUPER_ADMIN as a label for rows where the user already holds it
+ *  (see ALL_ROLE_LABELS below) so it doesn't visually fall back to
+ *  the first option. */
 const ROLE_OPTIONS: Role[] = ['USER', 'ADMIN']
+
+const ROLE_LABELS: Record<Role, string> = {
+  USER: 'USER',
+  ADMIN: 'ADMIN',
+  SUPER_ADMIN: 'SUPER ADMIN',
+}
 
 export default function Admin() {
   const { user: me } = useAuth()
@@ -99,21 +112,33 @@ function UsersSection({ users, currentUserId }: { users: AdminUser[]; currentUse
                     <td>
                       {u.email}
                       {isMe && <span className="admin__me-tag">나</span>}
+                      {u.role === 'SUPER_ADMIN' && (
+                        <span className="admin__super-tag" title="설정 파일로만 부여됩니다">
+                          SUPER ADMIN
+                        </span>
+                      )}
                     </td>
                     <td>{u.name}</td>
                     <td>
-                      <select
-                        className="admin__select"
-                        value={u.role}
-                        disabled={isMe || updateRole.isPending}
-                        onChange={(e) =>
-                          updateRole.mutate({ id: u.id, role: e.target.value as Role })
-                        }
-                      >
-                        {ROLE_OPTIONS.map((r) => (
-                          <option key={r} value={r}>{r}</option>
-                        ))}
-                      </select>
+                      {u.role === 'SUPER_ADMIN' ? (
+                        // SUPER_ADMIN is config-controlled — show as a
+                        // read-only pill instead of a select so it can't be
+                        // accidentally demoted from this page.
+                        <span className="admin__role-readonly">{ROLE_LABELS.SUPER_ADMIN}</span>
+                      ) : (
+                        <select
+                          className="admin__select"
+                          value={u.role}
+                          disabled={isMe || updateRole.isPending}
+                          onChange={(e) =>
+                            updateRole.mutate({ id: u.id, role: e.target.value as Role })
+                          }
+                        >
+                          {ROLE_OPTIONS.map((r) => (
+                            <option key={r} value={r}>{ROLE_LABELS[r]}</option>
+                          ))}
+                        </select>
+                      )}
                     </td>
                     <td>
                       <label className="admin__toggle">

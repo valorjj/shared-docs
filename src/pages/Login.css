@@ -1,76 +1,96 @@
+/* Bear-style minimal landing surface. No card lift, no shadows on the
+   page chrome itself — the whole login is one calm column on --c-bg.
+   All colors drive off tokens so Dracula / dark / light all behave. */
+
 .login {
   min-height: 100dvh;
+  min-height: 100svh;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1.5rem;
-  background: #f4efe5;
-  font-family: 'Noto Sans KR', system-ui, sans-serif;
-  color: #1c1916;
+  padding: var(--sp-7) var(--sp-5);
+  background: var(--c-bg);
+  color: var(--c-text);
+  font-family: var(--font-sans);
 }
 
-.login__card {
+.login__inner {
   width: 100%;
-  max-width: 380px;
-  background: #fff;
-  border: 1px solid #e5e0d6;
-  border-radius: 16px;
-  padding: 2.25rem 1.75rem;
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.06);
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   text-align: center;
 }
 
 .login__title {
-  margin: 0 0 0.35rem;
-  font-family: 'Noto Serif KR', 'Noto Sans KR', serif;
-  font-size: 1.65rem;
-  font-weight: 700;
+  margin: 0;
+  font-family: var(--font-serif);
+  font-weight: var(--fw-bold);
+  font-size: clamp(40px, 7vw, 64px);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tracking-display);
+  color: var(--c-text);
 }
 
-.login__sub {
-  margin: 0 0 1.5rem;
-  color: #6b6660;
-  font-size: 0.9rem;
+.login__lede {
+  margin: var(--sp-3) 0 0;
+  font-size: var(--fs-md);
+  line-height: var(--lh-snug);
+  color: var(--c-text-muted);
+}
+
+.login__rule {
+  width: 56px;
+  height: 1px;
+  background: var(--c-border-strong);
+  margin: var(--sp-7) 0;
 }
 
 .login__error {
-  margin-bottom: 1rem;
-  padding: 0.7rem 0.85rem;
-  background: #fdecea;
-  border: 1px solid #f5b1ad;
-  border-radius: 8px;
-  color: #9b1c14;
-  font-size: 0.85rem;
+  margin: var(--sp-5) 0 0;
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--c-danger-bg);
+  border: 1px solid var(--c-danger-border);
+  border-radius: var(--r-md);
+  color: var(--c-danger);
+  font-size: var(--fs-sm);
   text-align: left;
+  width: 100%;
+  box-sizing: border-box;
 }
 
+/* The single primary button: hairline-bordered, Google identity colors
+   preserved in the icon, surface bg so it tones into the page. Hover
+   shifts to surface-tint per Bear convention. */
 .login__google {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.7rem;
+  gap: var(--sp-3);
   width: 100%;
-  padding: 0.7rem 1rem;
-  background: #fff;
-  color: #1c1916;
-  border: 1px solid #d9d3c5;
-  border-radius: 8px;
-  font-size: 0.95rem;
-  font-weight: 500;
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--c-surface);
+  color: var(--c-text);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  font-family: inherit;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
+  letter-spacing: -0.005em;
   text-decoration: none;
   cursor: pointer;
-  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+  transition: background var(--t-fast), border-color var(--t-fast);
 }
 
 .login__google:hover {
-  background: #fbfaf7;
-  border-color: #b9b2a0;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  background: var(--c-surface-tint);
+  border-color: var(--c-border-strong);
 }
 
 .login__google:focus-visible {
-  outline: 2px solid #1b3a5c;
-  outline-offset: 2px;
+  outline: none;
+  box-shadow: var(--ring-focus);
 }
 
 .login__google-icon {
@@ -80,7 +100,10 @@
 }
 
 .login__hint {
-  margin: 1.25rem 0 0;
-  font-size: 0.75rem;
-  color: #8a857c;
+  margin: var(--sp-6) 0 0;
+  font-size: var(--fs-sm);
+  line-height: var(--lh-snug);
+  color: var(--c-text-subtle);
+  max-width: 28ch;
 }
+

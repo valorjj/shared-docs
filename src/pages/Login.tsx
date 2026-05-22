@@ -2,7 +2,6 @@ import { useSearchParams } from 'react-router-dom'
 import './Login.css'
 
 const ERROR_MESSAGES: Record<string, string> = {
-  not_allowed: '이 이메일은 접근 권한이 없습니다. 관리자에게 문의하세요.',
   deactivated: '계정이 비활성화되었습니다.',
   missing_email: 'Google 계정에서 이메일을 가져올 수 없습니다.',
   missing_token: '로그인 토큰을 찾을 수 없습니다. 다시 시도해 주세요.',
@@ -17,15 +16,17 @@ export default function Login() {
 
   return (
     <div className="login">
-      <div className="login__card">
+      <main className="login__inner">
         <h1 className="login__title">공유 문서</h1>
-        <p className="login__sub">진과 채연을 위한 비공개 공간</p>
+        <p className="login__lede">메모, 시트, 그리고 공유.</p>
 
         {error && (
           <div className="login__error" role="alert">
             {ERROR_MESSAGES[error] ?? `오류: ${error}`}
           </div>
         )}
+
+        <div className="login__rule" aria-hidden="true" />
 
         <a className="login__google" href={`${apiBase}/oauth2/authorization/google`}>
           <svg className="login__google-icon" viewBox="0 0 18 18" aria-hidden="true">
@@ -46,11 +47,13 @@ export default function Login() {
               d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.962L3.964 7.294C4.672 5.167 6.656 3.58 9 3.58z"
             />
           </svg>
-          <span>Google로 로그인</span>
+          <span>Google로 시작하기</span>
         </a>
 
-        <p className="login__hint">허용된 이메일만 로그인할 수 있습니다.</p>
-      </div>
+        <p className="login__hint">
+          링크로 받은 문서를 보러 오셨다면 로그인이 필요 없습니다.
+        </p>
+      </main>
     </div>
   )
 }

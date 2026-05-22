@@ -153,6 +153,37 @@
   vertical-align: middle;
 }
 
+/* SUPER ADMIN identity badge — uses the Bear-red accent (in Dracula
+   this resolves to the pink accent) so it reads as "elevated, rare". */
+.admin__super-tag {
+  margin-left: 0.4rem;
+  padding: 0.05rem 0.45rem;
+  background: var(--c-accent-soft);
+  color: var(--c-accent);
+  border: 1px solid var(--c-accent);
+  border-radius: var(--r-xs);
+  font-size: 0.66rem;
+  font-weight: var(--fw-semi);
+  letter-spacing: 0.02em;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+/* Read-only role display for SUPER_ADMIN rows — the role can only be
+   assigned via `app.auth.bootstrap-admins` in backend config, so the
+   picker is hidden on those rows and this pill takes its place. */
+.admin__role-readonly {
+  display: inline-block;
+  padding: 0.3rem 0.6rem;
+  border: 1px dashed var(--c-border-strong);
+  border-radius: var(--r-sm);
+  font-size: 0.82rem;
+  font-weight: var(--fw-medium);
+  color: var(--c-text-muted);
+  min-width: 80px;
+  text-align: center;
+}
+
 .admin__select {
   padding: 0.3rem 0.5rem;
   border: 1px solid var(--c-border);
