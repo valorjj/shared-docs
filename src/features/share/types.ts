@@ -32,3 +32,23 @@ export type CreateSharePayload = {
 export type UpdateSharePayload = {
   permission: SharePermission
 }
+
+/** Owner-side view of the current public link for a resource. */
+export type PublicLink = {
+  token: string
+  /** Fully-qualified URL the owner copies + shares. */
+  url: string
+  createdAt: string
+  expiresAt: string | null
+}
+
+/** Public read-only view of a note (Phase D). Returned by
+ *  `GET /api/public/notes/:id?token=...` to anonymous callers. */
+export type PublicNoteView = {
+  id: number
+  title: string | null
+  body: string
+  createdBy: { userId: number; name: string; pictureUrl: string | null }
+  createdAt: string
+  updatedAt: string
+}

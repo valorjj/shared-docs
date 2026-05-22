@@ -1,0 +1,263 @@
+/* Guest viewer — looks like a published article, not a stripped-down
+   editor. Centered single column, generous leading, Bear-style hairlines.
+   Inherits the user's theme (Dracula by default) — guests get the same
+   identity as logged-in users. */
+
+.root {
+  min-height: 100dvh;
+  min-height: 100svh;
+  background: var(--c-bg);
+  color: var(--c-text);
+  font-family: var(--font-sans);
+  display: flex;
+  justify-content: center;
+  padding: var(--sp-7) var(--sp-5);
+}
+
+.article {
+  width: 100%;
+  max-width: 720px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding-bottom: var(--sp-4);
+  border-bottom: 1px solid var(--c-border-dashed);
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-weight: var(--fw-bold);
+  font-size: clamp(28px, 5vw, 44px);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tracking-display);
+  color: var(--c-text);
+}
+
+.meta {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  font-size: var(--fs-sm);
+  color: var(--c-text-muted);
+}
+
+.kindBadge {
+  font-size: var(--fs-xs);
+  padding: 1px 8px;
+  border-radius: var(--r-pill);
+  background: var(--c-surface-tint);
+  color: var(--c-text-subtle);
+}
+
+.body {
+  font-size: var(--fs-md);
+  line-height: var(--lh-loose);
+  color: var(--c-text);
+}
+
+/* Inherit prose styling cues from the editor without depending on its
+   CSS Module — the body HTML uses canonical tag names which we style
+   directly here for the read-only surface. */
+.body h1 {
+  font-family: var(--font-serif);
+  font-size: 1.85rem;
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--tracking-display);
+  margin: var(--sp-7) 0 var(--sp-3);
+}
+
+.body h2 {
+  font-family: var(--font-serif);
+  font-size: 1.4rem;
+  font-weight: var(--fw-semi);
+  margin: var(--sp-6) 0 var(--sp-2);
+}
+
+.body h3 {
+  font-size: 1.15rem;
+  font-weight: var(--fw-semi);
+  margin: var(--sp-5) 0 var(--sp-2);
+}
+
+.body p {
+  margin: 0 0 var(--sp-3);
+}
+
+.body p:last-child {
+  margin-bottom: 0;
+}
+
+.body ul,
+.body ol {
+  margin: 0 0 var(--sp-3) var(--sp-5);
+  padding: 0;
+}
+
+.body li {
+  margin-bottom: var(--sp-1);
+}
+
+.body blockquote {
+  margin: var(--sp-4) 0;
+  padding: var(--sp-2) var(--sp-4);
+  border-left: 3px solid var(--c-border-strong);
+  color: var(--c-text-muted);
+  font-style: italic;
+}
+
+.body code {
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  background: var(--c-surface-tint);
+  padding: 1px 6px;
+  border-radius: var(--r-xs);
+}
+
+.body pre {
+  background: var(--c-surface-tint);
+  padding: var(--sp-3);
+  border-radius: var(--r-md);
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-body);
+  margin: var(--sp-4) 0;
+}
+
+.body pre code {
+  background: transparent;
+  padding: 0;
+}
+
+.body img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--r-md);
+  margin: var(--sp-4) 0;
+}
+
+.body a {
+  color: var(--c-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-thickness: 1px;
+}
+
+.body table {
+  border-collapse: collapse;
+  margin: var(--sp-4) 0;
+  width: 100%;
+}
+
+.body th,
+.body td {
+  border: 1px solid var(--c-border);
+  padding: var(--sp-2) var(--sp-3);
+  text-align: left;
+}
+
+.body th {
+  background: var(--c-surface-tint);
+  font-weight: var(--fw-semi);
+}
+
+.body mark {
+  background: var(--c-highlight);
+  padding: 0 2px;
+  border-radius: var(--r-xs);
+}
+
+/* Tag mark + entity-link chip — render as inert text since the guest
+   has no caches/auth to live-resolve them. */
+.body :global(.tag),
+.body :global([data-type='tag']) {
+  background: var(--c-accent-soft);
+  color: var(--c-accent);
+  padding: 1px 6px;
+  border-radius: var(--r-xs);
+  font-size: 0.9em;
+}
+
+.body :global([data-type='entity-link']) {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 6px;
+  border-radius: var(--r-xs);
+  background: var(--c-surface-tint);
+  color: var(--c-text-muted);
+  font-size: 0.92em;
+  white-space: nowrap;
+}
+
+.footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: var(--sp-5);
+  border-top: 1px solid var(--c-border-dashed);
+  font-size: var(--fs-xs);
+  color: var(--c-text-subtle);
+}
+
+.wordmark {
+  font-family: var(--font-serif);
+  font-weight: var(--fw-medium);
+  letter-spacing: -0.01em;
+}
+
+.cta {
+  color: var(--c-primary);
+  text-decoration: none;
+  font-weight: var(--fw-medium);
+}
+
+.cta:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* ── Loading + error states ──────────────────────────────────────── */
+
+.loading {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--c-bg);
+  color: var(--c-text);
+}
+
+.errorBox {
+  width: 100%;
+  max-width: 480px;
+  margin: auto;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  align-self: center;
+}
+
+.errorTitle {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: clamp(24px, 4vw, 32px);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--tracking-display);
+}
+
+.errorBody {
+  margin: 0;
+  font-size: var(--fs-md);
+  color: var(--c-text-muted);
+  line-height: var(--lh-body);
+}

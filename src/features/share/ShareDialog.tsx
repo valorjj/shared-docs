@@ -1,9 +1,13 @@
 import { useState, type FormEvent } from 'react'
-import { Mail, Trash2, UserPlus } from 'lucide-react'
+import { Copy, Link2, Mail, RefreshCw, Trash2, UserPlus } from 'lucide-react'
 import { Modal } from '../../components/ui/Modal'
 import {
+  useCreatePublicLink,
   useCreateShare,
   useDeleteShare,
+  usePublicLink,
+  useRevokePublicLink,
+  useRotatePublicLink,
   useShares,
   useUpdateShare,
 } from './api'
@@ -155,7 +159,112 @@ export default function ShareDialog({ kind, resourceId, open, onClose }: Props) 
           ))}
         </ul>
       )}
+
+      <PublicLinkSection kind={kind} resourceId={resourceId} open={open} />
     </Modal>
+  )
+}
+
+type PublicLinkProps = {
+  kind: ResourceKind
+  resourceId: number
+  open: boolean
+}
+
+/**
+ * Bottom half of the share dialog — "link with anyone who has it."
+ * Currently only meaningful for notes (the only kind with a
+ * GuestViewer). For other kinds we render nothing rather than a
+ * teaser that goes nowhere.
+ */
+function PublicLinkSection({ kind, resourceId, open }: PublicLinkProps) {
+  const linkQuery = usePublicLink(kind, open ? resourceId : null)
+  const createLink = useCreatePublicLink(kind, resourceId)
+  const rotateLink = useRotatePublicLink(kind, resourceId)
+  const revokeLink = useRevokePublicLink(kind, resourceId)
+  const [copied, setCopied] = useState(false)
+
+  if (kind !== 'notes') return null
+
+  const link = linkQuery.data ?? null
+  const enabled = link !== null
+
+  const handleToggle = () => {
+    if (enabled) {
+      revokeLink.mutate()
+    } else {
+      createLink.mutate()
+    }
+  }
+
+  const handleCopy = async () => {
+    if (!link) return
+    try {
+      await navigator.clipboard.writeText(link.url)
+      setCopied(true)
+      window.setTimeout(() => setCopied(false), 1500)
+    } catch {
+      // clipboard API can be unavailable (insecure context / Safari prompt) —
+      // fall back to selecting the input so the user can ⌘C manually.
+      const input = document.getElementById(`public-link-${resourceId}`) as HTMLInputElement | null
+      input?.select()
+    }
+  }
+
+  return (
+    <>
+      <div className={s.divider}>
+        <span>링크로 공유</span>
+      </div>
+
+      <label className={s.linkToggle}>
+        <input
+          type="checkbox"
+          checked={enabled}
+          onChange={handleToggle}
+          disabled={createLink.isPending || revokeLink.isPending}
+        />
+        <span className={s.linkToggleLabel}>
+          <Link2 size={14} strokeWidth={1.75} aria-hidden="true" />
+          링크가 있는 사람은 누구나 보기
+        </span>
+      </label>
+
+      {link && (
+        <>
+          <div className={s.linkRow}>
+            <input
+              id={`public-link-${resourceId}`}
+              type="text"
+              className={s.linkInput}
+              value={link.url}
+              readOnly
+              onFocus={(e) => e.currentTarget.select()}
+            />
+            <button
+              type="button"
+              className={s.linkAction}
+              onClick={handleCopy}
+              title="링크 복사"
+              aria-label="링크 복사"
+            >
+              <Copy size={14} strokeWidth={1.75} />
+              <span>{copied ? '복사됨' : '복사'}</span>
+            </button>
+          </div>
+          <button
+            type="button"
+            className={s.linkRotate}
+            onClick={() => rotateLink.mutate()}
+            disabled={rotateLink.isPending}
+            title="새 링크 발급 (기존 링크는 만료됨)"
+          >
+            <RefreshCw size={12} strokeWidth={1.75} aria-hidden="true" />
+            새 링크 발급
+          </button>
+        </>
+      )}
+    </>
   )
 }
 

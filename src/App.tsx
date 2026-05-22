@@ -3,6 +3,7 @@ import { Routes, Route } from 'react-router-dom'
 import Login from './pages/Login'
 import AuthCallback from './pages/AuthCallback'
 import DataLayout from './pages/DataLayout'
+import GuestViewer from './pages/GuestViewer'
 import NotFound from './pages/NotFound'
 import RequireAuth from './auth/RequireAuth'
 import RequireRole from './auth/RequireRole'
@@ -44,6 +45,9 @@ function App() {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
+        {/* Phase D — public read-only view, no auth required. Token is
+            validated server-side via the ?t= query param. */}
+        <Route path="/share/:kind/:id" element={<GuestViewer />} />
 
         <Route element={<RequireAuth />}>
           <Route element={<MobileShell />}>

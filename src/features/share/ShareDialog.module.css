@@ -266,3 +266,107 @@
   outline: none;
   box-shadow: 0 0 0 3px var(--c-danger-soft);
 }
+
+/* ── Public link (Phase D) ──────────────────────────────────────────── */
+
+.linkToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-3);
+  cursor: pointer;
+  margin-top: var(--sp-2);
+  user-select: none;
+}
+
+.linkToggleLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-sm);
+  color: var(--c-text);
+}
+
+.linkToggle input[type='checkbox'] {
+  accent-color: var(--c-primary);
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.linkRow {
+  display: flex;
+  gap: var(--sp-2);
+  align-items: stretch;
+}
+
+.linkInput {
+  flex: 1;
+  min-width: 0;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  background: var(--c-surface-tint);
+  color: var(--c-text);
+  font: inherit;
+  font-size: var(--fs-sm);
+  font-family: var(--font-mono);
+  user-select: all;
+}
+
+.linkInput:focus-visible {
+  outline: none;
+  border-color: var(--c-primary);
+  box-shadow: 0 0 0 3px var(--c-primary-soft);
+}
+
+.linkAction {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  background: var(--c-surface);
+  color: var(--c-text);
+  font: inherit;
+  font-size: var(--fs-sm);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background var(--t-fast), border-color var(--t-fast);
+}
+
+.linkAction:hover {
+  background: var(--c-surface-tint);
+  border-color: var(--c-border-strong);
+}
+
+.linkAction:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--c-primary-soft);
+}
+
+.linkRotate {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border: none;
+  background: transparent;
+  color: var(--c-text-muted);
+  font: inherit;
+  font-size: var(--fs-xs);
+  cursor: pointer;
+  border-radius: var(--r-sm);
+  transition: color var(--t-fast), background var(--t-fast);
+}
+
+.linkRotate:hover:not(:disabled) {
+  color: var(--c-text);
+  background: var(--c-surface-tint);
+}
+
+.linkRotate:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
