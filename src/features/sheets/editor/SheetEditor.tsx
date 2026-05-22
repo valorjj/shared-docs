@@ -2,14 +2,20 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useIsMobile } from '../../../lib/useMediaQuery'
 import { useDeleteSheet, useUpdateSheet } from '../api'
 import {
-  isEqualData,
+  defaultSheetData,
+  getActiveTab,
+  isEqualWorkbook,
   makeEmptyRow,
   nextColumnKey,
   nextColumnLabel,
-  parseSheetData,
-  stringifySheetData,
+  nextTabId,
+  nextTabName,
+  parseSheetWorkbook,
+  stringifySheetWorkbook,
+  tabAsData,
+  withActiveTab,
 } from '../shared/sheetData'
-import type { SheetData, SheetFull } from '../types'
+import type { SheetData, SheetFull, SheetTab, SheetWorkbook } from '../types'
 import SheetColumnSheet from './SheetColumnSheet'
 import SheetEditorCardList from './SheetEditorCardList'
 import SheetEditorGrid from './SheetEditorGrid'
@@ -17,6 +23,7 @@ import SheetEditorMeta from './SheetEditorMeta'
 import SheetEditorMobileBar from './SheetEditorMobileBar'
 import SheetEditorTitle from './SheetEditorTitle'
 import SheetEditorToolbar from './SheetEditorToolbar'
+import SheetTabStrip from './SheetTabStrip'
 import styles from './SheetEditor.module.css'
 
 type Props = {
@@ -32,24 +39,32 @@ const MAX_HISTORY = 50
 /**
  * Parent re-keys this component on sheet change, so lazy `useState` reads
  * the initial data once. No syncing effect needed.
+ *
+ * State lives at the workbook level (multi-tab). Each grid edit goes
+ * through `withActiveTab` so only the currently-active tab is mutated;
+ * undo/redo snapshots cover the whole workbook, so renaming/adding/
+ * deleting tabs is undoable too.
  */
 export default function SheetEditor({ sheet, onDeleted, onBack }: Props) {
   const updateSheet = useUpdateSheet()
   const deleteSheet = useDeleteSheet()
   const isMobile = useIsMobile()
 
-  const [localData, setLocalData] = useState<SheetData>(() => parseSheetData(sheet.data))
+  const [workbook, setWorkbook] = useState<SheetWorkbook>(() => parseSheetWorkbook(sheet.data))
   const dirty = useRef(false)
   const autosaveTimer = useRef<number | null>(null)
   const [savingHint, setSavingHint] = useState(false)
   const [columnSheetOpen, setColumnSheetOpen] = useState(false)
 
+  const activeTab = getActiveTab(workbook)
+  const activeData: SheetData = tabAsData(activeTab)
+
   const flush = useCallback(() => {
     if (!dirty.current) return
     dirty.current = false
     setSavingHint(false)
-    updateSheet.mutate({ id: sheet.id, payload: { data: stringifySheetData(localData) } })
-  }, [sheet.id, localData, updateSheet])
+    updateSheet.mutate({ id: sheet.id, payload: { data: stringifySheetWorkbook(workbook) } })
+  }, [sheet.id, workbook, updateSheet])
 
   const scheduleSave = useCallback(() => {
     dirty.current = true
@@ -69,38 +84,30 @@ export default function SheetEditor({ sheet, onDeleted, onBack }: Props) {
     }
   }, [sheet.id, flush])
 
-  // Cmd+Z / Cmd+Shift+Z / Cmd+Y keyboard shortcuts. Scoped to the
-  // editor's root via the wrapper ref — so undo elsewhere on the page
-  // doesn't roll back the sheet. Skips when focus is inside a text
-  // input so the cell editor / title field keep their own native
-  // undo stacks. (Listener attaches after `undo`/`redo` are declared
-  // below — JS reads top-to-bottom in component bodies.)
   const rootRef = useRef<HTMLDivElement | null>(null)
 
-  // Undo / redo. Snapshots are debounced — a burst of keystrokes
-  // within `SNAPSHOT_DEBOUNCE_MS` collapses into a single undo step,
-  // so Cmd+Z doesn't roll back letter-by-letter. The redo stack
-  // clears on any fresh edit (standard text-editor behavior).
-  const historyRef = useRef<SheetData[]>([])
-  const redoRef = useRef<SheetData[]>([])
-  const lastSnapshotRef = useRef<SheetData>(localData)
+  // Undo / redo at the workbook level. Snapshots are debounced — a
+  // burst of keystrokes within `SNAPSHOT_DEBOUNCE_MS` collapses into a
+  // single undo step. Tab adds / renames / deletes are also snapshotted
+  // so the same Cmd+Z rolls them back.
+  const historyRef = useRef<SheetWorkbook[]>([])
+  const redoRef = useRef<SheetWorkbook[]>([])
+  const lastSnapshotRef = useRef<SheetWorkbook>(workbook)
   const snapshotTimer = useRef<number | null>(null)
 
-  const scheduleSnapshot = useCallback((newData: SheetData) => {
+  const scheduleSnapshot = useCallback((next: SheetWorkbook) => {
     if (snapshotTimer.current) window.clearTimeout(snapshotTimer.current)
     snapshotTimer.current = window.setTimeout(() => {
-      if (isEqualData(lastSnapshotRef.current, newData)) return
+      if (isEqualWorkbook(lastSnapshotRef.current, next)) return
       historyRef.current.push(lastSnapshotRef.current)
       if (historyRef.current.length > MAX_HISTORY) historyRef.current.shift()
-      lastSnapshotRef.current = newData
-      // New edit invalidates any pending redos.
+      lastSnapshotRef.current = next
       redoRef.current = []
     }, SNAPSHOT_DEBOUNCE_MS)
   }, [])
 
   const undo = useCallback(() => {
     if (historyRef.current.length === 0) return
-    // Flush any pending snapshot first so the undo target is current.
     if (snapshotTimer.current) {
       window.clearTimeout(snapshotTimer.current)
       snapshotTimer.current = null
@@ -108,7 +115,7 @@ export default function SheetEditor({ sheet, onDeleted, onBack }: Props) {
     const prev = historyRef.current.pop()!
     redoRef.current.push(lastSnapshotRef.current)
     lastSnapshotRef.current = prev
-    setLocalData(prev)
+    setWorkbook(prev)
     scheduleSave()
   }, [scheduleSave])
 
@@ -117,15 +124,22 @@ export default function SheetEditor({ sheet, onDeleted, onBack }: Props) {
     const next = redoRef.current.pop()!
     historyRef.current.push(lastSnapshotRef.current)
     lastSnapshotRef.current = next
-    setLocalData(next)
+    setWorkbook(next)
     scheduleSave()
   }, [scheduleSave])
 
-  const handleDataChange = (next: SheetData) => {
-    if (isEqualData(next, localData)) return
-    setLocalData(next)
+  /** Replace the workbook entirely. Used by tab actions (add/rename/
+   *  delete/switch). Schedules autosave + a history snapshot. */
+  const applyWorkbook = useCallback((next: SheetWorkbook) => {
+    if (isEqualWorkbook(workbook, next)) return
+    setWorkbook(next)
     scheduleSnapshot(next)
     scheduleSave()
+  }, [workbook, scheduleSnapshot, scheduleSave])
+
+  /** The grid's onChange only touches the active tab. */
+  const handleActiveTabChange = (nextData: SheetData) => {
+    applyWorkbook(withActiveTab(workbook, nextData))
   }
 
   useEffect(() => {
@@ -149,18 +163,18 @@ export default function SheetEditor({ sheet, onDeleted, onBack }: Props) {
   }, [undo, redo])
 
   const handleAddRow = () => {
-    handleDataChange({
-      columns: localData.columns,
-      rows: [...localData.rows, makeEmptyRow(localData.columns)],
+    handleActiveTabChange({
+      columns: activeData.columns,
+      rows: [...activeData.rows, makeEmptyRow(activeData.columns)],
     })
   }
 
   const handleAddColumn = () => {
-    const key = nextColumnKey(localData.columns)
-    const name = nextColumnLabel(localData.columns)
-    const nextCols = [...localData.columns, { key, name, width: 160 }]
-    const nextRows = localData.rows.map((r) => ({ ...r, [key]: '' }))
-    handleDataChange({ columns: nextCols, rows: nextRows })
+    const key = nextColumnKey(activeData.columns)
+    const name = nextColumnLabel(activeData.columns)
+    const nextCols = [...activeData.columns, { key, name, width: 160 }]
+    const nextRows = activeData.rows.map((r) => ({ ...r, [key]: '' }))
+    handleActiveTabChange({ columns: nextCols, rows: nextRows })
   }
 
   const handleTitleCommit = (title: string | null) => {
@@ -174,6 +188,44 @@ export default function SheetEditor({ sheet, onDeleted, onBack }: Props) {
 
   const handleDelete = () => {
     deleteSheet.mutate(sheet.id, { onSuccess: onDeleted })
+  }
+
+  // ─── Tab actions ────────────────────────────────────────────────────
+
+  const handleTabSwitch = (id: string) => {
+    if (id === workbook.activeTabId) return
+    // Tab switch is its own snapshot so Cmd+Z restores the previous tab.
+    applyWorkbook({ ...workbook, activeTabId: id })
+  }
+
+  const handleTabAdd = () => {
+    const newTab: SheetTab = {
+      id: nextTabId(workbook),
+      name: nextTabName(workbook),
+      ...defaultSheetData(),
+    }
+    applyWorkbook({
+      tabs: [...workbook.tabs, newTab],
+      activeTabId: newTab.id,
+    })
+  }
+
+  const handleTabRename = (id: string, name: string) => {
+    applyWorkbook({
+      ...workbook,
+      tabs: workbook.tabs.map((t) => (t.id === id ? { ...t, name } : t)),
+    })
+  }
+
+  const handleTabDelete = (id: string) => {
+    if (workbook.tabs.length <= 1) return
+    const idx = workbook.tabs.findIndex((t) => t.id === id)
+    const tabs = workbook.tabs.filter((t) => t.id !== id)
+    const activeTabId =
+      workbook.activeTabId === id
+        ? tabs[Math.min(idx, tabs.length - 1)].id
+        : workbook.activeTabId
+    applyWorkbook({ tabs, activeTabId })
   }
 
   return (
@@ -194,15 +246,30 @@ export default function SheetEditor({ sheet, onDeleted, onBack }: Props) {
         />
       </div>
       {isMobile ? (
-        <SheetEditorCardList data={localData} onChange={handleDataChange} />
+        <SheetEditorCardList
+          key={activeTab.id}
+          data={activeData}
+          onChange={handleActiveTabChange}
+        />
       ) : (
-        <SheetEditorGrid data={localData} onChange={handleDataChange} />
+        <SheetEditorGrid
+          key={activeTab.id}
+          data={activeData}
+          onChange={handleActiveTabChange}
+        />
       )}
+      <SheetTabStrip
+        workbook={workbook}
+        onSwitch={handleTabSwitch}
+        onAdd={handleTabAdd}
+        onRename={handleTabRename}
+        onDelete={handleTabDelete}
+      />
       <SheetColumnSheet
         open={columnSheetOpen}
         onOpenChange={setColumnSheetOpen}
-        data={localData}
-        onChange={handleDataChange}
+        data={activeData}
+        onChange={handleActiveTabChange}
       />
     </div>
   )

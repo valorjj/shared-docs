@@ -50,3 +50,20 @@ export type SheetData = {
   columns: SheetColumn[]
   rows: SheetRow[]
 }
+
+/** One tab inside a multi-tab sheet. The grid still operates on a
+ *  single tab's `SheetData`; this just bundles `id` + display name. */
+export type SheetTab = {
+  id: string
+  name: string
+  columns: SheetColumn[]
+  rows: SheetRow[]
+}
+
+/** Multi-tab workbook. Legacy sheets stored as `{ columns, rows }`
+ *  auto-wrap into a single "Sheet1" tab on parse — see
+ *  `parseSheetWorkbook` in shared/sheetData.ts. */
+export type SheetWorkbook = {
+  tabs: SheetTab[]
+  activeTabId: string
+}

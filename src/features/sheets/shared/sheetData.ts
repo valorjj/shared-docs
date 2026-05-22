@@ -1,4 +1,4 @@
-import type { SheetColumn, SheetColumnKind, SheetData, SheetRow } from '../types'
+import type { SheetColumn, SheetColumnKind, SheetData, SheetRow, SheetTab, SheetWorkbook } from '../types'
 
 const EMPTY_DATA: SheetData = { columns: [], rows: [] }
 
@@ -89,6 +89,113 @@ export function isEqualData(a: SheetData, b: SheetData): boolean {
 }
 
 export const EMPTY_SHEET_DATA = EMPTY_DATA
+
+// ─── Multi-tab workbook ────────────────────────────────────────────────
+
+/** Parse a workbook from the backend's opaque JSON blob. Accepts both
+ *  the new shape `{ tabs: [...], activeTabId }` and the legacy single-
+ *  tab shape `{ columns, rows }` — legacy data is wrapped into a single
+ *  `Sheet1` tab on the fly. Save always writes the new shape, so the
+ *  next autosave migrates each legacy sheet permanently. */
+export function parseSheetWorkbook(json: string | undefined | null): SheetWorkbook {
+  if (!json) return defaultSheetWorkbook()
+  try {
+    const parsed = JSON.parse(json) as
+      | Partial<SheetWorkbook>
+      | Partial<SheetData>
+      | null
+    if (!parsed || typeof parsed !== 'object') return defaultSheetWorkbook()
+    // New shape: has `tabs` array.
+    if ('tabs' in parsed && Array.isArray(parsed.tabs) && parsed.tabs.length > 0) {
+      const tabs: SheetTab[] = parsed.tabs
+        .filter((t): t is SheetTab => !!t && typeof t === 'object')
+        .map((t, i) => ({
+          id: typeof t.id === 'string' && t.id ? t.id : `t${i + 1}`,
+          name: typeof t.name === 'string' && t.name ? t.name : `Sheet${i + 1}`,
+          columns: Array.isArray(t.columns) ? t.columns : [],
+          rows: Array.isArray(t.rows) ? t.rows : [],
+        }))
+      if (tabs.length === 0) return defaultSheetWorkbook()
+      const activeTabId =
+        typeof (parsed as SheetWorkbook).activeTabId === 'string' &&
+        tabs.some((t) => t.id === (parsed as SheetWorkbook).activeTabId)
+          ? (parsed as SheetWorkbook).activeTabId
+          : tabs[0].id
+      return { tabs, activeTabId }
+    }
+    // Legacy shape: `{ columns, rows }` — wrap as a single Sheet1.
+    const cols = Array.isArray((parsed as SheetData).columns) ? (parsed as SheetData).columns : []
+    const rows = Array.isArray((parsed as SheetData).rows) ? (parsed as SheetData).rows : []
+    return {
+      tabs: [{ id: 't1', name: 'Sheet1', columns: cols, rows: rows }],
+      activeTabId: 't1',
+    }
+  } catch {
+    return defaultSheetWorkbook()
+  }
+}
+
+export function stringifySheetWorkbook(wb: SheetWorkbook): string {
+  return JSON.stringify(wb)
+}
+
+export function defaultSheetWorkbook(): SheetWorkbook {
+  const sheet1: SheetTab = { id: 't1', name: 'Sheet1', ...defaultSheetData() }
+  return { tabs: [sheet1], activeTabId: 't1' }
+}
+
+export function getActiveTab(wb: SheetWorkbook): SheetTab {
+  return wb.tabs.find((t) => t.id === wb.activeTabId) ?? wb.tabs[0]
+}
+
+export function tabAsData(t: SheetTab): SheetData {
+  return { columns: t.columns, rows: t.rows }
+}
+
+/** Apply a `SheetData` patch to the active tab, leaving every other
+ *  tab untouched. Used by every grid edit. */
+export function withActiveTab(wb: SheetWorkbook, patch: SheetData): SheetWorkbook {
+  return {
+    ...wb,
+    tabs: wb.tabs.map((t) =>
+      t.id === wb.activeTabId
+        ? { ...t, columns: patch.columns, rows: patch.rows }
+        : t,
+    ),
+  }
+}
+
+/** Generate the next free tab id ("t1", "t2", …). */
+export function nextTabId(wb: SheetWorkbook): string {
+  const used = new Set(wb.tabs.map((t) => t.id))
+  for (let i = 1; i < 1_000_000; i++) {
+    const c = `t${i}`
+    if (!used.has(c)) return c
+  }
+  return `t${Date.now()}`
+}
+
+/** Generate the next "Sheet N" name avoiding existing tabs. */
+export function nextTabName(wb: SheetWorkbook): string {
+  const used = new Set(wb.tabs.map((t) => t.name))
+  for (let i = 1; i < 1_000_000; i++) {
+    const c = `Sheet${i}`
+    if (!used.has(c)) return c
+  }
+  return `Sheet`
+}
+
+export function isEqualWorkbook(a: SheetWorkbook, b: SheetWorkbook): boolean {
+  if (a.activeTabId !== b.activeTabId) return false
+  if (a.tabs.length !== b.tabs.length) return false
+  for (let i = 0; i < a.tabs.length; i++) {
+    const x = a.tabs[i]
+    const y = b.tabs[i]
+    if (x.id !== y.id || x.name !== y.name) return false
+    if (!isEqualData({ columns: x.columns, rows: x.rows }, { columns: y.columns, rows: y.rows })) return false
+  }
+  return true
+}
 
 /** Parse a cell string into a number, tolerating comma thousand
  *  separators and a leading currency symbol (₩, $, etc.).

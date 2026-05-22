@@ -1,0 +1,81 @@
+.strip {
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+  padding: 4px 8px 0;
+  border-top: 1px solid var(--c-border);
+  background: var(--c-surface);
+  overflow-x: auto;
+  scrollbar-width: thin;
+  min-height: 32px;
+  flex-shrink: 0;
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--c-text-muted);
+  font-family: inherit;
+  font-size: var(--fs-sm);
+  cursor: pointer;
+  white-space: nowrap;
+  border-radius: 0;
+  margin-bottom: -1px;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color var(--t-fast), background var(--t-fast);
+}
+
+.tab:hover {
+  color: var(--c-text);
+  background: var(--c-surface-tint);
+}
+
+.activeTab {
+  color: var(--c-text);
+  border-bottom-color: var(--c-accent);
+  font-weight: var(--fw-medium);
+}
+
+.add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--c-text-placeholder);
+  cursor: pointer;
+  margin: 2px 4px;
+  transition: background var(--t-fast), color var(--t-fast);
+}
+
+.add:hover {
+  background: var(--c-surface-tint);
+  color: var(--c-text);
+}
+
+.renameInput {
+  appearance: none;
+  border: 1px solid var(--c-border-strong);
+  background: var(--c-surface);
+  color: var(--c-text);
+  font: inherit;
+  font-size: var(--fs-sm);
+  padding: 2px 8px;
+  border-radius: var(--r-sm);
+  outline: none;
+  width: 120px;
+  margin: 2px 4px;
+}
+
+.renameInput:focus {
+  border-color: var(--c-primary);
+}
