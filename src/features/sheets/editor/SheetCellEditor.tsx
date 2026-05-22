@@ -191,14 +191,30 @@ export default function SheetCellEditor({
   const [autocomplete, setAutocomplete] =
     useState<{ ctx: AutocompleteContext; matches: FunctionMeta[] } | null>(null)
   const [autocompleteIdx, setAutocompleteIdx] = useState(0)
+  // Track the last query the popup was synced to. Arrow-key navigation
+  // also fires the input's onKeyUp → handleSelect → refreshAutocomplete;
+  // resetting the index every time would make ↓ snap back to 0. Only
+  // reset when the query *actually* changes (user typed/deleted).
+  const lastAutocompleteQueryRef = useRef<string | null>(null)
 
   const refreshAutocomplete = (newText: string, newCaret: number) => {
     const ctx = getAutocompleteContext(newText, newCaret)
-    if (!ctx) return setAutocomplete(null)
+    if (!ctx) {
+      lastAutocompleteQueryRef.current = null
+      setAutocomplete(null)
+      return
+    }
     const matches = matchFunctions(ctx.query)
-    if (matches.length === 0) return setAutocomplete(null)
+    if (matches.length === 0) {
+      lastAutocompleteQueryRef.current = null
+      setAutocomplete(null)
+      return
+    }
+    if (lastAutocompleteQueryRef.current !== ctx.query) {
+      setAutocompleteIdx(0)
+      lastAutocompleteQueryRef.current = ctx.query
+    }
     setAutocomplete({ ctx, matches })
-    setAutocompleteIdx(0)
   }
 
   const pickFunction = (fn: FunctionMeta) => {
