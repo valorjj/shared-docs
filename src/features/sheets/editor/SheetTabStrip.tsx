@@ -12,9 +12,10 @@ import styles from './SheetTabStrip.module.css'
 type Props = {
   workbook: SheetWorkbook
   onSwitch: (tabId: string) => void
-  onAdd: () => void
-  onRename: (tabId: string, name: string) => void
-  onDelete: (tabId: string) => void
+  /** Undefined for VIEW recipients — hides the +/rename/delete UI. */
+  onAdd?: () => void
+  onRename?: (tabId: string, name: string) => void
+  onDelete?: (tabId: string) => void
 }
 
 /**
@@ -42,7 +43,8 @@ export default function SheetTabStrip({
   const deleteTab = confirmDeleteId
     ? workbook.tabs.find((t) => t.id === confirmDeleteId) ?? null
     : null
-  const canDelete = workbook.tabs.length > 1
+  const canDelete = workbook.tabs.length > 1 && onDelete != null
+  const canMutate = onAdd != null && onRename != null
 
   return (
     <div className={styles.strip} role="tablist" aria-label="시트 탭">
@@ -52,26 +54,29 @@ export default function SheetTabStrip({
           tab={tab}
           active={tab.id === workbook.activeTabId}
           editing={editingId === tab.id}
+          canMutate={canMutate}
           onSwitch={() => onSwitch(tab.id)}
           onStartRename={() => setEditingId(tab.id)}
           onCommitRename={(name) => {
-            onRename(tab.id, name)
+            if (onRename) onRename(tab.id, name)
             setEditingId(null)
           }}
           onCancelRename={() => setEditingId(null)}
           onContextMenu={(x, y) => setMenu({ tabId: tab.id, x, y })}
         />
       ))}
-      <button
-        type="button"
-        className={styles.add}
-        onClick={onAdd}
-        aria-label="탭 추가"
-        title="탭 추가"
-      >
-        <Plus size={14} strokeWidth={2} />
-      </button>
-      {menuTab && menu && (
+      {onAdd && (
+        <button
+          type="button"
+          className={styles.add}
+          onClick={onAdd}
+          aria-label="탭 추가"
+          title="탭 추가"
+        >
+          <Plus size={14} strokeWidth={2} />
+        </button>
+      )}
+      {menuTab && menu && canMutate && (
         <ContextMenu
           open
           position={{ x: menu.x, y: menu.y }}
@@ -98,7 +103,7 @@ export default function SheetTabStrip({
           )}
         </ContextMenu>
       )}
-      {deleteTab && (
+      {deleteTab && onDelete && (
         <ConfirmDialog
           open
           onOpenChange={(o) => !o && setConfirmDeleteId(null)}
@@ -120,6 +125,7 @@ function TabButton({
   tab,
   active,
   editing,
+  canMutate,
   onSwitch,
   onStartRename,
   onCommitRename,
@@ -129,6 +135,7 @@ function TabButton({
   tab: { id: string; name: string }
   active: boolean
   editing: boolean
+  canMutate: boolean
   onSwitch: () => void
   onStartRename: () => void
   onCommitRename: (name: string) => void
@@ -137,7 +144,7 @@ function TabButton({
 }) {
   // Keyed inner so the input mounts fresh per rename session — no
   // sync-prop-into-state pattern.
-  if (editing) return <TabRenameInput key={tab.id} initial={tab.name} onCommit={onCommitRename} onCancel={onCancelRename} />
+  if (editing && canMutate) return <TabRenameInput key={tab.id} initial={tab.name} onCommit={onCommitRename} onCancel={onCancelRename} />
   return (
     <button
       type="button"
@@ -146,10 +153,12 @@ function TabButton({
       className={`${styles.tab}${active ? ` ${styles.activeTab}` : ''}`}
       onClick={onSwitch}
       onDoubleClick={(e) => {
+        if (!canMutate) return
         e.stopPropagation()
         onStartRename()
       }}
       onContextMenu={(e) => {
+        if (!canMutate) return
         e.preventDefault()
         e.stopPropagation()
         onContextMenu(e.clientX, e.clientY)

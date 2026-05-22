@@ -50,6 +50,13 @@ export default function SheetEditor({ sheet, onDeleted, onBack }: Props) {
   const deleteSheet = useDeleteSheet()
   const isMobile = useIsMobile()
 
+  // Server-issued read-only switch. VIEW recipients see the grid but
+  // every edit affordance is hidden — toolbar, tab strip's + button,
+  // kebab actions, title input. Their typed cells are also rejected
+  // by react-data-grid via `enableCellAutoFocus=false` (we omit the
+  // grid's onChange in that branch).
+  const canEdit = sheet.myPermission !== 'VIEW'
+
   const [workbook, setWorkbook] = useState<SheetWorkbook>(() => parseSheetWorkbook(sheet.data))
   const dirty = useRef(false)
   const autosaveTimer = useRef<number | null>(null)
@@ -67,11 +74,14 @@ export default function SheetEditor({ sheet, onDeleted, onBack }: Props) {
   }, [sheet.id, workbook, updateSheet])
 
   const scheduleSave = useCallback(() => {
+    // VIEW recipients can't mutate — every save would 403 backend-side.
+    // Skip scheduling so the "저장 중…" hint never lies.
+    if (!canEdit) return
     dirty.current = true
     setSavingHint(true)
     if (autosaveTimer.current) window.clearTimeout(autosaveTimer.current)
     autosaveTimer.current = window.setTimeout(flush, AUTOSAVE_MS)
-  }, [flush])
+  }, [canEdit, flush])
 
   // Flush pending changes on unmount / sheet switch.
   useEffect(() => {
@@ -178,6 +188,7 @@ export default function SheetEditor({ sheet, onDeleted, onBack }: Props) {
   }
 
   const handleTitleCommit = (title: string | null) => {
+    if (!canEdit) return
     if (title === sheet.title) return
     updateSheet.mutate({ id: sheet.id, payload: { title } })
   }
@@ -232,45 +243,57 @@ export default function SheetEditor({ sheet, onDeleted, onBack }: Props) {
     <div className={styles.root} ref={rootRef} tabIndex={-1}>
       <SheetEditorMobileBar onBack={onBack} />
       <div className={styles.headerArea}>
-        <SheetEditorTitle key={sheet.id} initialValue={sheet.title} onCommit={handleTitleCommit} />
+        <SheetEditorTitle
+          key={sheet.id}
+          initialValue={sheet.title}
+          onCommit={handleTitleCommit}
+          readOnly={!canEdit}
+        />
         <SheetEditorMeta
           sheet={sheet}
-          saving={savingHint || updateSheet.isPending}
+          saving={(savingHint || updateSheet.isPending) && canEdit}
+          canEdit={canEdit}
           onTogglePin={handleTogglePin}
           onDelete={handleDelete}
         />
-        <SheetEditorToolbar
-          onAddRow={handleAddRow}
-          onAddColumn={handleAddColumn}
-          onOpenColumnSheet={() => setColumnSheetOpen(true)}
-        />
+        {canEdit && (
+          <SheetEditorToolbar
+            onAddRow={handleAddRow}
+            onAddColumn={handleAddColumn}
+            onOpenColumnSheet={() => setColumnSheetOpen(true)}
+          />
+        )}
       </div>
       {isMobile ? (
         <SheetEditorCardList
           key={activeTab.id}
           data={activeData}
-          onChange={handleActiveTabChange}
+          onChange={canEdit ? handleActiveTabChange : undefined}
+          readOnly={!canEdit}
         />
       ) : (
         <SheetEditorGrid
           key={activeTab.id}
           data={activeData}
-          onChange={handleActiveTabChange}
+          onChange={canEdit ? handleActiveTabChange : undefined}
+          readOnly={!canEdit}
         />
       )}
       <SheetTabStrip
         workbook={workbook}
         onSwitch={handleTabSwitch}
-        onAdd={handleTabAdd}
-        onRename={handleTabRename}
-        onDelete={handleTabDelete}
+        onAdd={canEdit ? handleTabAdd : undefined}
+        onRename={canEdit ? handleTabRename : undefined}
+        onDelete={canEdit ? handleTabDelete : undefined}
       />
-      <SheetColumnSheet
-        open={columnSheetOpen}
-        onOpenChange={setColumnSheetOpen}
-        data={activeData}
-        onChange={handleActiveTabChange}
-      />
+      {canEdit && (
+        <SheetColumnSheet
+          open={columnSheetOpen}
+          onOpenChange={setColumnSheetOpen}
+          data={activeData}
+          onChange={handleActiveTabChange}
+        />
+      )}
     </div>
   )
 }

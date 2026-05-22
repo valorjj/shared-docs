@@ -4,12 +4,14 @@ import styles from './SheetEditorTitle.module.css'
 type Props = {
   initialValue: string | null
   onCommit: (value: string | null) => void
+  readOnly?: boolean
 }
 
-export default function SheetEditorTitle({ initialValue, onCommit }: Props) {
+export default function SheetEditorTitle({ initialValue, onCommit, readOnly = false }: Props) {
   const [value, setValue] = useState(() => initialValue ?? '')
 
   const commit = () => {
+    if (readOnly) return
     const next = value.trim()
     const normalized = next.length === 0 ? null : next
     const prev = (initialValue ?? '').trim()
@@ -22,7 +24,8 @@ export default function SheetEditorTitle({ initialValue, onCommit }: Props) {
       className={styles.input}
       type="text"
       value={value}
-      placeholder="시트 제목"
+      placeholder={readOnly ? '제목 없는 시트' : '시트 제목'}
+      readOnly={readOnly}
       onChange={(e) => setValue(e.target.value)}
       onBlur={commit}
       onKeyDown={(e) => {

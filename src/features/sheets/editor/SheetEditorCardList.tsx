@@ -8,28 +8,32 @@ import styles from './SheetEditorCardList.module.css'
 
 type Props = {
   data: SheetData
-  onChange: (next: SheetData) => void
+  /** Undefined for VIEW recipients — inputs become readonly and the
+   *  add-row / delete-row affordances are hidden. */
+  onChange?: (next: SheetData) => void
+  readOnly?: boolean
 }
 
 /**
  * Mobile-only view of the sheet: each row becomes a card with one labeled
  * field per column. Cell edits stream into `onChange`; the parent debounces
- * the actual save.
+ * the actual save. VIEW recipients see the same cards as read-only.
  */
-export default function SheetEditorCardList({ data, onChange }: Props) {
+export default function SheetEditorCardList({ data, onChange, readOnly = false }: Props) {
   const { columns, rows } = data
+  const emitChange = onChange ?? (() => {})
 
   const setCell = (rowIndex: number, key: string, value: string) => {
     const nextRows = rows.map((r, i) => (i === rowIndex ? { ...r, [key]: value } : r))
-    onChange({ columns, rows: nextRows })
+    emitChange({ columns, rows: nextRows })
   }
 
   const deleteRow = (rowIndex: number) => {
-    onChange({ columns, rows: rows.filter((_, i) => i !== rowIndex) })
+    emitChange({ columns, rows: rows.filter((_, i) => i !== rowIndex) })
   }
 
   const addRow = () => {
-    onChange({ columns, rows: [...rows, makeEmptyRow(columns)] })
+    emitChange({ columns, rows: [...rows, makeEmptyRow(columns)] })
   }
 
   if (columns.length === 0) {
@@ -51,15 +55,18 @@ export default function SheetEditorCardList({ data, onChange }: Props) {
             index={i}
             columns={columns}
             row={row}
+            readOnly={readOnly}
             onCellChange={(key, value) => setCell(i, key, value)}
             onDelete={() => deleteRow(i)}
           />
         ))}
       </ol>
-      <button type="button" className={styles.addRow} onClick={addRow}>
-        <Plus size={14} strokeWidth={2} />
-        <span>행 추가</span>
-      </button>
+      {!readOnly && (
+        <button type="button" className={styles.addRow} onClick={addRow}>
+          <Plus size={14} strokeWidth={2} />
+          <span>행 추가</span>
+        </button>
+      )}
     </div>
   )
 }
@@ -68,27 +75,30 @@ type RowCardProps = {
   index: number
   columns: SheetColumn[]
   row: SheetRow
+  readOnly: boolean
   onCellChange: (key: string, value: string) => void
   onDelete: () => void
 }
 
-function RowCard({ index, columns, row, onCellChange, onDelete }: RowCardProps) {
+function RowCard({ index, columns, row, readOnly, onCellChange, onDelete }: RowCardProps) {
   const [confirmOpen, setConfirmOpen] = useState(false)
   return (
     <li className={styles.card}>
       <div className={styles.cardHeader}>
         <span className={styles.cardIndex}>#{index + 1}</span>
-        <Menu
-          trigger={
-            <button type="button" className={styles.kebab} aria-label={`행 ${index + 1} 메뉴`}>
-              <MoreHorizontal size={18} strokeWidth={2} />
-            </button>
-          }
-        >
-          <MenuItem onSelect={() => setConfirmOpen(true)} icon={<Trash2 size={14} />} destructive>
-            행 삭제
-          </MenuItem>
-        </Menu>
+        {!readOnly && (
+          <Menu
+            trigger={
+              <button type="button" className={styles.kebab} aria-label={`행 ${index + 1} 메뉴`}>
+                <MoreHorizontal size={18} strokeWidth={2} />
+              </button>
+            }
+          >
+            <MenuItem onSelect={() => setConfirmOpen(true)} icon={<Trash2 size={14} />} destructive>
+              행 삭제
+            </MenuItem>
+          </Menu>
+        )}
       </div>
       <div className={styles.fields}>
         {columns.map((c) => (
@@ -98,6 +108,7 @@ function RowCard({ index, columns, row, onCellChange, onDelete }: RowCardProps) 
               type="text"
               className={styles.input}
               value={row[c.key] ?? ''}
+              readOnly={readOnly}
               onChange={(e) => onCellChange(c.key, e.target.value)}
               placeholder="—"
             />

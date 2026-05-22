@@ -19,6 +19,14 @@
 .time   { font-variant-numeric: tabular-nums; }
 .saving { color: var(--c-text-placeholder); font-style: italic; }
 
+/* "보기만" indicator for VIEW recipients — mirrors the note meta strip. */
+.viewOnly {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--c-text-muted);
+}
+
 .right {
   display: inline-flex;
   align-items: center;

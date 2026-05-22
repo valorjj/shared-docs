@@ -1,27 +1,18 @@
-import { useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import {
   useAdminOverview,
-  useAddAllowedEmail,
-  useDeleteAllowedEmail,
-  useUpdateAllowedEmailRole,
   useUpdateUserActive,
   useUpdateUserRole,
   type AdminUser,
-  type AllowedEmail,
 } from '../api/admin'
 import { useAuth } from '../auth/useAuth'
 import { ErrorState, Spinner } from '../components/ui'
 import type { Role } from '../auth/authContext'
 import './Admin.css'
 
-/** Roles that an admin can ASSIGN to another user via the picker.
- *  SUPER_ADMIN is intentionally absent — that role is controlled by
- *  `app.auth.bootstrap-admins` in the backend config + forced on every
- *  login by `OAuth2SuccessHandler`. The picker still RENDERS
- *  SUPER_ADMIN as a label for rows where the user already holds it
- *  (see ALL_ROLE_LABELS below) so it doesn't visually fall back to
- *  the first option. */
+/** Roles an admin can assign via the picker. SUPER_ADMIN is config-
+ *  controlled (see `app.auth.bootstrap-admins`) and intentionally
+ *  absent — the row gets a read-only pill when it's already held. */
 const ROLE_OPTIONS: Role[] = ['USER', 'ADMIN']
 
 const ROLE_LABELS: Record<Role, string> = {
@@ -58,15 +49,7 @@ export default function Admin() {
       )}
       {isError && <ErrorState error={error} onRetry={() => refetch()} />}
 
-      {data && (
-        <>
-          <UsersSection users={data.users} currentUserId={me?.userId ?? -1} />
-          <AllowedEmailsSection
-            entries={data.pendingAllowedEmails}
-            currentUserEmail={me?.email ?? ''}
-          />
-        </>
-      )}
+      {data && <UsersSection users={data.users} currentUserId={me?.userId ?? -1} />}
     </div>
   )
 }
@@ -121,9 +104,6 @@ function UsersSection({ users, currentUserId }: { users: AdminUser[]; currentUse
                     <td>{u.name}</td>
                     <td>
                       {u.role === 'SUPER_ADMIN' ? (
-                        // SUPER_ADMIN is config-controlled — show as a
-                        // read-only pill instead of a select so it can't be
-                        // accidentally demoted from this page.
                         <span className="admin__role-readonly">{ROLE_LABELS.SUPER_ADMIN}</span>
                       ) : (
                         <select
@@ -173,140 +153,6 @@ function UsersSection({ users, currentUserId }: { users: AdminUser[]; currentUse
         <p className="admin__status admin__status--error">
           활성 변경 실패: {(updateActive.error as Error).message}
         </p>
-      )}
-    </section>
-  )
-}
-
-function AllowedEmailsSection({
-  entries,
-  currentUserEmail,
-}: {
-  entries: AllowedEmail[]
-  currentUserEmail: string
-}) {
-  const addAllowed = useAddAllowedEmail()
-  const updateAllowedRole = useUpdateAllowedEmailRole()
-  const deleteAllowed = useDeleteAllowedEmail()
-
-  const [email, setEmail] = useState('')
-  const [role, setRole] = useState<Role>('USER')
-
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    const trimmed = email.trim().toLowerCase()
-    if (!trimmed) return
-    addAllowed.mutate(
-      { email: trimmed, defaultRole: role },
-      {
-        onSuccess: () => {
-          setEmail('')
-          setRole('USER')
-        },
-      },
-    )
-  }
-
-  return (
-    <section className="admin__section">
-      <h2 className="admin__section-title">허용된 이메일 ({entries.length} 대기)</h2>
-      <p className="admin__section-hint">
-        아직 로그인하지 않은 사용자입니다. 첫 로그인 시 여기 설정된 권한이 부여됩니다.
-      </p>
-
-      <form className="admin__add-form" onSubmit={handleSubmit}>
-        <input
-          className="admin__input"
-          type="email"
-          placeholder="email@example.com"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-        <select
-          className="admin__select"
-          value={role}
-          onChange={(e) => setRole(e.target.value as Role)}
-        >
-          {ROLE_OPTIONS.map((r) => (
-            <option key={r} value={r}>{r}</option>
-          ))}
-        </select>
-        <button
-          type="submit"
-          className="admin__btn admin__btn--primary"
-          disabled={addAllowed.isPending}
-        >
-          {addAllowed.isPending ? '추가 중…' : '추가'}
-        </button>
-      </form>
-
-      {addAllowed.isError && (
-        <p className="admin__status admin__status--error">
-          추가 실패: {(addAllowed.error as Error).message}
-        </p>
-      )}
-
-      {entries.length > 0 && (
-        <div className="admin__table-wrap">
-          <table className="admin__table">
-            <thead>
-              <tr>
-                <th>이메일</th>
-                <th>기본 권한</th>
-                <th>추가일</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {entries.map((e) => {
-                const isMine = e.email === currentUserEmail.toLowerCase()
-                return (
-                  <tr key={e.id}>
-                    <td>
-                      {e.email}
-                      {isMine && <span className="admin__me-tag">나</span>}
-                    </td>
-                    <td>
-                      <select
-                        className="admin__select"
-                        value={e.defaultRole}
-                        disabled={updateAllowedRole.isPending}
-                        onChange={(ev) =>
-                          updateAllowedRole.mutate({
-                            id: e.id,
-                            role: ev.target.value as Role,
-                          })
-                        }
-                      >
-                        {ROLE_OPTIONS.map((r) => (
-                          <option key={r} value={r}>{r}</option>
-                        ))}
-                      </select>
-                    </td>
-                    <td className="admin__time">
-                      {new Date(e.addedAt).toLocaleString('ko-KR')}
-                    </td>
-                    <td>
-                      <button
-                        type="button"
-                        className="admin__btn admin__btn--danger"
-                        disabled={isMine || deleteAllowed.isPending}
-                        onClick={() => {
-                          if (confirm(`${e.email}을(를) 허용 목록에서 제거하시겠습니까?`)) {
-                            deleteAllowed.mutate(e.id)
-                          }
-                        }}
-                      >
-                        제거
-                      </button>
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
       )}
     </section>
   )

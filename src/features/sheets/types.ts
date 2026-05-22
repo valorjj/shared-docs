@@ -14,9 +14,15 @@ export type SheetSummary = {
   updatedAt: string
 }
 
-/** Full sheet, including the JSON grid payload. */
+export type SheetPermission = 'OWNER' | 'EDIT' | 'VIEW'
+
+/** Full sheet, including the JSON grid payload. `myPermission` is
+ *  set server-side from AccessControl and drives the grid's
+ *  read-only switch — VIEW recipients see the cells but every edit
+ *  affordance is hidden. */
 export type SheetFull = SheetSummary & {
   data: string
+  myPermission: SheetPermission
 }
 
 export type CreateSheetPayload = {

@@ -29,7 +29,11 @@ import styles from './SheetEditorGrid.module.css'
 
 type Props = {
   data: SheetData
-  onChange: (next: SheetData) => void
+  /** Undefined when the caller is in read-only mode (VIEW recipient).
+   *  Every column then renders with `editable: false` and the grid's
+   *  onRowsChange callback is a no-op. */
+  onChange?: (next: SheetData) => void
+  readOnly?: boolean
 }
 
 type GridRow = SheetRow & { _idx?: number | string }
@@ -38,7 +42,12 @@ const ROW_HEIGHT = 34
 const HEADER_HEIGHT = 36
 const MIN_COL_WIDTH = 80
 
-export default function SheetEditorGrid({ data, onChange }: Props) {
+export default function SheetEditorGrid({ data, onChange, readOnly = false }: Props) {
+  // Safe wrapper — when onChange is omitted (VIEW recipient), every
+  // caller below funnels into this no-op so we don't need a tree of
+  // `onChange?.(…)` guards. Cells are also marked non-editable via
+  // the `editable` flag we inject on each column below.
+  const emitChange = onChange ?? (() => {})
   const gridRows = useMemo<GridRow[]>(
     () => data.rows.map((r, i) => ({ ...r, _idx: String(i) })),
     [data.rows],
@@ -290,7 +299,7 @@ export default function SheetEditorGrid({ data, onChange }: Props) {
           nextRows[startRow + r] = { ...nextRows[startRow + r], [col.key]: rows[r][c] }
         }
       }
-      onChangeRef.current({ columns: d.columns, rows: nextRows })
+      onChangeRef.current?.({ columns: d.columns, rows: nextRows })
       e.preventDefault()
     }
 
@@ -418,7 +427,10 @@ export default function SheetEditorGrid({ data, onChange }: Props) {
       width: col.width ?? 160,
       minWidth: MIN_COL_WIDTH,
       resizable: true,
-      editable: true,
+      // VIEW recipients see the grid but cells don't enter edit mode
+      // on click. Combined with emitChange being a no-op, every edit
+      // path is closed at the react-data-grid layer.
+      editable: !readOnly,
       // Freeze the first column so it stays visible while scrolling
       // wide sheets. Common spreadsheet ergonomic — labels stay anchored.
       frozen: idx === 0,
@@ -466,10 +478,10 @@ export default function SheetEditorGrid({ data, onChange }: Props) {
         />
       ),
     }))
-  }, [data.columns, resolver, highlightMap, selectionSet]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [data.columns, resolver, highlightMap, selectionSet, readOnly]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function handleRowsChange(next: GridRow[]) {
-    onChange({
+    emitChange({
       columns: data.columns,
       rows: next.map((r) => {
         const { _idx: _ignored, ...rest } = r
@@ -483,20 +495,20 @@ export default function SheetEditorGrid({ data, onChange }: Props) {
     const nextCols: SheetColumn[] = data.columns.map((c) =>
       c.key === column.key ? { ...c, width: Math.round(width) } : c,
     )
-    onChange({ columns: nextCols, rows: data.rows })
+    emitChange({ columns: nextCols, rows: data.rows })
   }
 
   function renameColumn(key: string, newName: string) {
     const trimmed = newName.trim()
     if (!trimmed) return
-    onChange({
+    emitChange({
       columns: data.columns.map((c) => (c.key === key ? { ...c, name: trimmed } : c)),
       rows: data.rows,
     })
   }
 
   function setColumnKind(key: string, kind: SheetColumnKind) {
-    onChange({
+    emitChange({
       columns: data.columns.map((c) => (c.key === key ? { ...c, kind } : c)),
       rows: data.rows,
     })
@@ -527,12 +539,12 @@ export default function SheetEditorGrid({ data, onChange }: Props) {
       const cmp = compareSortKeys(a.sortKey, b.sortKey, kind)
       return direction === 'asc' ? cmp : -cmp
     })
-    onChange({ columns: data.columns, rows: ranked.map((r) => r.row) })
+    emitChange({ columns: data.columns, rows: ranked.map((r) => r.row) })
   }
 
   function deleteColumn(key: string) {
     if (!window.confirm(`이 열을 삭제할까요?`)) return
-    onChange({
+    emitChange({
       columns: data.columns.filter((c) => c.key !== key),
       rows: data.rows.map((r) => {
         const { [key]: _removed, ...rest } = r
