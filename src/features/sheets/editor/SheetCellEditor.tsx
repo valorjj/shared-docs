@@ -257,26 +257,38 @@ export default function SheetCellEditor({
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     // Autocomplete owns these keys when its popup is open.
+    //
+    // stopPropagation is load-bearing here: rdg's EditCell wrapper has
+    // its own keydown on the surrounding gridcell <div> that treats
+    // Enter as "commit + close" and Escape as "close", and it does NOT
+    // honor the standard e.isDefaultPrevented() — it only bails on its
+    // own `cellEvent.isGridDefaultPrevented()` flag. Without stopping
+    // propagation the editor tears down before pickFunction's text
+    // insert can land, so the user sees the whole cell editor vanish.
     if (autocomplete && autocomplete.matches.length > 0) {
       const count = autocomplete.matches.length
       if (e.key === 'ArrowDown') {
         e.preventDefault()
+        e.stopPropagation()
         setAutocompleteIdx((i) => (i + 1) % count)
         return
       }
       if (e.key === 'ArrowUp') {
         e.preventDefault()
+        e.stopPropagation()
         setAutocompleteIdx((i) => (i - 1 + count) % count)
         return
       }
       if (e.key === 'Enter' || e.key === 'Tab') {
         e.preventDefault()
+        e.stopPropagation()
         const pick = autocomplete.matches[Math.min(autocompleteIdx, count - 1)]
         if (pick) pickFunction(pick)
         return
       }
       if (e.key === 'Escape') {
         e.preventDefault()
+        e.stopPropagation()
         setAutocomplete(null)
         return
       }
