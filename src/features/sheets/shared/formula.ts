@@ -934,3 +934,111 @@ export function matchFunctions(query: string): FunctionMeta[] {
 export function isKnownFunctionName(name: string): boolean {
   return FUNCTION_NAME_SET.has(name.toUpperCase())
 }
+
+const FUNCTION_BY_NAME = new Map(FUNCTIONS.map((f) => [f.name, f]))
+
+/**
+ * Given in-flight formula text + caret, finds the function call the
+ * caret is currently inside and which argument it's typing. Used by the
+ * cell editor to surface an inline signature hint à la VSCode.
+ *
+ * Algorithm: scan left-to-right up to the caret, maintaining a paren
+ * stack. Each `(` pushes a frame tagged with the immediately-preceding
+ * identifier (or `null` for grouping parens like `(A1+B1)`). `)` pops.
+ * `,` increments the topmost frame's `argIndex`. Quoted strings are
+ * skipped so `","` inside a SUMIF criterion doesn't bump the count.
+ *
+ * The reported frame is the innermost *function* frame — non-function
+ * grouping parens are see-through, so `=SUM(A1, (B1+C1|), D1)` still
+ * reports SUM at arg index 1.
+ */
+export type ArgumentHintContext = {
+  meta: FunctionMeta
+  argIndex: number
+}
+
+export function getArgumentHintContext(text: string, caret: number): ArgumentHintContext | null {
+  if (!isFormulaCell(text)) return null
+  if (caret < 1) return null
+
+  type Frame = { name: string | null; argIndex: number }
+  const stack: Frame[] = []
+  let inString = false
+
+  const limit = Math.min(caret, text.length)
+  for (let i = 0; i < limit; i++) {
+    const ch = text[i]
+    if (inString) {
+      if (ch === '"') inString = false
+      continue
+    }
+    if (ch === '"') { inString = true; continue }
+    if (ch === '(') {
+      // Walk back to find the identifier immediately preceding the `(`
+      // (no whitespace allowed between, matching tokenize()).
+      let j = i - 1
+      while (j >= 0 && /[A-Za-z0-9_]/.test(text[j])) j--
+      const ident = text.slice(j + 1, i)
+      const isFn =
+        ident.length > 0 &&
+        /^[A-Za-z_]/.test(ident) &&
+        FUNCTION_BY_NAME.has(ident.toUpperCase())
+      stack.push({ name: isFn ? ident.toUpperCase() : null, argIndex: 0 })
+      continue
+    }
+    if (ch === ')') {
+      stack.pop()
+      continue
+    }
+    if (ch === ',' && stack.length > 0) {
+      stack[stack.length - 1].argIndex++
+      continue
+    }
+  }
+
+  // Walk down the stack to find the innermost function frame.
+  for (let i = stack.length - 1; i >= 0; i--) {
+    const frame = stack[i]
+    if (frame.name) {
+      const meta = FUNCTION_BY_NAME.get(frame.name)
+      if (meta) return { meta, argIndex: frame.argIndex }
+    }
+  }
+  return null
+}
+
+/**
+ * Parsed shape of a `FunctionMeta.signature`. Used to render the arg
+ * hint tooltip with the active argument bolded. We parse on demand
+ * rather than cache because there are only ~36 functions and parsing
+ * is cheap.
+ *
+ * Signature grammar (loose): `NAME(arg1, arg2, [optionalArg], …)`
+ *   - `…` (or `...`) at the tail marks variadic.
+ *   - `[label]` marks an optional positional argument.
+ */
+export type ParsedSignature = {
+  args: { label: string; optional?: boolean }[]
+  variadic: boolean
+}
+
+export function parseSignature(meta: FunctionMeta): ParsedSignature {
+  const sig = meta.signature
+  const open = sig.indexOf('(')
+  const close = sig.lastIndexOf(')')
+  if (open < 0 || close < 0 || close <= open) return { args: [], variadic: false }
+  const inner = sig.slice(open + 1, close).trim()
+  if (!inner) return { args: [], variadic: false }
+  const parts = inner.split(',').map((s) => s.trim())
+  let variadic = false
+  const args: { label: string; optional?: boolean }[] = []
+  for (const p of parts) {
+    if (p === '…' || p === '...') { variadic = true; continue }
+    if (p.startsWith('[') && p.endsWith(']')) {
+      args.push({ label: p.slice(1, -1).trim(), optional: true })
+    } else {
+      args.push({ label: p })
+    }
+  }
+  return { args, variadic }
+}

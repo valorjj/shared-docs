@@ -2,12 +2,15 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { RenderEditCellProps } from 'react-data-grid'
 import type { SheetRow } from '../types'
 import {
+  getArgumentHintContext,
   getAutocompleteContext,
   isFormulaCell,
   matchFunctions,
+  type ArgumentHintContext,
   type AutocompleteContext,
   type FunctionMeta,
 } from '../shared/formula'
+import SheetArgumentHint from './SheetArgumentHint'
 import SheetFunctionAutocomplete from './SheetFunctionAutocomplete'
 import styles from './SheetCellEditor.module.css'
 
@@ -197,7 +200,19 @@ export default function SheetCellEditor({
   // reset when the query *actually* changes (user typed/deleted).
   const lastAutocompleteQueryRef = useRef<string | null>(null)
 
+  // Signature hint shown under the input while the caret is inside a
+  // function's argument list. Mutually exclusive with `autocomplete`
+  // visually — they'd overlap at the same anchor — so the JSX guards
+  // with `!autocomplete`. State is independent because the two pieces
+  // surface for different cursor positions and we don't want one's
+  // recompute to clobber the other.
+  const [argHint, setArgHint] = useState<ArgumentHintContext | null>(null)
+
   const refreshAutocomplete = (newText: string, newCaret: number) => {
+    // Signature hint runs unconditionally — cheap (linear scan to caret)
+    // and the renderer hides it when the autocomplete popup is open.
+    setArgHint(getArgumentHintContext(newText, newCaret))
+
     const ctx = getAutocompleteContext(newText, newCaret)
     if (!ctx) {
       lastAutocompleteQueryRef.current = null
@@ -333,6 +348,13 @@ export default function SheetCellEditor({
           activeIndex={autocompleteIdx}
           onHover={setAutocompleteIdx}
           onPick={pickFunction}
+        />
+      )}
+      {!autocomplete && argHint && (
+        <SheetArgumentHint
+          anchor={inputRef.current}
+          meta={argHint.meta}
+          argIndex={argHint.argIndex}
         />
       )}
     </>

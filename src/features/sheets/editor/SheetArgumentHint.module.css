@@ -1,0 +1,54 @@
+/* Inline signature tooltip shown under the formula editor input while
+   the caret is inside a function's argument list. Mirrors
+   SheetFunctionAutocomplete's positioning + portal pattern but reads
+   as a quiet single-line hint, not a list. */
+.hint {
+  position: fixed;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 6px 10px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--r-sm);
+  box-shadow: var(--shadow-md);
+  font-family: var(--font-sans);
+  font-size: var(--fs-xs);
+  color: var(--c-text);
+  z-index: 60;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.signature {
+  display: inline-flex;
+  align-items: baseline;
+  font-variant-numeric: tabular-nums;
+}
+
+.fn {
+  color: var(--c-primary);
+  font-weight: var(--fw-semi);
+}
+
+.arg {
+  color: var(--c-text-muted);
+}
+
+.activeArg {
+  color: var(--c-text);
+  font-weight: var(--fw-semi);
+  /* Subtle underline so the active argument also reads for users with
+     reduced color contrast / colorblind palettes. */
+  text-decoration: underline;
+  text-decoration-color: var(--c-primary);
+  text-underline-offset: 2px;
+}
+
+.sep {
+  color: var(--c-text-placeholder);
+}
+
+.description {
+  color: var(--c-text-muted);
+}

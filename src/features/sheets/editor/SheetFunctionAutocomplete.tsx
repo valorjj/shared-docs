@@ -31,7 +31,10 @@ export default function SheetFunctionAutocomplete({
   const [pos, setPos] = useState<{ left: number; top: number; width: number } | null>(null)
 
   useLayoutEffect(() => {
-    if (!anchor) return setPos(null)
+    // Bail without touching state — the render guard below handles
+    // anchor === null via the pos === null path. (Calling setPos here
+    // trips react-hooks/set-state-in-effect.)
+    if (!anchor) return
     const update = () => {
       const r = anchor.getBoundingClientRect()
       setPos({ left: r.left, top: r.bottom + 4, width: r.width })
@@ -53,7 +56,7 @@ export default function SheetFunctionAutocomplete({
     el?.scrollIntoView({ block: 'nearest' })
   }, [activeIndex])
 
-  if (!pos || matches.length === 0) return null
+  if (!anchor || !pos || matches.length === 0) return null
   const safeActive = Math.min(Math.max(activeIndex, 0), matches.length - 1)
 
   return createPortal(
