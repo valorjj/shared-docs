@@ -108,9 +108,26 @@
 .grid :global(.rdg-cell).refColor3 { outline: 2px dashed #c026d3; outline-offset: -2px; }
 
 /* Drag-selection tint. A soft accent-tinted background, no border,
-   so the user sees the range without losing read of the values. */
+   so the user sees the range without losing read of the values. The
+   unified outer rectangle around the range is drawn by .selectionFrame
+   below, not per-cell. */
 .grid :global(.rdg-cell).selectedCell {
   background: color-mix(in srgb, var(--c-primary) 12%, transparent);
+}
+
+/* Outer frame around the whole drag-selection. Single rectangle drawn
+   by an absolutely positioned <div> sized to span the top-left and
+   bottom-right cells. pointer-events: none so it never steals clicks
+   from the cells underneath; z-index sits below the aggregate bubble
+   (20) but above the cells. The frame is inset by 1px against rdg's
+   gridlines so the border lands flush with the cell edges. */
+.selectionFrame {
+  position: absolute;
+  border: 2px solid var(--c-primary);
+  border-radius: var(--r-xs);
+  pointer-events: none;
+  z-index: 15;
+  box-sizing: border-box;
 }
 
 /* Floating aggregate pill — anchored to the bottom-right of the

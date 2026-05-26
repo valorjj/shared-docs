@@ -591,6 +591,15 @@ export default function SheetEditorGrid({ data, onChange, readOnly = false }: Pr
         defaultColumnOptions={{ resizable: true }}
       />
       <SheetStatusBar data={data} focusedColumnKey={focusedKey} resolver={resolver} />
+      {selection && (
+        <SelectionFrame
+          wrapperRef={wrapperRef}
+          c0={Math.min(selection.anchorCol, selection.focusCol)}
+          c1={Math.max(selection.anchorCol, selection.focusCol)}
+          r0={Math.min(selection.anchorRow, selection.focusRow)}
+          r1={Math.max(selection.anchorRow, selection.focusRow)}
+        />
+      )}
       {selectionStats && selectionStats.filledCount > 0 && (
         <SelectionAggregateBubble
           wrapperRef={wrapperRef}
@@ -653,6 +662,77 @@ function compareSortKeys(
     return an < bn ? -1 : an > bn ? 1 : 0
   }
   return String(a).localeCompare(String(b), 'ko')
+}
+
+/**
+ * Draws a single colored rectangle around the whole drag-selection,
+ * Google-Sheets style. Reads the top-left and bottom-right cells' DOM
+ * rects (via rdg's aria-* attrs, same trick as SelectionAggregateBubble)
+ * and sizes itself to span them. The per-cell `.selectedCell` tint stays
+ * — this just adds the unified outer frame on top.
+ *
+ * When part of the selection scrolls out of rdg's virtualization window
+ * either corner cell may be missing from the DOM; in that case we hide
+ * the frame and fall back to the per-cell tint alone, rather than
+ * guessing positions for off-screen rows/columns.
+ */
+function SelectionFrame({
+  wrapperRef,
+  c0,
+  c1,
+  r0,
+  r1,
+}: {
+  wrapperRef: React.RefObject<HTMLDivElement | null>
+  c0: number; c1: number; r0: number; r1: number
+}) {
+  const [rect, setRect] = useState<{ left: number; top: number; width: number; height: number } | null>(null)
+
+  useEffect(() => {
+    const update = () => {
+      const wrapper = wrapperRef.current
+      if (!wrapper) return setRect(null)
+      // rdg aria indices are 1-based and count the header row, so data
+      // row N (0-based) is aria-rowindex N+2; column M (0-based) is
+      // aria-colindex M+1. Same convention as cellFromPoint above.
+      const tl = wrapper.querySelector<HTMLElement>(
+        `[aria-rowindex="${r0 + 2}"] > [aria-colindex="${c0 + 1}"]`,
+      )
+      const br = wrapper.querySelector<HTMLElement>(
+        `[aria-rowindex="${r1 + 2}"] > [aria-colindex="${c1 + 1}"]`,
+      )
+      if (!tl || !br) return setRect(null)
+      const wRect = wrapper.getBoundingClientRect()
+      const tlRect = tl.getBoundingClientRect()
+      const brRect = br.getBoundingClientRect()
+      setRect({
+        left: tlRect.left - wRect.left,
+        top: tlRect.top - wRect.top,
+        width: brRect.right - tlRect.left,
+        height: brRect.bottom - tlRect.top,
+      })
+    }
+    update()
+    window.addEventListener('resize', update)
+    const wrapper = wrapperRef.current
+    // Capture phase catches scrolls on rdg's inner viewport, not just
+    // the wrapper itself. Without it the frame drifts when the user
+    // scrolls the grid mid-selection.
+    wrapper?.addEventListener('scroll', update, true)
+    return () => {
+      window.removeEventListener('resize', update)
+      wrapper?.removeEventListener('scroll', update, true)
+    }
+  }, [c0, c1, r0, r1, wrapperRef])
+
+  if (!rect) return null
+  return (
+    <div
+      className={styles.selectionFrame}
+      style={{ left: rect.left, top: rect.top, width: rect.width, height: rect.height }}
+      aria-hidden
+    />
+  )
 }
 
 function SelectionAggregateBubble({
