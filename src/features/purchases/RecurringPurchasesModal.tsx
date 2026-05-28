@@ -246,10 +246,18 @@ function RecurringPurchasesModalInner({ onClose }: { onClose: () => void }) {
               <Field>
                 <Label>나눔</Label>
                 <Tabs<SplitMode>
-                  items={SPLIT_MODES.map((m) => ({
-                    key: m,
-                    label: `${SPLIT_META[m].emoji} ${SPLIT_META[m].label}`,
-                  }))}
+                  items={SPLIT_MODES.map((m) => {
+                    const { Icon, label } = SPLIT_META[m]
+                    return {
+                      key: m,
+                      label: (
+                        <span className="purchase__split-tab">
+                          <Icon size={14} strokeWidth={2} aria-hidden="true" />
+                          <span>{label}</span>
+                        </span>
+                      ),
+                    }
+                  })}
                   value={form.splitMode}
                   onChange={(splitMode) => setForm((f) => ({ ...f, splitMode }))}
                 />
@@ -310,9 +318,15 @@ function RecurringPurchasesModalInner({ onClose }: { onClose: () => void }) {
                       <span>·</span>
                       <span>{t.category}</span>
                       <span>·</span>
-                      <span title={SPLIT_META[t.splitMode].hint}>
-                        {SPLIT_META[t.splitMode].emoji} {SPLIT_META[t.splitMode].label}
-                      </span>
+                      {(() => {
+                        const { Icon, label, hint } = SPLIT_META[t.splitMode]
+                        return (
+                          <span className="purchase__split-inline" title={hint}>
+                            <Icon size={13} strokeWidth={2} aria-hidden="true" />
+                            <span>{label}</span>
+                          </span>
+                        )
+                      })()}
                       {!t.active && (
                         <>
                           <span>·</span>

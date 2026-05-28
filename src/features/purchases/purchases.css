@@ -260,13 +260,56 @@ body:has(.purchase-page) { /* hook left intentionally; tokens handle bg */ }
 .pform__amount-field { flex: 2; min-width: 140px; }
 .pform__currency-field { flex: 1; min-width: 90px; }
 
-/* ── Grid: splitMode cell ── */
+/* ── Grid: splitMode cell — single-click Radix Menu trigger ── */
 .purchase__split-cell {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 2px 6px 2px 8px;
+  font: inherit;
+  font-size: var(--fs-sm);
+  color: var(--c-text);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  transition: background var(--t-fast), border-color var(--t-fast);
+  line-height: 1;
+}
+
+.purchase__split-cell:hover:not(:disabled) {
+  background: var(--c-surface-tint);
+  border-color: var(--c-border);
+}
+
+.purchase__split-cell:focus-visible {
+  outline: none;
+  border-color: var(--c-primary);
+  box-shadow: 0 0 0 3px var(--c-primary-soft);
+}
+
+.purchase__split-cell:disabled {
+  cursor: default;
+  opacity: 0.65;
+}
+
+.purchase__split-caret {
+  color: var(--c-text-subtle);
+}
+
+/* Inline icon + label (recurring item meta) */
+.purchase__split-inline {
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
-  font-size: var(--fs-sm);
-  color: var(--c-text-muted);
+}
+
+/* Tab strip label wrapper (Tabs items) */
+.purchase__split-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
 }
 
 /* ── Settlement card ── */

@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Gift, User, Users, type LucideIcon } from 'lucide-react'
 import { apiClient } from '../../api/client'
 
 export type Currency = 'KRW' | 'USD' | 'EUR' | 'JPY' | 'GBP' | 'CNY'
@@ -7,10 +8,10 @@ export const SUPPORTED_CURRENCIES: Currency[] = ['KRW', 'USD', 'EUR', 'JPY', 'GB
 export type SplitMode = 'SHARED' | 'MINE' | 'THEIRS'
 export const SPLIT_MODES: SplitMode[] = ['SHARED', 'MINE', 'THEIRS']
 
-export const SPLIT_META: Record<SplitMode, { emoji: string; label: string; hint: string }> = {
-  SHARED: { emoji: '👫', label: '함께', hint: '둘이서 반반' },
-  MINE:   { emoji: '👤', label: '나',   hint: '내 것' },
-  THEIRS: { emoji: '🎁', label: '상대', hint: '상대 것' },
+export const SPLIT_META: Record<SplitMode, { Icon: LucideIcon; label: string; hint: string }> = {
+  SHARED: { Icon: Users, label: '함께', hint: '둘이서 반반' },
+  MINE:   { Icon: User,  label: '나',   hint: '내 것' },
+  THEIRS: { Icon: Gift,  label: '상대', hint: '상대 것' },
 }
 
 export type PurchaseAuthor = {

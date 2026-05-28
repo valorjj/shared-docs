@@ -163,10 +163,18 @@ function PurchaseFormInner({
           <Field>
             <Label>나눔</Label>
             <Tabs<SplitMode>
-              items={SPLIT_MODES.map((m) => ({
-                key: m,
-                label: `${SPLIT_META[m].emoji} ${SPLIT_META[m].label}`,
-              }))}
+              items={SPLIT_MODES.map((m) => {
+                const { Icon, label } = SPLIT_META[m]
+                return {
+                  key: m,
+                  label: (
+                    <span className="purchase__split-tab">
+                      <Icon size={14} strokeWidth={2} aria-hidden="true" />
+                      <span>{label}</span>
+                    </span>
+                  ),
+                }
+              })}
               value={form.splitMode}
               onChange={(splitMode) => setForm((f) => ({ ...f, splitMode }))}
             />

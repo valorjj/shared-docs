@@ -7,11 +7,12 @@ import {
   type RenderEditCellProps,
   type RowsChangeData,
 } from 'react-data-grid'
-import { Pencil, Plus, Trash2, X } from 'lucide-react'
+import { ChevronDown, Pencil, Plus, Trash2, X } from 'lucide-react'
 import 'react-data-grid/lib/styles.css'
 
 import { useAuth } from '../../auth/useAuth'
 import { Badge, Button, IconButton, Kbd } from '../../components/ui'
+import { Menu, MenuItem } from '../../components/ui/Menu'
 import { formatMoney } from '../../lib/format'
 import {
   SPLIT_META,
@@ -222,14 +223,27 @@ export default function PurchaseGrid({ rows, onEditDetails, highlightRowId }: Pr
       {
         key: 'splitMode',
         name: '나눔',
-        width: 90,
-        renderCell: ({ row }) => (
-          <span className="purchase__split-cell" title={SPLIT_META[row.splitMode].hint}>
-            <span aria-hidden="true">{SPLIT_META[row.splitMode].emoji}</span>
-            <span>{SPLIT_META[row.splitMode].label}</span>
-          </span>
-        ),
-        renderEditCell: (p) => selectEditor(p, SPLIT_MODES),
+        width: 110,
+        renderCell: ({ row }) => {
+          const canMutate =
+            row.id === DRAFT_ID || row.byUserId === user?.userId || isAdmin
+          return (
+            <SplitModeCell
+              value={row.splitMode}
+              disabled={!canMutate}
+              onChange={(splitMode) => {
+                if (row.id === DRAFT_ID) {
+                  setDraft((d) => ({ ...d, splitMode }))
+                  return
+                }
+                updateMut.mutate({
+                  id: row.id as number,
+                  payload: toPayload({ ...row, splitMode }),
+                })
+              }}
+            />
+          )
+        },
       },
       {
         key: 'byName',
@@ -304,7 +318,7 @@ export default function PurchaseGrid({ rows, onEditDetails, highlightRowId }: Pr
         },
       },
     ]
-  }, [categories, createMut, deleteMut, isAdmin, onEditDetails, rows, user?.userId, commitDraft, cancelAdd])
+  }, [categories, createMut, deleteMut, updateMut, isAdmin, onEditDetails, rows, user?.userId, commitDraft, cancelAdd])
 
   function handleRowsChange(newRows: GridRow[], { indexes }: RowsChangeData<GridRow>) {
     for (const i of indexes) {
@@ -455,6 +469,54 @@ function selectEditor(p: RenderEditCellProps<GridRow>, options: string[]) {
         </option>
       ))}
     </select>
+  )
+}
+
+function SplitModeCell({
+  value,
+  onChange,
+  disabled = false,
+}: {
+  value: SplitMode
+  onChange: (m: SplitMode) => void
+  disabled?: boolean
+}) {
+  const { Icon, label, hint } = SPLIT_META[value]
+  return (
+    <Menu
+      align="start"
+      trigger={
+        <button
+          type="button"
+          className="purchase__split-cell"
+          title={hint}
+          disabled={disabled}
+          onMouseDown={(e) => e.stopPropagation()}
+        >
+          <Icon size={14} strokeWidth={2} aria-hidden="true" />
+          <span>{label}</span>
+          <ChevronDown
+            size={12}
+            strokeWidth={2}
+            aria-hidden="true"
+            className="purchase__split-caret"
+          />
+        </button>
+      }
+    >
+      {SPLIT_MODES.map((m) => {
+        const Item = SPLIT_META[m].Icon
+        return (
+          <MenuItem
+            key={m}
+            icon={<Item size={14} strokeWidth={2} />}
+            onSelect={() => onChange(m)}
+          >
+            {SPLIT_META[m].label}
+          </MenuItem>
+        )
+      })}
+    </Menu>
   )
 }
 
