@@ -5,7 +5,6 @@ import {
   useDeleteForever,
   useNotes,
   useRestoreNote,
-  useSharedNotes,
   useTrashNotes,
 } from '../api'
 import { AppSidebar } from '../../../components/common/AppSidebar'
@@ -20,16 +19,29 @@ import TrashList from '../list/TrashList'
 import NoteSidebarBody, { type SidebarFilter } from '../sidebar/NoteSidebarBody'
 import { buildTagCounts, noteHasTag } from '../shared/extractTags'
 import { useIsMobile } from '../../../lib/useMediaQuery'
+import { useAuth } from '../../../auth/useAuth'
+import type { Note } from '../types'
 import styles from './NoteWorkspace.module.css'
 
-function describeFilter(f: SidebarFilter): string {
+function describeFilter(f: SidebarFilter, partnerLabel: string): string {
   switch (f.kind) {
     case 'all':           return '모든 메모'
     case 'pinned':        return '고정됨'
-    case 'sharedWithMe':  return '공유받음'
+    case 'shared':        return '함께'
+    case 'mine-private':  return '내 비공개'
+    case 'partner':       return `${partnerLabel}의 메모`
     case 'trash':         return '휴지통'
     case 'tag':           return f.value
   }
+}
+
+// Two-person app — the partner's display name is derived from the *other*
+// allowlisted account's note authorship. If no notes from the partner exist
+// yet, we fall back to "상대" so the sidebar item still labels itself.
+function partnerLabelFromNotes(notes: Note[], myUserId: number | undefined): string {
+  if (!myUserId) return '상대'
+  const partner = notes.find((n) => n.createdBy.userId !== myUserId)
+  return partner?.createdBy.name ?? '상대'
 }
 
 export default function NoteWorkspace() {
@@ -37,6 +49,7 @@ export default function NoteWorkspace() {
   const notesQuery = useNotes()
   const createNote = useCreateNote()
   const isMobile = useIsMobile()
+  const { user } = useAuth()
   const [filter, setFilter] = useState<SidebarFilter>({ kind: 'all' })
   const [filtersSheetOpen, setFiltersSheetOpen] = useState(false)
   const [rowMenu, setRowMenu] = useState<NoteListContextMenuState>(null)
@@ -47,19 +60,34 @@ export default function NoteWorkspace() {
   const allNotes = useMemo(() => notesQuery.data ?? [], [notesQuery.data])
   const tags = useMemo(() => buildTagCounts(allNotes), [allNotes])
   const pinnedCount = useMemo(() => allNotes.filter((n) => n.pinned).length, [allNotes])
+  const partnerLabel = useMemo(
+    () => partnerLabelFromNotes(allNotes, user?.userId),
+    [allNotes, user?.userId],
+  )
 
   // Trash list feeds both the sidebar count and the TrashList pane.
-  // We fetch it eagerly so the count badge stays current — previously
-  // it was gated on `filter.kind === 'trash'` and showed a stale "0"
-  // after a delete until the user opened trash.
   const trashQuery = useTrashNotes()
   const trashNotes = useMemo(() => trashQuery.data ?? [], [trashQuery.data])
-  // Shared-with-me feeds both the sidebar count (hidden if 0) and the
-  // "공유받음" list view. Eagerly fetched for the same reason as trash.
-  const sharedQuery = useSharedNotes()
-  const sharedNotes = useMemo(() => sharedQuery.data ?? [], [sharedQuery.data])
   const restoreNote = useRestoreNote()
   const deleteForever = useDeleteForever()
+
+  const counts = useMemo(() => {
+    const minePrivate = allNotes.filter(
+      (n) => n.visibility === 'PRIVATE' && n.createdBy.userId === user?.userId,
+    ).length
+    const shared = allNotes.filter((n) => n.visibility === 'SHARED').length
+    const partner = allNotes.filter(
+      (n) => n.visibility === 'SHARED' && n.createdBy.userId !== user?.userId,
+    ).length
+    return {
+      all: allNotes.length,
+      pinned: pinnedCount,
+      minePrivate,
+      shared,
+      partner,
+      trash: trashNotes.length,
+    }
+  }, [allNotes, pinnedCount, trashNotes.length, user?.userId])
 
   const filtered = useMemo(() => {
     switch (filter.kind) {
@@ -67,24 +95,26 @@ export default function NoteWorkspace() {
         return allNotes
       case 'pinned':
         return allNotes.filter((n) => n.pinned)
-      case 'sharedWithMe':
-        return sharedNotes
+      case 'mine-private':
+        return allNotes.filter(
+          (n) => n.visibility === 'PRIVATE' && n.createdBy.userId === user?.userId,
+        )
+      case 'shared':
+        return allNotes.filter((n) => n.visibility === 'SHARED')
+      case 'partner':
+        return allNotes.filter(
+          (n) => n.visibility === 'SHARED' && n.createdBy.userId !== user?.userId,
+        )
       case 'trash':
         return [] // Trash is rendered through TrashList, not NoteList — guard.
       case 'tag':
         return allNotes.filter((n) => noteHasTag(n, filter.value))
     }
-  }, [allNotes, sharedNotes, filter])
+  }, [allNotes, filter, user?.userId])
 
-  // The active note may live in `allNotes` (mine) or `sharedNotes`
-  // (shared with me). When the user opens a shared-with-me note its row
-  // isn't in `allNotes`, so we look up across both pools.
-  const activeNote =
-    activeId !== null
-      ? allNotes.find((n) => n.id === activeId)
-        ?? sharedNotes.find((n) => n.id === activeId)
-        ?? null
-      : null
+  const activeNote = activeId !== null
+    ? allNotes.find((n) => n.id === activeId) ?? null
+    : null
 
   const selectNote = (id: number) => {
     const next = new URLSearchParams(searchParams)
@@ -99,28 +129,19 @@ export default function NoteWorkspace() {
   }
 
   const handleCreate = () => {
+    // New notes default to PRIVATE (current user only) — explicit "send to
+    // both of us" is the toggle in the editor meta strip. Picking PRIVATE
+    // here avoids accidentally pushing every scratch note to the partner.
     createNote.mutate(
-      { title: null, body: '' },
+      { title: null, body: '', visibility: 'PRIVATE' },
       { onSuccess: (n) => selectNote(n.id) },
     )
   }
 
   const isTrash = filter.kind === 'trash'
-  // In trash mode the right pane is always empty (action-only list). On
-  // mobile we still want the list visible by default so the user can act.
   const showEditor = isTrash ? !isMobile : isMobile ? activeNote !== null : true
   const showList = isTrash ? true : isMobile ? activeNote === null : true
 
-  const counts = {
-    all: allNotes.length,
-    pinned: pinnedCount,
-    sharedWithMe: sharedNotes.length,
-    trash: trashNotes.length,
-  }
-
-  // Mobile sheet closes the picker after a filter is picked — the
-  // workspace's filter state is what drives the list, so we wrap
-  // setFilter to also dismiss the sheet.
   const setFilterFromSheet = (f: SidebarFilter) => {
     setFilter(f)
     setFiltersSheetOpen(false)
@@ -133,6 +154,7 @@ export default function NoteWorkspace() {
           filter={filter}
           onFilterChange={setFilter}
           counts={counts}
+          partnerLabel={partnerLabel}
           tags={tags}
         />
       </AppSidebar>
@@ -151,14 +173,14 @@ export default function NoteWorkspace() {
               notes={filtered}
               activeId={activeId}
               loading={notesQuery.isLoading}
-              filterLabel={describeFilter(filter)}
+              filterLabel={describeFilter(filter, partnerLabel)}
               onSelect={selectNote}
               onCreate={handleCreate}
               onOpenFilters={() => setFiltersSheetOpen(true)}
-              // Creating a new memo from the "공유받음" view would land it
-              // in the caller's own workspace and immediately vanish from
-              // the visible list — disable to keep the affordance honest.
-              createDisabled={filter.kind === 'sharedWithMe'}
+              // The partner-only view can't accept new memos — they would
+              // land in the caller's PRIVATE bucket and immediately vanish
+              // from the visible list — disable to keep the affordance honest.
+              createDisabled={filter.kind === 'partner'}
               onContextMenu={(e, note) => {
                 e.preventDefault()
                 setRowMenu({ note, x: e.clientX, y: e.clientY })
@@ -188,6 +210,7 @@ export default function NoteWorkspace() {
           filter={filter}
           onFilterChange={setFilterFromSheet}
           counts={counts}
+          partnerLabel={partnerLabel}
           tags={tags}
         />
       </AppSidebarSheet>

@@ -1,4 +1,4 @@
-import { Hash, NotebookText, Pin, Share2, Trash2 } from 'lucide-react'
+import { Hash, Lock, NotebookText, Pin, Trash2, User, Users } from 'lucide-react'
 import {
   AppSidebarItem,
   AppSidebarSection,
@@ -6,33 +6,44 @@ import {
 import type { TagWithCount } from '../shared/extractTags'
 
 /** Filter discriminated-union — the source of truth for which subset
- *  of the user's notes the workspace is currently showing. */
+ *  of the visible notes the workspace is currently showing. */
 export type SidebarFilter =
   | { kind: 'all' }
   | { kind: 'pinned' }
-  | { kind: 'sharedWithMe' }
+  | { kind: 'mine-private' }
+  | { kind: 'shared' }
+  | { kind: 'partner' }
   | { kind: 'trash' }
   | { kind: 'tag'; value: string }
 
 type Props = {
   filter: SidebarFilter
   onFilterChange: (f: SidebarFilter) => void
-  counts: { all: number; pinned: number; sharedWithMe: number; trash: number }
+  counts: {
+    all: number
+    pinned: number
+    minePrivate: number
+    shared: number
+    partner: number
+    trash: number
+  }
+  /** Label for the "partner's notes" item — derived from the auth state.
+   *  When the partner's name isn't known yet, callers pass "상대" as a fallback. */
+  partnerLabel: string
   tags: TagWithCount[]
 }
 
 /**
- * Shared content for memo's left-rail sidebar. Used by AppSidebar on
- * desktop and AppSidebarSheet on mobile so both surfaces stay in lock
- * step — adding a new filter only touches this file.
- *
- * "공유받음" is hidden when count == 0 so a brand-new user doesn't see
- * an empty rail item competing with their own notes.
+ * Memo's left rail. After the 2026-05-28 reset the rail splits the
+ * world into 함께 (SHARED) / 내 비공개 (PRIVATE owned by me) / 상대 메모
+ * (SHARED authored by the other partner). The legacy "공유받음" item is
+ * gone — sharing is no longer a per-note ACL.
  */
 export default function NoteSidebarBody({
   filter,
   onFilterChange,
   counts,
+  partnerLabel,
   tags,
 }: Props) {
   return (
@@ -52,15 +63,33 @@ export default function NoteSidebarBody({
           active={filter.kind === 'pinned'}
           onClick={() => onFilterChange({ kind: 'pinned' })}
         />
-        {counts.sharedWithMe > 0 && (
-          <AppSidebarItem
-            Icon={Share2}
-            label="공유받음"
-            count={counts.sharedWithMe}
-            active={filter.kind === 'sharedWithMe'}
-            onClick={() => onFilterChange({ kind: 'sharedWithMe' })}
-          />
-        )}
+      </AppSidebarSection>
+
+      <AppSidebarSection label="시야">
+        <AppSidebarItem
+          Icon={Users}
+          label="함께"
+          count={counts.shared}
+          active={filter.kind === 'shared'}
+          onClick={() => onFilterChange({ kind: 'shared' })}
+        />
+        <AppSidebarItem
+          Icon={Lock}
+          label="내 비공개"
+          count={counts.minePrivate}
+          active={filter.kind === 'mine-private'}
+          onClick={() => onFilterChange({ kind: 'mine-private' })}
+        />
+        <AppSidebarItem
+          Icon={User}
+          label={`${partnerLabel}의 메모`}
+          count={counts.partner}
+          active={filter.kind === 'partner'}
+          onClick={() => onFilterChange({ kind: 'partner' })}
+        />
+      </AppSidebarSection>
+
+      <AppSidebarSection>
         <AppSidebarItem
           Icon={Trash2}
           label="휴지통"

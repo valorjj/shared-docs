@@ -16,7 +16,6 @@ export { MAX_IMAGE_BYTES, absoluteFileUrl }
 
 export const noteKeys = {
   list: () => ['notes', 'list'] as const,
-  shared: () => ['notes', 'shared'] as const,
   attachments: (noteId: number) => ['notes', 'attachments', noteId] as const,
   // Tombstone hydration cache — keyed separately from list so referrer
   // resolves for soft-deleted notes don't poison the active list.
@@ -27,13 +26,6 @@ export const noteKeys = {
 
 async function fetchNotes(): Promise<Note[]> {
   const { data } = await apiClient.get<Note[]>('/api/notes')
-  return data
-}
-
-async function fetchSharedNotesReq(): Promise<Note[]> {
-  const { data } = await apiClient.get<Note[]>('/api/notes', {
-    params: { filter: 'sharedWithMe' },
-  })
   return data
 }
 
@@ -102,13 +94,6 @@ async function deleteAttachmentReq(id: number): Promise<void> {
 
 export function useNotes() {
   return useQuery({ queryKey: noteKeys.list(), queryFn: fetchNotes })
-}
-
-/** Notes that other users have explicitly shared with the caller.
- *  Empty array if nothing shared — used for the sidebar's "공유받음"
- *  section, which is hidden when count is 0. */
-export function useSharedNotes() {
-  return useQuery({ queryKey: noteKeys.shared(), queryFn: fetchSharedNotesReq })
 }
 
 export function useCreateNote() {

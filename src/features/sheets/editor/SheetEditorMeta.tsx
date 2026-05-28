@@ -1,8 +1,7 @@
 import { useState } from 'react'
-import { Eye, MoreHorizontal, Pin, PinOff, Share2, Trash2 } from 'lucide-react'
+import { MoreHorizontal, Pin, PinOff, Trash2 } from 'lucide-react'
 import ConfirmDialog from '../../../components/ui/ConfirmDialog'
 import { Menu, MenuItem, MenuSeparator } from '../../../components/ui/Menu'
-import ShareDialog from '../../share/ShareDialog'
 import { formatRelativeTime } from '../../notes/shared/formatRelativeTime'
 import type { SheetFull } from '../types'
 import styles from './SheetEditorMeta.module.css'
@@ -10,8 +9,8 @@ import styles from './SheetEditorMeta.module.css'
 type Props = {
   sheet: SheetFull
   saving: boolean
-  /** Hides every mutation affordance (kebab + pinned glyph) and shows
-   *  a "보기만" indicator for VIEW recipients. */
+  /** Legacy prop — sheets are household-shared after the 2026-05-28 reset
+   *  and always editable. Kept for compatibility with existing callers. */
   canEdit?: boolean
   onTogglePin: () => void
   onDelete: () => void
@@ -25,7 +24,6 @@ export default function SheetEditorMeta({
   onDelete,
 }: Props) {
   const [confirming, setConfirming] = useState(false)
-  const [sharing, setSharing] = useState(false)
 
   return (
     <div className={styles.bar}>
@@ -37,15 +35,6 @@ export default function SheetEditorMeta({
           <>
             <span className={styles.sep} aria-hidden="true">·</span>
             <span className={styles.saving}>저장 중…</span>
-          </>
-        )}
-        {!canEdit && (
-          <>
-            <span className={styles.sep} aria-hidden="true">·</span>
-            <span className={styles.viewOnly} title="공유받은 시트는 보기만 가능합니다">
-              <Eye size={12} strokeWidth={1.75} aria-hidden="true" />
-              보기만
-            </span>
           </>
         )}
       </div>
@@ -68,13 +57,6 @@ export default function SheetEditorMeta({
               </button>
             }
           >
-            <MenuItem
-              onSelect={() => setSharing(true)}
-              icon={<Share2 size={14} strokeWidth={1.75} />}
-            >
-              공유
-            </MenuItem>
-            <MenuSeparator />
             <MenuItem
               onSelect={onTogglePin}
               icon={sheet.pinned ? <PinOff size={14} strokeWidth={1.75} /> : <Pin size={14} strokeWidth={1.75} />}
@@ -102,13 +84,6 @@ export default function SheetEditorMeta({
         cancelLabel="취소"
         destructive
         onConfirm={onDelete}
-      />
-
-      <ShareDialog
-        kind="sheets"
-        resourceId={sheet.id}
-        open={sharing}
-        onClose={() => setSharing(false)}
       />
     </div>
   )

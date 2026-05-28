@@ -50,12 +50,9 @@ export default function SheetEditor({ sheet, onDeleted, onBack }: Props) {
   const deleteSheet = useDeleteSheet()
   const isMobile = useIsMobile()
 
-  // Server-issued read-only switch. VIEW recipients see the grid but
-  // every edit affordance is hidden — toolbar, tab strip's + button,
-  // kebab actions, title input. Their typed cells are also rejected
-  // by react-data-grid via `enableCellAutoFocus=false` (we omit the
-  // grid's onChange in that branch).
-  const canEdit = sheet.myPermission !== 'VIEW'
+  // After the 2026-05-28 share-system removal sheets are household-shared
+  // and always editable by both partners.
+  const canEdit = true
 
   const [workbook, setWorkbook] = useState<SheetWorkbook>(() => parseSheetWorkbook(sheet.data))
   const dirty = useRef(false)

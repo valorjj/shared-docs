@@ -4,22 +4,21 @@ export type NoteUserRef = {
   pictureUrl: string | null
 }
 
-/** Caller's effective access on a single note, set server-side from
- *  `AccessControl.permissionFor`. Drives the editor's read-only switch.
- *  OWNER = creator; EDIT = share with EDIT permission; VIEW = share
- *  with VIEW permission (read-only). */
-export type NotePermission = 'OWNER' | 'EDIT' | 'VIEW'
+/** Whether a note is visible to both partners (SHARED, default) or only
+ *  its author (PRIVATE). The 2026-05-28 reset replaced the per-note ACL
+ *  with this binary — see docs/plans/2026-05-28-personal-shared-notes.md. */
+export type NoteVisibility = 'PRIVATE' | 'SHARED'
 
 export type Note = {
   id: number
   title: string | null
   body: string
   pinned: boolean
+  visibility: NoteVisibility
   createdBy: NoteUserRef
   createdAt: string
   updatedAt: string
   deletedAt?: string | null
-  myPermission: NotePermission
 }
 
 export type NoteSummary = {
@@ -32,12 +31,14 @@ export type CreateNotePayload = {
   title?: string | null
   body?: string
   pinned?: boolean
+  visibility?: NoteVisibility
 }
 
 export type UpdateNotePayload = {
   title?: string | null
   body?: string
   pinned?: boolean
+  visibility?: NoteVisibility
 }
 
 export type Attachment = {

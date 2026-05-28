@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import { Eye, MoreHorizontal, Pin, PinOff, Share2, Trash2 } from 'lucide-react'
+import { Lock, MoreHorizontal, Pin, PinOff, Trash2, Users } from 'lucide-react'
 import ConfirmDialog from '../../../components/ui/ConfirmDialog'
 import { Menu, MenuItem, MenuSeparator } from '../../../components/ui/Menu'
-import ShareDialog from '../../share/ShareDialog'
+import { useUpdateNote } from '../api'
 import { formatRelativeTime } from '../shared/formatRelativeTime'
 import type { Note } from '../types'
 import styles from './NoteEditorMeta.module.css'
@@ -10,8 +10,8 @@ import styles from './NoteEditorMeta.module.css'
 type Props = {
   note: Note
   saving: boolean
-  /** Hides every mutation affordance (kebab actions + pin glyph row)
-   *  and surfaces a read-only indicator instead. */
+  /** Hides every mutation affordance — used when the viewer isn't the
+   *  author of a PRIVATE note (defensive; the read query already filters). */
   canEdit?: boolean
   onTogglePin: () => void
   onDelete: () => void
@@ -19,7 +19,15 @@ type Props = {
 
 export default function NoteEditorMeta({ note, saving, canEdit = true, onTogglePin, onDelete }: Props) {
   const [confirming, setConfirming] = useState(false)
-  const [sharing, setSharing] = useState(false)
+  const updateNote = useUpdateNote()
+
+  const isPrivate = note.visibility === 'PRIVATE'
+  const toggleVisibility = () => {
+    updateNote.mutate({
+      id: note.id,
+      payload: { visibility: isPrivate ? 'SHARED' : 'PRIVATE' },
+    })
+  }
 
   return (
     <div className={styles.bar}>
@@ -31,15 +39,6 @@ export default function NoteEditorMeta({ note, saving, canEdit = true, onToggleP
           <>
             <span className={styles.sep} aria-hidden="true">·</span>
             <span className={styles.saving}>저장 중…</span>
-          </>
-        )}
-        {!canEdit && (
-          <>
-            <span className={styles.sep} aria-hidden="true">·</span>
-            <span className={styles.viewOnly} title="공유받은 메모는 보기만 가능합니다">
-              <Eye size={12} strokeWidth={1.75} aria-hidden="true" />
-              보기만
-            </span>
           </>
         )}
       </div>
@@ -63,10 +62,14 @@ export default function NoteEditorMeta({ note, saving, canEdit = true, onToggleP
             }
           >
             <MenuItem
-              onSelect={() => setSharing(true)}
-              icon={<Share2 size={14} strokeWidth={1.75} />}
+              onSelect={toggleVisibility}
+              icon={
+                isPrivate
+                  ? <Users size={14} strokeWidth={1.75} />
+                  : <Lock size={14} strokeWidth={1.75} />
+              }
             >
-              공유
+              {isPrivate ? '공유로 전환' : '비공개로 전환'}
             </MenuItem>
             <MenuSeparator />
             <MenuItem
@@ -96,13 +99,6 @@ export default function NoteEditorMeta({ note, saving, canEdit = true, onToggleP
         cancelLabel="취소"
         destructive
         onConfirm={onDelete}
-      />
-
-      <ShareDialog
-        kind="notes"
-        resourceId={note.id}
-        open={sharing}
-        onClose={() => setSharing(false)}
       />
     </div>
   )

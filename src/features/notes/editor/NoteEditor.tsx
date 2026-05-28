@@ -34,11 +34,9 @@ export default function NoteEditor({ note, onDeleted, onBack }: Props) {
   const deleteNote = useDeleteNote()
   const uploadAttachment = useUploadAttachment()
 
-  // Server-issued read-only switch. VIEW recipients see the body but
-  // cannot type, save, upload, share, pin, or delete. Title input is
-  // also locked. Toolbar is hidden entirely (rather than greyed out)
-  // so the page reads as a document, not a disabled form.
-  const canEdit = note.myPermission !== 'VIEW'
+  // After the 2026-05-28 share-system removal the editor is always
+  // editable for whomever can see it (visibility check happens server-side).
+  const canEdit = true
 
   const [editor, setEditor] = useState<Editor | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
