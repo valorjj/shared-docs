@@ -1,143 +1,41 @@
 # shared-docs
 
-A private web app for two people. Vite + React 19 + TypeScript on the
-front, Spring Boot + Kotlin on the back, MariaDB on the side. Visually
-modelled on **Bear** (the macOS note app).
+A private web app for two people — built for me and my wife to keep our notes and our decisions in one place. Bear-style memo editor, a soon-to-arrive engineering calculator, and (the headline feature) a decision-history surface so we never lose track of *why* we chose what we chose.
 
-Deployed at **https://shared-docs-nine.vercel.app** (Vercel for the
-front, Cloudflare Tunnel → Mac Mini for the API). Access is restricted
-to two Google accounts via an OAuth + JWT pipeline; everything else
-404s after a login redirect.
-
-## What it does
-
-- **메모** (`/`) — Bear/Apple-Memo hybrid markdown editor. Three-pane
-  desktop layout (sidebar tags · note list · editor), single-pane on
-  mobile. Tiptap WYSIWYG with task lists, tables, bubble menu, `/`
-  slash command palette, `#hashtag` parsing surfaced in the sidebar
-  with counts and click-to-filter. Paste / drag / clip-button image
-  and file uploads. A note's attachments appear in a gallery strip
-  below the body with thumbnails, filename + size pills, per-file
-  download and delete, and a full-screen image lightbox.
-  **`/ 데이터 스냅샷`** embeds a frozen card from `/data` (purchase
-  totals, settlement state, todo subsets, anniversaries) — the
-  numbers stay fixed at insertion time, with a per-card refresh
-  button when you want to recapture. **Memo backlinks**: type
-  `@` to pick another memo from a popover, or `[[제목]]` to
-  auto-link by title. Chips read the target's title live from the
-  cache (rename and every reference updates); deleted targets
-  render as a greyed "삭제됨" tombstone instead of vanishing.
-  A "참조됨" strip above the body lists every memo that points
-  here. **Soft delete + 휴지통**: the sidebar's 휴지통 section
-  lists removed memos with 복원 / 영구 삭제 actions per row;
-  restore re-runs the body indexer so outbound links come back
-  live. Pin and per-note autosave on every keystroke.
-- **시트** (`/sheets`) — lightweight spreadsheet. Two-pane workspace.
-  On desktop a react-data-grid (column rename via header double-click,
-  delete via hover ×, `+ 행` / `+ 열` toolbar). On mobile the same
-  data renders as a **card-per-row** view with labeled inputs, a
-  per-card kebab for row delete, a dashed `+ 행 추가` at the bottom,
-  and a **열 관리** slide-up sheet for column rename / delete / add.
-  Debounced autosave of the whole grid as one JSON payload.
-- **데이터** (`/data`) — Bear-style sidebar workspace for the typed
-  mini-apps. Left rail lists each tracker (구매 내역 / 할 일 / 기념일 /
-  유용한 링크 / 레시피); main pane shows the active subroute via React
-  Router nested routes. On `/data` with no subroute, a clean picker
-  list mirrors the same options.
-  - 구매 내역 — multi-currency, inline-edit grid on desktop, per-row
-    split mode (SHARED · MINE · THEIRS), per-currency settlement card
-    with one-click 정산 완료 + history, KRW donut chart by category,
-    recurring expenses with monthly auto-generation
-  - 할 일 — tabs filter, anyone toggles done
-  - 기념일 — annual recurrence, N주년 badges, upcoming-30-days section
-  - 유용한 링크 — paste a URL, backend auto-fetches OpenGraph (title /
-    description / hero image / favicon / site name); polished card
-    grid + compact list view with localStorage-persisted toggle;
-    per-link 메모 field, pin, 6 seeded categories (개발 / 디자인 / 글 /
-    영상 / 도구 / 기타) with chip filter and search across title /
-    description / note / URL
-  - 레시피 — recipe collection with hero image (paste-URL OR
-    click-to-upload via `POST /api/files/upload`), ingredients + steps
-    as `@dnd-kit`-sortable lists, 인분 환산 scaler that re-renders
-    amounts at any serving size without mutating the baseline, 6
-    seeded categories (한식 / 일식 / 양식 / 중식 / 디저트 / 기타),
-    debounced autosave
-- **캘린더** (`/calendar`) — Bear-style sidebar workspace too. Left
-  rail = filter list of the four event sources (기념일 · 할 일 · 구매 ·
-  정산) with live counts and toggle visibility; main pane shows the
-  `react-day-picker` grid with colored dots per *visible* source and
-  the day-detail card. Clickable events jump back to their source
-  page (purchases scroll to the exact row). On mobile the filter list
-  lives in a slide-up sheet opened from the page-header chip.
-- **관리** — admin page for the email allowlist + user roles.
-- **⌘K** — global search palette across memo (title + body) and sheet
-  (title) results. Opens via `⌘K` / `Ctrl+K`, via the search chip in
-  the desktop TopNav, or via the 검색 item in the mobile BottomNav.
-  Keyboard-navigable; Enter opens the result, Esc closes.
-- **설정** — theme (light / dark / Dracula / Monokai), body font (sans /
-  serif / mono), line height (compact / normal / relaxed). Click-to-
-  apply, persisted in localStorage, cross-tab synced. Reached via the
-  gear icon in the desktop TopNav or the 설정 item in the mobile
-  BottomNav. The dialog also carries a 계정 section with avatar +
-  email + 로그아웃; desktop additionally exposes 로그아웃 via the
-  TopNav avatar dropdown.
-
-iPhone-aware: the workspace collapses to single pane, mobile back
-buttons drop you out of the editor, a slide-up sheet exposes the
-sidebar's tag filters from the list header, touch targets are ≥44px,
-and the iOS keyboard reflows the layout via
-`interactive-widget=resizes-content`.
+Not a SaaS, not for sale, not open to the public — the codebase is shared for reference and learning.
 
 ## Stack
 
-- **Vite 8** + **React 19** + **TypeScript** (strict)
-- **React Router v7** with layout routes (`<MobileShell>` adds bottom
-  nav + safe-area padding under all protected routes) and `React.lazy`
-  for every non-trivial page
-- **TanStack Query** for server state; **axios** for HTTP with a bearer
-  interceptor + 401 → /login redirect
-- **Tiptap v3** for the memo editor (`@tiptap/starter-kit`, `image`,
-  `link`, `placeholder`, `task-list`, `table`, `@tiptap/suggestion` for
-  the slash menu, plus custom `Tag` mark and `SlashCommand` extension).
-  Bubble menu via `@tiptap/react/menus` — hidden on touch.
-- **react-data-grid v7** for the sheet editor and the purchase grid
-- **react-day-picker v10** with a custom `DayButton` for the calendar
-- **Radix Primitives** (selective): `@radix-ui/react-dialog` for
-  modals, the mobile tags drawer, and the calendar's mobile filter
-  sheet; `@radix-ui/react-dropdown-menu` for the kebab `…` menu on
-  notes and sheets. Wrapped in `components/ui/ConfirmDialog.tsx`,
-  `components/ui/Menu.tsx`, and the shared `components/common/
-  AppSidebar` + `AppSidebarSheet`. No Tailwind, no shadcn-style mass
-  import.
-- **jwt-decode** to read claims from the issued JWT
-- **Plain CSS Modules** per component; tokens-based design system
-  in `src/components/ui/`. No Tailwind, no CSS-in-JS runtime.
+- **Frontend:** Vite + React 19 + TypeScript + CSS Modules
+- **Editor:** Tiptap v3 (with custom Tag, EntityLink, DataSnapshot, LinkCard, SlashCommand, MentionCommand extensions)
+- **Data:** TanStack React Query + axios with a Bearer-token interceptor
+- **Backend:** Spring Boot 3.5 + Kotlin, JPA on MariaDB
+- **Auth:** Google OAuth2 → JWT (2-email allowlist, no public signup)
+- **Deploy:** Vercel (frontend) + Cloudflare Tunnel → Mac Mini Docker (backend + DB)
 
-## Repo layout (frontend)
+Live (allowlisted only): `https://shared-docs-nine.vercel.app`
 
-```
-src/
-├── api/                        # axios client + shared QueryClient
-├── auth/                       # authContext / AuthProvider / useAuth (split 3 files)
-├── components/
-│   ├── ui/                     # design system (CSS Modules + tokens.css)
-│   │                           # primitives + ConfirmDialog + Menu wrappers
-│   └── common/                 # MobileTable, MobileShell, TopNav, BottomNav
-├── features/
-│   ├── notes/                  # ★ memo: api + workspace/sidebar/list/editor/shared
-│   │   └── editor/extensions/  #   custom Tiptap: Tag mark, SlashCommand
-│   ├── sheets/                 # ★ sheet: same shape — workspace/list/editor/shared
-│   ├── purchases/              # 💰 purchases + settlement + recurring + category chart
-│   ├── todos/
-│   ├── anniversaries/
-│   └── calendar/               # aggregator hook (4 event sources)
-├── lib/
-│   ├── format.ts / color.ts
-│   └── useMediaQuery.ts        # useIsDesktop / useIsMobile / useIsTouch
-├── pages/                      # Hub (notes), SheetsPage, DataHub, CalendarPage,
-│                               # Login, AuthCallback, Forbidden, NotFound, Admin
-└── App.tsx                     # routes + Suspense
-```
+## What it does today
+
+- **메모** — Bear-style markdown editor (Tiptap). Tables, task lists, slash menu, bubble menu, `@`-mention with entity search, `#hashtag`, attachments, drag-and-drop / paste image upload, soft-delete trash, frozen data snapshots and link cards.
+- **시트** — JSON-blob spreadsheet with react-data-grid on desktop and a card-per-row view on mobile.
+- **데이터** — typed mini-apps: 구매, 정산, 반복 항목, 할 일, 기념일, 유용한 링크 (OpenGraph auto-fetch), 레시피 (dnd-kit sortable, 인분 환산).
+- **캘린더** — aggregates 4 sources (기념일, 할 일, 구매, 정산) with per-source filters.
+- **설정** — 4 themes (Dracula default), 3 fonts, 3 line-heights, click-to-apply, localStorage-persisted.
+- **⌘K** — global search across memo + sheet titles and bodies.
+
+## What it's becoming (2026-05-28 reset)
+
+The product has been narrowed to four pillars:
+
+1. **Personal notes** — private notes per person (Phase 1, in progress)
+2. **Shared notes** — the existing memo system
+3. **Decisions** — Plan → SubPlan → Option → Decision with audit-trail UI (Phase 3, the wedge)
+4. **Calculator** — tape-style engineering calc with Korean modes, embeddable in notes (Phase 2)
+
+Sheets is frozen. Expenses are deferred. Email/SMS/Open-Banking integrations are off the table for good.
+
+Full story: [`docs/VISION.md`](docs/VISION.md). Build order: [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 ## Run locally
 
@@ -146,15 +44,14 @@ npm install
 npm run dev               # http://localhost:5173 (Vite)
 ```
 
-Set `VITE_API_BASE_URL` in `.env.development` to point at a backend
-(`http://localhost:8090` for local; the production env var on Vercel is
-`https://docs-api.markflowing.com`).
+Set `VITE_API_BASE_URL` in `.env.development` (`http://localhost:8090` for local). Backend lives in the sibling repo `shared-docs-backend`:
 
-Backend lives in the sibling repo `shared-docs-backend`. For local
-end-to-end work, run `./gradlew bootRun` there and the
-`SPRING_PROFILES_ACTIVE=local` profile exposes a `POST /api/auth/dev-login`
-that issues a JWT for any allowlisted email without going through
-Google.
+```bash
+cd ../shared-docs-backend
+./gradlew bootRun         # http://localhost:8090 — needs MariaDB on :3307
+```
+
+Dev-only shortcut: `POST /api/auth/dev-login` issues a JWT for any allowlisted email without going through Google.
 
 ## Build
 
@@ -162,92 +59,45 @@ Google.
 npm run build             # tsc -b && vite build → dist/
 ```
 
-Vercel uses this same command. The build bakes `VITE_API_BASE_URL`
-into the bundle, so a deploy after changing the env var is required
-for prod to pick it up.
+Bundle shape (gzip): main ≈ 64 kB · Hub chunk (Tiptap-heavy) ≈ 167 kB · CalendarPage ≈ 23 kB · SheetsPage ≈ 20 kB.
 
-Bundle shape (gzip): main ≈ 64 kB · Hub chunk (Tiptap-heavy) ≈ 147 kB
-on first visit to `/` · CalendarPage ≈ 23 kB · SheetsPage ≈ 5 kB
-(react-data-grid shared with PurchaseList).
+## Folder layout (frontend)
 
-## Backend & deployment
+```
+shared-docs/
+├── CLAUDE.md             ← project bible (start here)
+├── docs/
+│   ├── VISION.md         ← the why, the four pillars, the not-list
+│   ├── ROADMAP.md        ← phased build order
+│   ├── ARCHITECTURE.md   ← stack, folders, data model, auth, deploy
+│   ├── DESIGN.md         ← visual identity, tokens, Bear rules
+│   ├── plans/            ← per-phase implementation plans
+│   └── investment/       ← personal content (not project docs)
+└── src/
+    ├── api/              ← axios + shared QueryClient
+    ├── auth/             ← AuthProvider + useAuth + tokenStorage
+    ├── components/
+    │   ├── ui/           ← design system (CSS Modules + tokens.css)
+    │   └── common/       ← MobileShell / TopNav / BottomNav / AppSidebar
+    ├── features/         ← 1 folder = 1 feature
+    ├── lib/              ← format / color / useMediaQuery
+    ├── pages/            ← route components (mostly lazy)
+    └── App.tsx
+```
 
-The backend repo (`valorjj/shared-docs-backend`) handles:
-- Google OAuth2 + JWT issuance
-- All `/api/**` data endpoints (notes, attachments, sheets, purchases,
-  settlements, recurring purchases, todos, anniversaries, calendar
-  aggregator, comments, admin)
-- `/files/{storedFilename}` serves note attachments from a Docker
-  volume (`./uploads:/app/uploads`); UUID filenames + Cloudflare
-  Tunnel act as the perimeter, not auth
-- A self-hosted GitHub Actions runner on the Mac Mini that
-  builds + redeploys via Docker Compose on every push to `main`
-
-A Cloudflare Tunnel routes `docs-api.markflowing.com` → `localhost:8090`
-on the Mac Mini.
-
-Two blueprints in `shared-docs-backend/docs/` document the architecture
-and roadmap:
-
-- `AUTH_BLUEPRINT.md` — Google OAuth, JWT, allowlist, admin model
-- `SCALING_BLUEPRINT.md` — feature roadmap + implementation log
-  (memo + sheet workspaces, Bear sidebar for `/data` and `/calendar`,
-  the `#tag` input-rule fix, the chrome refinement pass, the ⌘K
-  search palette, the attachment gallery, the theme / font / line-
-  height settings panel)
-- `REFERENCES_BLUEPRINT.md` — design for the two References features
-  (both shipped 2026-05-15): data snapshots (frozen `/data` cards
-  embedded in memo bodies) and memo backlinks (`@`-mention /
-  `[[title]]` linking + soft delete + tombstone + referrer panel)
+Backend mirrors this with one Kotlin package per feature: `com.shareddocs.backend.<feature>`.
 
 ## Conventions
 
-- All UI text is in Korean.
-- TypeScript strict mode.
-- **Aesthetic**: Bear is the reference. Hairlines, no shadows, generous
-  spacing, monochrome warm palette with `--c-accent` (Bear-red) used
-  *sparsely* — selection rail, pinned glyph, active sidebar item,
-  hashtag pills. The rule is codified at the design-system level:
-  `Card.module.css` has no `box-shadow`, `Badge` has no `icon` prop,
-  and only the `Fab` / Radix-floating surfaces (Menu, Modal,
-  ConfirmDialog) carry shadows because they are *floating*, not
-  *lifted*.
-- **Buttons**: `variant="primary"` (solid navy) is reserved for actions
-  that actually mutate data (e.g. the inline-add "저장" on the
-  purchase grid). Navigation / enter-mode actions are `outline`,
-  secondaries are `ghost` / `soft`. Most screens have zero or one
-  navy button.
-- **Icons**: Lucide only in chrome. Emojis are fine in user-authored
-  content (note bodies, comments) but never as UI icons. The
-  `Category.icon` field in the backend still stores an emoji string,
-  but the frontend deliberately ignores it everywhere.
-- **Components**: many small single-purpose files, each with its own
-  `.module.css`. A "list item" is one file, not a section of a 600-line
-  component. Micro-tuning lands in one place.
-- New code uses the shared primitives in `src/components/ui/` — don't
-  hand-roll a new button or input. Tokens live in `tokens.css`.
-- One feature = one folder under `src/features/` with `api.ts` +
-  `types.ts` + a tight component tree. Backend mirrors with one Kotlin
-  package per feature.
-- BigDecimal money + ISO 4217 currency code per row; `formatMoney()`
-  from `src/lib/format.ts` wraps `Intl.NumberFormat('ko-KR', { currency })`.
-- No global state library — React state + TanStack Query cache.
-- No setState inside `useEffect` (ESLint `react-hooks/set-state-in-effect`
-  is on). Use `useSyncExternalStore` for subscriptions, derived state
-  for prop reset, the wrapper + keyed inner pattern for "reset form on
-  open" — see any of the three `*Form.tsx` files, or `NoteEditorTitle`
-  re-keyed by `note.id`, for the canonical shape.
+- All UI text in Korean
+- Lucide icons only — no emoji as chrome
+- CSS Modules + tokens (no Tailwind, no styled-components)
+- One primary button per screen
+- Card never lifts (hairline border, no shadow)
+- No setState in effect; derive from URL or use the wrapper+keyed-inner pattern
 
-## Cross-feature routing tricks
+Full design rules in [`docs/DESIGN.md`](docs/DESIGN.md).
 
-- **Memo**: `/?note=N` — activate that note (URL is the source of
-  truth; mobile back button just clears the param).
-- **Sheet**: `/sheets?sheet=N` — same pattern.
-- **Purchases**: `?month=YYYY-MM` (month filter source of truth),
-  `?date=YYYY-MM-DD` (opens add modal pre-filled), `?edit=N` (opens
-  edit modal once rows load), `?row=N` (scrolls grid + 1.8s pulse).
-- **Todos / Anniversaries**: `?date=YYYY-MM-DD`.
+## License
 
-The calendar uses these to make every event clickable: clicking a
-purchase event lands on `/data/purchases?month=...&row=...`, scrolls,
-and pulses.
+No license. Source provided for reference only.
