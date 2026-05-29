@@ -34,7 +34,7 @@ shared-docs-root/
 
 - **Frontend:** Vite + React 19 + TypeScript + CSS Modules. Tiptap v3 for the editor. React Query for data. React Router v6.
 - **Backend:** Spring Boot 3.5 + Kotlin. JPA + MariaDB (port 3307 host). Hibernate `ddl-auto: update`.
-- **Auth:** Google OAuth2 → JWT (24h), gated by `app.auth.allowed-emails` (2-person allowlist enforced in `OAuth2SuccessHandler`). No public signup, ever. Add a household member by appending their email to that config — nothing else to wire.
+- **Auth:** Google OAuth2 → JWT (24h), 2-email allowlist. No public signup, ever.
 - **Deploy:** Vercel (frontend) + Cloudflare Tunnel → Mac Mini Docker (backend + DB + uploads volume).
 
 Full details in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).

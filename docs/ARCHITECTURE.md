@@ -128,7 +128,7 @@ Entity      → JPA-annotated domain. Immutable IDs, `var` mutable fields, lazy 
 1. User hits a protected route → `RequireAuth` detects missing token → redirects to `/login`.
 2. "Google로 로그인" → `${VITE_API_BASE_URL}/oauth2/authorization/google`.
 3. Google → `/login/oauth2/code/google` (Spring handles).
-4. `OAuth2SuccessHandler` checks `app.auth.allowed-emails` — emails not on the list redirect to `/login?error=not_allowed`. Allowed emails upsert a `users` row → issue JWT → redirect to `${FRONTEND_URL}/auth/callback#token=<jwt>`.
+4. `OAuth2SuccessHandler` checks allowlist → upserts `users` row → issues JWT → redirects to `${FRONTEND_URL}/auth/callback#token=<jwt>`.
 5. `AuthCallback` reads fragment → stores in localStorage → navigates to `/`.
 6. Axios interceptor (`api/client.ts`) attaches `Authorization: Bearer <jwt>` to every `/api/**` request.
 7. `/files/**` is `permitAll` — auth bypassed (UUID-based obscurity + Cloudflare Tunnel).
@@ -146,7 +146,7 @@ Every shared entity follows this pattern:
 | Delete | Author or ADMIN |
 | Soft-delete | `deletedAt: Instant?` — set, not removed; `/restore` clears, `/forever` hard-deletes |
 
-The **only deviation** is `Note.visibility` (shipped Phase 1, 2026-05-28): a PRIVATE note is invisible to the non-author even though both users are authenticated. See `plans/2026-05-28-personal-shared-notes.md` for the predicate.
+The **only deviation** (incoming in Phase 1) is `Note.visibility`: a PRIVATE note is invisible to the non-author even though both users are authenticated. See `plans/2026-05-28-personal-shared-notes.md` for the predicate.
 
 ## 7. Cross-entity references
 

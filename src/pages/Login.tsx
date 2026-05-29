@@ -7,7 +7,6 @@ const ERROR_MESSAGES: Record<string, string> = {
   missing_token: '로그인 토큰을 찾을 수 없습니다. 다시 시도해 주세요.',
   oauth_failed: 'Google 로그인에 실패했습니다. 다시 시도해 주세요.',
   session_expired: '세션이 만료되었습니다. 다시 로그인해 주세요.',
-  not_allowed: '이 계정으로는 접근할 수 없습니다. 허용된 이메일로 로그인해 주세요.',
 }
 
 export default function Login() {
@@ -50,6 +49,10 @@ export default function Login() {
           </svg>
           <span>Google로 시작하기</span>
         </a>
+
+        <p className="login__hint">
+          링크로 받은 문서를 보러 오셨다면 로그인이 필요 없습니다.
+        </p>
       </main>
     </div>
   )
