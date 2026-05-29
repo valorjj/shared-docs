@@ -1,6 +1,7 @@
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import {
   BookOpen,
+  Calculator,
   Calendar,
   Database,
   LogOut,
@@ -26,11 +27,12 @@ type NavItem = {
 }
 
 const ITEMS: NavItem[] = [
-  { to: '/',         Icon: BookOpen, label: '메모' },
-  { to: '/sheets',   Icon: Table2,   label: '시트' },
-  { to: '/data',     Icon: Database, label: '데이터' },
-  { to: '/calendar', Icon: Calendar, label: '캘린더' },
-  { to: '/admin',    Icon: Settings, label: '관리', adminOnly: true },
+  { to: '/',         Icon: BookOpen,   label: '메모' },
+  { to: '/sheets',   Icon: Table2,     label: '시트' },
+  { to: '/data',     Icon: Database,   label: '데이터' },
+  { to: '/calc',     Icon: Calculator, label: '계산' },
+  { to: '/calendar', Icon: Calendar,   label: '캘린더' },
+  { to: '/admin',    Icon: Settings,   label: '관리', adminOnly: true },
 ]
 
 const HIDDEN_PREFIXES = ['/login', '/auth']

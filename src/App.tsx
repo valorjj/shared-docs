@@ -18,6 +18,7 @@ const LinkList         = lazy(() => import('./features/links/LinkList'))
 const RecipeList       = lazy(() => import('./features/recipes/RecipeList'))
 const RecipeEditor     = lazy(() => import('./features/recipes/RecipeEditor'))
 const CalendarPage     = lazy(() => import('./pages/CalendarPage'))
+const CalcWorkspace    = lazy(() => import('./features/calc/CalcWorkspace'))
 const Admin            = lazy(() => import('./pages/Admin'))
 const AdminCategories  = lazy(() => import('./pages/AdminCategories'))
 
@@ -58,6 +59,7 @@ function App() {
               <Route path="recipes/:id" element={<RecipeEditor />} />
             </Route>
             <Route path="/calendar" element={<CalendarPage />} />
+            <Route path="/calc" element={<CalcWorkspace />} />
 
             <Route element={<RequireRole role="ADMIN" />}>
               <Route path="/admin" element={<Admin />} />

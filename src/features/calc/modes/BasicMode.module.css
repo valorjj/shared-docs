@@ -1,0 +1,20 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  max-width: 540px;
+}
+
+.result {
+  font-size: var(--fs-xl);
+  font-family: var(--font-serif);
+  color: var(--c-text);
+  padding: var(--sp-4);
+  background: var(--c-surface-tint);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+}
+
+.result strong {
+  font-weight: var(--fw-semi);
+}

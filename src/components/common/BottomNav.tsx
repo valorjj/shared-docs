@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from 'react-router-dom'
-import { BookOpen, Database, Calendar, Search, Settings, Settings2, Table2, type LucideIcon } from 'lucide-react'
+import { BookOpen, Calculator, Database, Calendar, Search, Settings, Settings2, Table2, type LucideIcon } from 'lucide-react'
 import { useIsMobile } from '../../lib/useMediaQuery'
 import { useAuth } from '../../auth/useAuth'
 import { useSearchPalette } from '../../features/search/searchContext'
@@ -14,11 +14,12 @@ type NavItem = {
 }
 
 const ITEMS: NavItem[] = [
-  { to: '/',         Icon: BookOpen, label: '메모' },
-  { to: '/sheets',   Icon: Table2,   label: '시트' },
-  { to: '/data',     Icon: Database, label: '데이터' },
-  { to: '/calendar', Icon: Calendar, label: '캘린더' },
-  { to: '/admin',    Icon: Settings, label: '관리', adminOnly: true },
+  { to: '/',         Icon: BookOpen,   label: '메모' },
+  { to: '/sheets',   Icon: Table2,     label: '시트' },
+  { to: '/data',     Icon: Database,   label: '데이터' },
+  { to: '/calc',     Icon: Calculator, label: '계산' },
+  { to: '/calendar', Icon: Calendar,   label: '캘린더' },
+  { to: '/admin',    Icon: Settings,   label: '관리', adminOnly: true },
 ]
 
 const HIDDEN_PREFIXES = ['/login', '/auth', '/doc']
