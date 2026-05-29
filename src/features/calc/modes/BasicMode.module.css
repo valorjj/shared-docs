@@ -5,6 +5,14 @@
   max-width: 720px;
 }
 
+.seedBanner {
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--c-primary-soft);
+  color: var(--c-primary);
+  border-radius: var(--r-sm);
+  font-size: var(--fs-sm);
+}
+
 .toolbar {
   display: flex;
   align-items: center;

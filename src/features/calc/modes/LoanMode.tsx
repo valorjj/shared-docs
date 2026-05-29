@@ -4,17 +4,40 @@ import { Button, ErrorText, Field, Input, Label, Select } from '../../../compone
 import { useCreateCalcEntry } from '../api'
 import { computeLoan } from '../compute/loan'
 import { formatKRW } from '../format'
-import type { LoanInput, LoanOutput, LoanType } from '../types'
+import type { CalcEntry, LoanInput, LoanOutput, LoanType } from '../types'
 import styles from './SpecializedMode.module.css'
 
 const LOAN_TYPES: LoanType[] = ['원리금균등', '원금균등']
 
-export default function LoanMode() {
-  const [principal, setPrincipal] = useState<number>(0)
-  const [annualRate, setAnnualRate] = useState<number>(5)
-  const [months, setMonths] = useState<number>(12)
-  const [type, setType] = useState<LoanType>('원리금균등')
-  const [result, setResult] = useState<LoanOutput | null>(null)
+type Props = {
+  seedEntry?: CalcEntry | null
+}
+
+function seedInput(seed: CalcEntry | null): Partial<LoanInput> {
+  if (!seed) return {}
+  try {
+    return JSON.parse(seed.inputJson) as Partial<LoanInput>
+  } catch {
+    return {}
+  }
+}
+
+function seedOutput(seed: CalcEntry | null): LoanOutput | null {
+  if (!seed) return null
+  try {
+    return JSON.parse(seed.resultJson) as LoanOutput
+  } catch {
+    return null
+  }
+}
+
+export default function LoanMode({ seedEntry = null }: Props) {
+  const seed = seedInput(seedEntry)
+  const [principal, setPrincipal] = useState<number>(seed.principal ?? 0)
+  const [annualRate, setAnnualRate] = useState<number>(seed.annualRate ?? 5)
+  const [months, setMonths] = useState<number>(seed.months ?? 12)
+  const [type, setType] = useState<LoanType>(seed.type ?? '원리금균등')
+  const [result, setResult] = useState<LoanOutput | null>(() => seedOutput(seedEntry))
   const [error, setError] = useState<string | null>(null)
   const [showSchedule, setShowSchedule] = useState(false)
   const create = useCreateCalcEntry()
@@ -39,6 +62,13 @@ export default function LoanMode() {
 
   return (
     <form onSubmit={handleSubmit} className={styles.form}>
+      {seedEntry && (
+        <div className={styles.seedBanner}>
+          기록을 불러왔습니다
+          {seedEntry.label ? ` — "${seedEntry.label}"` : ''}.
+          저장하면 새 항목으로 추가됩니다.
+        </div>
+      )}
       <div className={styles.fields}>
         <Field>
           <Label htmlFor="calc-loan-principal">원금 (₩)</Label>

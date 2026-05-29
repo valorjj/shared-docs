@@ -4,20 +4,46 @@ import { Button, ErrorText, Field, IconButton, Input, Label, Select } from '../.
 import { useCreateCalcEntry } from '../api'
 import { computeDutch } from '../compute/dutch'
 import { formatCurrency } from '../format'
-import type { DutchInput, DutchOutput, DutchShare } from '../types'
+import type { CalcEntry, DutchInput, DutchOutput, DutchShare } from '../types'
 import styles from './SpecializedMode.module.css'
 
 const CURRENCIES = ['KRW', 'USD', 'EUR', 'JPY']
+const DEFAULT_SHARES: DutchShare[] = [
+  { label: '나', weight: 1 },
+  { label: '상대', weight: 1 },
+]
 
-export default function DutchMode() {
-  const [total, setTotal] = useState<number>(0)
-  const [currency, setCurrency] = useState<string>('KRW')
-  const [tipPct, setTipPct] = useState<number>(0)
-  const [shares, setShares] = useState<DutchShare[]>([
-    { label: '나', weight: 1 },
-    { label: '상대', weight: 1 },
-  ])
-  const [result, setResult] = useState<DutchOutput | null>(null)
+type Props = {
+  seedEntry?: CalcEntry | null
+}
+
+function seedInput(seed: CalcEntry | null): Partial<DutchInput> {
+  if (!seed) return {}
+  try {
+    return JSON.parse(seed.inputJson) as Partial<DutchInput>
+  } catch {
+    return {}
+  }
+}
+
+function seedOutput(seed: CalcEntry | null): DutchOutput | null {
+  if (!seed) return null
+  try {
+    return JSON.parse(seed.resultJson) as DutchOutput
+  } catch {
+    return null
+  }
+}
+
+export default function DutchMode({ seedEntry = null }: Props) {
+  const seed = seedInput(seedEntry)
+  const [total, setTotal] = useState<number>(seed.total ?? 0)
+  const [currency, setCurrency] = useState<string>(seed.currency ?? 'KRW')
+  const [tipPct, setTipPct] = useState<number>(seed.tipPct ?? 0)
+  const [shares, setShares] = useState<DutchShare[]>(
+    Array.isArray(seed.shares) && seed.shares.length > 0 ? seed.shares : DEFAULT_SHARES,
+  )
+  const [result, setResult] = useState<DutchOutput | null>(() => seedOutput(seedEntry))
   const [error, setError] = useState<string | null>(null)
   const create = useCreateCalcEntry()
 
@@ -54,6 +80,13 @@ export default function DutchMode() {
 
   return (
     <form onSubmit={handleSubmit} className={styles.form}>
+      {seedEntry && (
+        <div className={styles.seedBanner}>
+          기록을 불러왔습니다
+          {seedEntry.label ? ` — "${seedEntry.label}"` : ''}.
+          저장하면 새 항목으로 추가됩니다.
+        </div>
+      )}
       <div className={styles.fields}>
         <Field>
           <Label htmlFor="calc-dutch-total">총액</Label>

@@ -8,9 +8,11 @@ import styles from './Tape.module.css'
 
 type Props = {
   entry: CalcEntry
+  active?: boolean
+  onSelect?: (entry: CalcEntry) => void
 }
 
-export default function TapeLine({ entry }: Props) {
+export default function TapeLine({ entry, active = false, onSelect }: Props) {
   const update = useUpdateCalcEntry()
   const del = useDeleteCalcEntry()
 
@@ -18,8 +20,38 @@ export default function TapeLine({ entry }: Props) {
   const result = safeParse(entry.resultJson)
   const summary = renderSummary(entry.mode, input, result)
 
+  const handleClick = () => onSelect?.(entry)
+  const handleKey = (e: React.KeyboardEvent) => {
+    if (!onSelect) return
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      onSelect(entry)
+    }
+  }
+
+  // Clicks on the kebab (the menu trigger or its items) must NOT bubble
+  // up to the row's onClick — otherwise picking "삭제" would also seed
+  // the editor with the doomed entry.
+  const stopRow = (e: React.SyntheticEvent) => e.stopPropagation()
+
+  const className = [
+    styles.line,
+    entry.pinned ? styles.linePinned : '',
+    active ? styles.lineActive : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
+
   return (
-    <article className={`${styles.line}${entry.pinned ? ` ${styles.linePinned}` : ''}`}>
+    <article
+      className={className}
+      role="button"
+      tabIndex={0}
+      aria-pressed={active}
+      onClick={handleClick}
+      onKeyDown={handleKey}
+      title={onSelect ? '클릭하여 편집기에 불러오기' : undefined}
+    >
       <header className={styles.header}>
         <span className={styles.modeBadge}>{CALC_MODE_LABELS[entry.mode]}</span>
         {entry.pinned && (
@@ -28,28 +60,30 @@ export default function TapeLine({ entry }: Props) {
         <span className={styles.author}>{entry.createdBy.name}</span>
         <span className={styles.sep}>·</span>
         <time className={styles.time}>{formatRelativeTime(entry.createdAt)}</time>
-        <Menu
-          trigger={
-            <button type="button" className={styles.kebab} aria-label="옵션">
-              <MoreHorizontal size={14} strokeWidth={1.75} />
-            </button>
-          }
-        >
-          <MenuItem
-            icon={entry.pinned ? <PinOff size={14} /> : <Pin size={14} />}
-            onSelect={() => update.mutate({ id: entry.id, payload: { pinned: !entry.pinned } })}
+        <span onClick={stopRow} onPointerDown={stopRow} onKeyDown={stopRow}>
+          <Menu
+            trigger={
+              <button type="button" className={styles.kebab} aria-label="옵션">
+                <MoreHorizontal size={14} strokeWidth={1.75} />
+              </button>
+            }
           >
-            {entry.pinned ? '고정 해제' : '고정'}
-          </MenuItem>
-          <MenuSeparator />
-          <MenuItem
-            destructive
-            icon={<Trash2 size={14} />}
-            onSelect={() => del.mutate(entry.id)}
-          >
-            삭제
-          </MenuItem>
-        </Menu>
+            <MenuItem
+              icon={entry.pinned ? <PinOff size={14} /> : <Pin size={14} />}
+              onSelect={() => update.mutate({ id: entry.id, payload: { pinned: !entry.pinned } })}
+            >
+              {entry.pinned ? '고정 해제' : '고정'}
+            </MenuItem>
+            <MenuSeparator />
+            <MenuItem
+              destructive
+              icon={<Trash2 size={14} />}
+              onSelect={() => del.mutate(entry.id)}
+            >
+              삭제
+            </MenuItem>
+          </Menu>
+        </span>
       </header>
       <div className={styles.body}>{summary}</div>
       {entry.label && <p className={styles.label}>{entry.label}</p>}
@@ -67,10 +101,7 @@ function safeParse(json: string): any {
 
 /** BASIC summary handles both shapes:
  *  - legacy single-line: input = {expr}, result = {value, formatted}
- *  - 2026-05-29 multi-line: input = {body}, result = {lines, finalFormatted}
- *
- *  For multi-line we show "{N}단계 · 최종 {formatted}" or the bare expr
- *  if there's only one meaningful line. */
+ *  - 2026-05-29 multi-line: input = {body}, result = {lines, finalFormatted} */
 function summarizeBasic(input: any, result: any): string {
   if (typeof input?.expr === 'string') {
     return `${input.expr} = ${result?.formatted ?? result?.value ?? '?'}`

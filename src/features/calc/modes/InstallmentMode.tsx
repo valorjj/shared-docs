@@ -4,14 +4,37 @@ import { Button, ErrorText, Field, Input, Label } from '../../../components/ui'
 import { useCreateCalcEntry } from '../api'
 import { computeInstallment } from '../compute/installment'
 import { formatKRW } from '../format'
-import type { InstallmentInput, InstallmentOutput } from '../types'
+import type { CalcEntry, InstallmentInput, InstallmentOutput } from '../types'
 import styles from './SpecializedMode.module.css'
 
-export default function InstallmentMode() {
-  const [principal, setPrincipal] = useState<number>(0)
-  const [annualRate, setAnnualRate] = useState<number>(5)
-  const [months, setMonths] = useState<number>(12)
-  const [result, setResult] = useState<InstallmentOutput | null>(null)
+type Props = {
+  seedEntry?: CalcEntry | null
+}
+
+function seedInput(seed: CalcEntry | null): Partial<InstallmentInput> {
+  if (!seed) return {}
+  try {
+    return JSON.parse(seed.inputJson) as Partial<InstallmentInput>
+  } catch {
+    return {}
+  }
+}
+
+function seedOutput(seed: CalcEntry | null): InstallmentOutput | null {
+  if (!seed) return null
+  try {
+    return JSON.parse(seed.resultJson) as InstallmentOutput
+  } catch {
+    return null
+  }
+}
+
+export default function InstallmentMode({ seedEntry = null }: Props) {
+  const seed = seedInput(seedEntry)
+  const [principal, setPrincipal] = useState<number>(seed.principal ?? 0)
+  const [annualRate, setAnnualRate] = useState<number>(seed.annualRate ?? 5)
+  const [months, setMonths] = useState<number>(seed.months ?? 12)
+  const [result, setResult] = useState<InstallmentOutput | null>(() => seedOutput(seedEntry))
   const [error, setError] = useState<string | null>(null)
   const create = useCreateCalcEntry()
 
@@ -35,6 +58,13 @@ export default function InstallmentMode() {
 
   return (
     <form onSubmit={handleSubmit} className={styles.form}>
+      {seedEntry && (
+        <div className={styles.seedBanner}>
+          기록을 불러왔습니다
+          {seedEntry.label ? ` — "${seedEntry.label}"` : ''}.
+          저장하면 새 항목으로 추가됩니다.
+        </div>
+      )}
       <div className={styles.fields}>
         <Field>
           <Label htmlFor="calc-inst-principal">원금 (₩)</Label>

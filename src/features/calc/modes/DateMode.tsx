@@ -3,7 +3,7 @@ import { Calculator } from 'lucide-react'
 import { Button, ErrorText, Field, Input, Label, Tabs } from '../../../components/ui'
 import { useCreateCalcEntry } from '../api'
 import { computeDate } from '../compute/date'
-import type { DateInput, DateOutput, DateSubMode } from '../types'
+import type { CalcEntry, DateInput, DateOutput, DateSubMode } from '../types'
 import styles from './SpecializedMode.module.css'
 
 const SUBMODE_LABELS: Record<DateSubMode, string> = {
@@ -15,12 +15,42 @@ const SUBMODES: DateSubMode[] = ['D_DAY', 'BETWEEN', 'WORKING_DAYS']
 
 const today = () => new Date().toISOString().slice(0, 10)
 
-export default function DateMode() {
-  const [submode, setSubmode] = useState<DateSubMode>('D_DAY')
-  const [target, setTarget] = useState<string>(today())
-  const [from, setFrom] = useState<string>(today())
-  const [to, setTo] = useState<string>(today())
-  const [result, setResult] = useState<DateOutput | null>(null)
+type Props = {
+  seedEntry?: CalcEntry | null
+}
+
+type SeedDateInput = {
+  mode?: DateSubMode
+  target?: string
+  from?: string
+  to?: string
+}
+
+function seedInput(seed: CalcEntry | null): SeedDateInput {
+  if (!seed) return {}
+  try {
+    return JSON.parse(seed.inputJson) as SeedDateInput
+  } catch {
+    return {}
+  }
+}
+
+function seedOutput(seed: CalcEntry | null): DateOutput | null {
+  if (!seed) return null
+  try {
+    return JSON.parse(seed.resultJson) as DateOutput
+  } catch {
+    return null
+  }
+}
+
+export default function DateMode({ seedEntry = null }: Props) {
+  const seed = seedInput(seedEntry)
+  const [submode, setSubmode] = useState<DateSubMode>(seed.mode ?? 'D_DAY')
+  const [target, setTarget] = useState<string>(seed.target ?? today())
+  const [from, setFrom] = useState<string>(seed.from ?? today())
+  const [to, setTo] = useState<string>(seed.to ?? today())
+  const [result, setResult] = useState<DateOutput | null>(() => seedOutput(seedEntry))
   const [error, setError] = useState<string | null>(null)
   const create = useCreateCalcEntry()
 
@@ -49,6 +79,13 @@ export default function DateMode() {
 
   return (
     <form onSubmit={handleSubmit} className={styles.form}>
+      {seedEntry && (
+        <div className={styles.seedBanner}>
+          기록을 불러왔습니다
+          {seedEntry.label ? ` — "${seedEntry.label}"` : ''}.
+          저장하면 새 항목으로 추가됩니다.
+        </div>
+      )}
       <div className={styles.dateSubTabs}>
         <Tabs<DateSubMode>
           items={SUBMODES.map((m) => ({ key: m, label: SUBMODE_LABELS[m] }))}
