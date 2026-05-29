@@ -1,130 +1,115 @@
 # Roadmap
 
-> Last revised: 2026-05-29 — Phase 2 shipped, with two same-day follow-ups (multi-line scratchpad + clickable history).
+> Last revised: 2026-05-29 — multi-tenant v2 direction. The old Phase 3/4 framing (private 2-person app) is superseded.
 
-The product has four pillars (see [`VISION.md`](VISION.md)). This document is the build order, with explicit deferrals.
+The product is being rebuilt as a multi-tenant app with workspaces, invitations, and cross-workspace per-doc sharing. See [`plans/2026-05-29-multi-tenant-v2.md`](plans/2026-05-29-multi-tenant-v2.md) for the architecture spec. This roadmap is the build order.
 
-## Today (2026-05-29) — current state
+## Where we are (2026-05-29)
 
-What exists and is stable:
-
-- **Memo** (Tiptap-based, 3-pane shell, autosave, attachments, tags, slash menu, bubble menu, context menus on editor + sidebar, link cards, data snapshots, cross-entity `@` mentions, ⌘K search palette, soft-delete trash)
-- **Sheets** (JSON-blob spreadsheet, desktop grid + mobile cards)
-- **Data sub-features**: 구매 내역, 정산, 반복 항목, 할 일, 기념일, 유용한 링크, 레시피
-- **Calendar** (4-source aggregation: anniversaries + todos + purchases + settlements)
-- **Settings**: 4 themes (Dracula default), 3 fonts, 3 line-heights
-- **Auth**: Google OAuth2 + JWT, 2-email allowlist
-
-Status of each, after the reset:
-
-| Feature | Status |
+| Surface | State |
 |---|---|
-| Memo | **Stable.** Phase 1 personal/shared split shipped 2026-05-28. |
-| Sheets | **Frozen.** Works today; no new features. Will likely be removed in 2026-H2 if unused. |
-| 구매 / 정산 / 반복 항목 | **Deferred.** Phase X+, not before Phase 4. |
-| 할 일 / 기념일 | **Stable.** Bug-fixes only. |
-| 유용한 링크 / 레시피 | **Stable.** Bug-fixes only. |
-| Calendar | **Stable.** Will grow to source from Decisions in Phase 3. |
-| Settings | **Stable.** |
-| Auth | **Stable.** No public-launch work. |
-| Calculator | **Stable.** Phase 2 shipped 2026-05-29 — see plan + commits e3b619d … 2d6ec85. Includes 2.1 multi-line scratchpad and 2.2 click-history-to-load. |
+| v1 codebase on `main` | **Frozen.** All four pillars work, but as a single-workspace app gated by a 2-email allowlist. |
+| v1 production data | **Will be wiped on v2 cutover.** No migration. `mysqldump` backup taken first for nostalgia. |
+| v2 spec | **Locked.** `plans/2026-05-29-multi-tenant-v2.md` is the source of truth. |
+| v2 implementation | **Not started.** Branch `v2-multi-tenant` to be created on both repos before Phase A begins. |
 
-## Phase 0 — Doc reset (this session, 2026-05-28)
+## v2 phases
 
-Delete obsolete blueprints, write the new doc set (this file + VISION/ARCHITECTURE/DESIGN/CLAUDE/README). One commit per doc batch.
+Each phase ships with tests green; nothing merges to `main` until v2 cutover. All work happens on the `v2-multi-tenant` branch.
 
-**Goal:** the docs accurately reflect what the product is becoming, not what it was in 2026-05-12.
+### Phase A — workspaces + memberships + scoped reads (~7–10 days)
 
-## Phase 1 — Personal / Shared notes split (1 weekend)
+- New tables: `workspaces`, `workspace_members`.
+- Add `workspace_id` column to every resource table (notes, sheets, calc entries, purchases, settlements, todos, anniversaries, links, recipes, categories, attachments).
+- `WorkspaceContextFilter` backend + `@CurrentWorkspace` resolver.
+- Every existing repository/service filters by workspace.
+- On first Google sign-in: auto-create personal workspace + OWNER membership.
+- Frontend: axios interceptor injects `X-Workspace-Id` header from localStorage.
+- No new UI yet — the existing app should keep working with a single auto-created workspace.
 
-Add `visibility: PRIVATE | SHARED` to notes. Default PRIVATE on create. Sidebar splits into 내 비공개 / 함께 / 상대의 메모. Editor meta strip gets a one-click toggle.
+### Phase B — workspace switcher + create-workspace (~3–5 days)
 
-**Why first:** unblocks both partners to use this as a real notebook (mine + ours), and the data-model touches will inform later pillars.
+- `WorkspaceSwitcher` chrome (top-left desktop dropdown; mobile lives in sidebar/settings).
+- `POST /api/workspaces` to create new (caller becomes OWNER).
+- 워크스페이스 설정 page (rename, delete).
+- localStorage active-workspace + React Query cache clear on switch.
 
-**Plan:** [`plans/2026-05-28-personal-shared-notes.md`](plans/2026-05-28-personal-shared-notes.md)
+### Phase C — per-workspace categories + onboarding seed (~2–3 days)
 
-## Phase 2 — Calculator with tape history ✅ shipped 2026-05-29
+- Seed default categories on workspace creation (구매 / 할 일 / 기념일 / 링크 / 레시피 category bootstrap).
+- Category services become workspace-scoped (no global categories anymore).
 
-`/calc` feature (peer to `/`, `/sheets`, `/calendar` — moved from the original `/data/calc` because it's a daily utility, not data tracking). Tape is shared between both partners; entries are immutable (rerun creates a new one), with `pinned` and `label` mutable.
+### Phase D — invitations (~7–10 days)
 
-Modes that shipped (daily-five):
-- **기본** (basic) — Soulver-style multi-line scratchpad (added 2.1, see below)
-- **할부** (installment) — equal-monthly-payment formula
-- **대출 상환** — 원리금균등 + 원금균등 with full amortization schedule
-- **더치페이** — weighted shares + tip across multiple currencies
-- **날짜 계산** — D-day / 사이 일수 / 영업일 (no holiday table)
+- `workspace_invitations` table + endpoints.
+- Resend integration for email send (Korean templates).
+- 멤버 관리 page per workspace.
+- `/invite/:token` claim flow.
+- Leave-workspace + remove-member actions.
 
-Deferred per the picker:
-- **적금 / 예금 만기**
-- **단위 환산** (특히 평↔㎡)
+### Phase E — per-doc ShareGrant + "공유받은 항목" (~10–14 days)
 
-CalcSnapshot embed: same Tiptap atom pattern as DataSnapshot — slash menu `/계산 스냅샷` opens the picker, picking a tape entry inserts a frozen block with refresh kebab; 404 on refresh switches the card to a tombstone state.
+- `resource_shares` table + endpoints (resurrected from the share/ package deleted in commit `122e489`, adapted to the workspace model).
+- ShareDialog per resource kind (probably a single generic dialog).
+- New `/shared` route — workspace-independent surface for cross-workspace grants.
+- Permission resolution in every read endpoint (`effectivePermission: VIEW | EDIT` in responses).
+- Frontend hides edit affordances when `effectivePermission === 'VIEW'`.
 
-### Same-day follow-ups
+### Phase F — polish + remove kill-switch + launch (~3–5 days)
 
-- **2.1 multi-line scratchpad** (commit `385d478`) — the original single-line BASIC was rebuilt as a two-column Soulver-style scratchpad: comments with `#`, assignments (`name = expr`) flowing variables to later lines, line-scoped errors, live evaluation, click-a-result to insert-at-cursor, `localStorage` recovery, and explicit 저장 to snapshot the whole pad as one entry. Old single-line entries still render via back-compat in `summarizeBasic`.
-- **2.2 click history → load** (commit `2d6ec85`) — every tape row is now interactive. Clicking a row switches to that mode's editor and seeds the form fields from the entry. The active row gets a primary-soft background; clicking it again deselects. Wrapper+keyed-inner pattern: `CalcWorkspace` owns `seedEntry` and keys each mode component on `seedEntry?.id ?? 'fresh'` so the mode's `useState` initializers re-run cleanly. While a seed is loaded BASIC's `localStorage` write pauses, so the user's fresh scratchpad survives untouched in the background.
+- Empty-state UI for fresh workspaces.
+- User profile page.
+- Disable `APP_AUTH_ALLOWLIST_ENABLED` in prod → open sign-up.
+- Minimal Privacy/Terms placeholder pages.
+- Basic landing page improvements for `/login`.
 
-**Plan:** [`plans/2026-05-29-calculator-tape-history.md`](plans/2026-05-29-calculator-tape-history.md) (with post-ship appendix)
+### v2 cutover (~1 day, separate from the phases)
 
-## Phase 3 — Decisions (4–8 weeks) — the wedge — **next**
+1. Tag `main` as `v1-final`.
+2. Pause Cloudflare Tunnel.
+3. `mysqldump shared_docs > pre-v2-backup.sql` on the Mac Mini.
+4. `DROP DATABASE shared_docs; CREATE DATABASE shared_docs;`
+5. `rm -rf /app/uploads/*`.
+6. Merge `v2-multi-tenant` → `main`.
+7. Redeploy frontend + backend.
+8. Sign in to seed the first personal workspace.
+9. Resume traffic.
 
-The differentiated feature. Data model:
+See spec §10 for the rollback procedure.
 
-```
-Plan
-  └─ SubPlan
-       ├─ Option
-       │    ├─ Rating per partner (★1–5 + comment)
-       │    └─ Pros / Cons (free text)
-       └─ Decision (chosen Option + reasoning + timestamp)
-```
+## Post-v2 directions
 
-Surfaces:
+These wait until v2 is shipped and stable.
 
-- `/data/decisions` — Plan list with status (open / decided / archived)
-- Plan detail — vertical timeline of SubPlans with their Decisions
-- SubPlan detail — Options grid with both partners' ratings side-by-side, comment threads per option
-- Decision card — pin to plan timeline, embeddable as frozen block in notes (`@` mention or slash menu)
-- Calendar source — decisions appear as dots on the date they were made
+### Decisions feature (Phase 3 from the old roadmap)
 
-This is where the product earns its name.
+The original wedge of the product. `Plan → SubPlan → Option (with per-member ratings) → Decision` with a timeline view. Will live inside the workspace model — each Plan belongs to a workspace. Plan doc gets written when work on it starts.
 
-**Plan:** to be written when work on Phase 3 actually starts (Phase 2 is complete; the plan is held until the user signals "let's start Phase 3" so the design reflects what we learned from Phases 1–2).
+### Multi-calendar overlay (the "sweet spot")
 
-## Phase 4 — Presence on shared notes (1 weekend)
+A unified `/calendar/all` view that overlays the calendars of every workspace a user belongs to (work + family + hobby), each color-coded, each toggleable. The multi-workspace model from v2 makes this nearly free to build — just parallel-fetch each workspace's calendar endpoint and merge client-side.
 
-Tiptap "awareness" — partner's avatar + cursor color when both viewing the same note. No real-time editing (last-write-wins remains). Uses Y.js awareness over WebSocket, but no Y.js document sync.
+### Presence on shared notes
 
-**Why last:** cheap polish that lands well after the wedge is in place.
-
-**Plan:** to be written when Phase 3 completes.
-
----
+Tiptap "awareness" — partner's avatar + cursor color when both viewing the same note. No real-time editing (last-write-wins remains). Uses Y.js awareness over WebSocket, no CRDT sync.
 
 ## Deferred indefinitely
 
-Items removed from the roadmap, with the reason logged so we don't re-litigate.
-
-| Item | Why deferred |
+| Item | Why |
 |---|---|
-| iMessage / SMS scraping for expense ingestion | Impossible from web; native SMS access restricted on Android; iMessage has no API |
-| Email-receipt regex ingestion | Discarded — not worth the maintenance burden for a 2-person app |
-| Open Banking 마이데이터 integration | Requires FSC license + multi-억원 capital — not happening for a personal project |
-| Real-time collaborative editing (Y.js CRDT sync) | Couples don't race paragraphs; awareness is enough until proven otherwise |
-| Expense feature deep work (구매 / 정산 enhancements beyond bug-fixes) | Not in service of the four pillars; revisit only if Decisions stabilizes and there's leftover capacity |
-| Sheets enhancements (formulas, sorting, filtering) | Use a real spreadsheet for spreadsheet work |
-| Mobile native apps (iOS / Android binaries) | Responsive web + PWA install is sufficient |
-| Public launch / multi-tenancy / billing | The product is private by design |
-| User onboarding / signup / forgot-password / marketing surface | Same |
-| Comments on notes/sheets | Latent infrastructure exists; no use case until Decisions ships threaded comments |
+| iMessage / SMS / email expense ingestion | Impossible from web; off the table for good |
+| Open Banking 마이데이터 integration | Requires FSC license, multi-억원 capital — not happening |
+| Real-time collaborative editing (CRDT sync) | Couples and small groups don't race paragraphs; awareness is enough |
+| Sheets enhancements (formulas, sorting, filtering) | Use a real spreadsheet |
+| Mobile native apps | Responsive web + PWA install is sufficient |
+| Billing / pricing / paid tiers | No commercial intent — may revisit if storage costs become real |
+| Notion-scale workspaces (50+ members, org charts, @everyone) | Out of design scope — workspaces are small by design |
+| Document publishing (open-web URLs) | Cross-workspace ShareGrant covers the "share with specific people" need; we don't want to host public web pages |
 
 ## Roadmap principles
 
-A few rules to keep this honest:
-
-1. **One pillar at a time.** Phase 3 doesn't start until Phase 2 ships, regardless of how exciting it sounds.
-2. **Plans are written when the previous phase ships, not earlier.** The plan for Phase 2 is written after Phase 1 lands — because Phase 1 will teach us things we'd guess wrong about now.
+1. **One phase at a time on the v2 branch.** Each phase is a reviewable PR or commit cluster against `v2-multi-tenant`, not against `main`.
+2. **No code starts without a per-phase plan.** Phase A's plan (`plans/2026-05-29-phase-a-workspaces.md`) gets written first, reviewed, then executed.
 3. **The "deferred" list is sticky.** Adding back requires explicit reasoning, not "while we're here."
-4. **Sheets is on death watch.** If neither partner opens it for 60 days running, it gets deleted. Mark the calendar.
-5. **No feature flags.** This is a 2-person app. Ship to main or don't ship.
+4. **No feature flags inside v2.** Ship to `v2-multi-tenant` or don't ship. (Allowlist kill-switch in Phase F is the only exception.)
+5. **Tests + type-check green before merging each phase to the v2 branch.**

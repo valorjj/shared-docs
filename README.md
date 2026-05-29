@@ -1,42 +1,48 @@
 # shared-docs
 
-A private web app for two people — built for me and my wife to keep our notes and our decisions in one place. Bear-style memo editor, a Soulver-style engineering calculator, and (the headline feature, still ahead) a decision-history surface so we never lose track of *why* we chose what we chose.
+A small-group shared workspace for couples, families, and friend circles. Bear-style memo editor, a Soulver-style engineering calculator, a calendar, a recipe book — and an upcoming decision-history surface so groups never lose track of *why* they chose what they chose.
 
-Not a SaaS, not for sale, not open to the public — the codebase is shared for reference and learning.
+One user, many workspaces (work / family / hobby). Each workspace is its own world: own notes, own calendar, own calc history. Cross-workspace sharing lets you grant a single document to specific people outside your workspace.
+
+Currently rebuilding from a 2-person prototype to a multi-tenant app — see [`docs/plans/2026-05-29-multi-tenant-v2.md`](docs/plans/2026-05-29-multi-tenant-v2.md) for the architecture spec.
 
 ## Stack
 
 - **Frontend:** Vite + React 19 + TypeScript + CSS Modules
-- **Editor:** Tiptap v3 (with custom Tag, EntityLink, DataSnapshot, LinkCard, SlashCommand, MentionCommand extensions)
+- **Editor:** Tiptap v3 (with custom Tag, EntityLink, DataSnapshot, LinkCard, CalcSnapshot, SlashCommand, MentionCommand extensions)
 - **Data:** TanStack React Query + axios with a Bearer-token interceptor
 - **Backend:** Spring Boot 3.5 + Kotlin, JPA on MariaDB
-- **Auth:** Google OAuth2 → JWT (2-email allowlist, no public signup)
+- **Auth:** Google OAuth2 → JWT, open sign-up (temporary allowlist kill-switch during the v2 build)
 - **Deploy:** Vercel (frontend) + Cloudflare Tunnel → Mac Mini Docker (backend + DB)
 
-Live (allowlisted only): `https://shared-docs-nine.vercel.app`
+Live preview: `https://shared-docs-nine.vercel.app`
 
-## What it does today
+## What it does today (v1, frozen)
 
-- **메모** — Bear-style markdown editor (Tiptap). Tables, task lists, slash menu, bubble menu, `@`-mention with entity search, `#hashtag`, attachments, drag-and-drop / paste image upload, soft-delete trash, frozen data snapshots and link cards.
+The v1 codebase is feature-complete as a single-workspace app. v2 rebuilds it as multi-tenant; the features themselves carry forward.
+
+- **메모** — Bear-style markdown editor (Tiptap). Tables, task lists, slash menu, bubble menu, `@`-mention with entity search, `#hashtag`, attachments, drag-and-drop / paste image upload, soft-delete trash, frozen data snapshots, link cards, calc snapshots.
 - **시트** — JSON-blob spreadsheet with react-data-grid on desktop and a card-per-row view on mobile.
 - **데이터** — typed mini-apps: 구매, 정산, 반복 항목, 할 일, 기념일, 유용한 링크 (OpenGraph auto-fetch), 레시피 (dnd-kit sortable, 인분 환산).
-- **계산** — `/calc`. Five modes (기본 multi-line scratchpad with variables and `#` comments, 할부, 대출 with amortization schedule, 더치페이, 날짜). Shared tape between partners; click any history row to load it back into the editor. Calculations embed as frozen blocks in notes via `/계산 스냅샷`.
+- **계산** — `/calc`. Five modes (기본 multi-line scratchpad with variables and `#` comments, 할부, 대출 with amortization, 더치페이, 날짜). Shared tape; click any history row to load it back into the editor. Calculations embed as frozen blocks in notes via `/계산 스냅샷`.
 - **캘린더** — aggregates 4 sources (기념일, 할 일, 구매, 정산) with per-source filters.
-- **설정** — 4 themes (Dracula default), 3 fonts, 3 line-heights, click-to-apply, localStorage-persisted.
+- **설정** — 4 themes (Dracula default), 3 fonts, 3 line-heights, click-to-apply.
 - **⌘K** — global search across memo + sheet titles and bodies.
 
-## What it's becoming (2026-05-28 reset)
+## What's coming (v2 build, ~4–5 weeks)
 
-The product has been narrowed to four pillars:
+Multi-tenant rebuild. v1 features survive; the access model changes from "everyone sees everything" to "workspaces, with per-doc shares across boundaries":
 
-1. **Personal notes** — ✅ shipped 2026-05-28. `visibility` flag on `Note`; sidebar splits into 내 비공개 / 함께 / 상대의 메모.
-2. **Shared notes** — the existing memo system, household-shared by default.
-3. **Calculator** — ✅ shipped 2026-05-29. `/calc` route, 5 modes, shared tape, multi-line scratchpad with variables, click-to-load history, embeddable in notes.
-4. **Decisions** — Plan → SubPlan → Option → Decision with audit-trail UI (Phase 3, the wedge) — **next**.
+1. **Workspaces** — one user belongs to many. Each is isolated by default.
+2. **Invitations** — workspace owners invite by email; recipients claim via Google sign-in.
+3. **Per-doc sharing** — grant any single note/sheet/calc-entry to specific users outside your workspace as VIEW or EDIT.
+4. **"공유받은 항목"** — top-level view for cross-workspace grants.
+5. **Open sign-up** — drop the 2-person allowlist; anyone with Google can sign in.
+6. **Wipe + restart** — existing v1 data is dropped on cutover. No migration.
 
-Sheets is frozen. Expenses are deferred. Email/SMS/Open-Banking integrations are off the table for good.
+Six implementation phases (A–F) in [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
-Full story: [`docs/VISION.md`](docs/VISION.md). Build order: [`docs/ROADMAP.md`](docs/ROADMAP.md).
+After v2 ships: the **Decisions** feature (Plan → SubPlan → Option → Decision with timeline) and the **multi-calendar overlay** (work + family + hobby in one color-coded view).
 
 ## Run locally
 
@@ -52,7 +58,7 @@ cd ../shared-docs-backend
 ./gradlew bootRun         # http://localhost:8090 — needs MariaDB on :3307
 ```
 
-Dev-only shortcut: `POST /api/auth/dev-login` issues a JWT for any allowlisted email without going through Google.
+Dev-only shortcut: `POST /api/auth/dev-login` issues a JWT for any email without going through Google.
 
 ## Build
 
@@ -60,7 +66,7 @@ Dev-only shortcut: `POST /api/auth/dev-login` issues a JWT for any allowlisted e
 npm run build             # tsc -b && vite build → dist/
 ```
 
-Bundle shape (gzip): main ≈ 64 kB · Hub chunk (Tiptap-heavy) ≈ 167 kB · CalendarPage ≈ 23 kB · SheetsPage ≈ 20 kB.
+Bundle shape (gzip, v1 baseline): main ≈ 64 kB · Hub chunk (Tiptap-heavy) ≈ 167 kB · CalendarPage ≈ 23 kB · SheetsPage ≈ 20 kB.
 
 ## Folder layout (frontend)
 
@@ -68,9 +74,9 @@ Bundle shape (gzip): main ≈ 64 kB · Hub chunk (Tiptap-heavy) ≈ 167 kB · Ca
 shared-docs/
 ├── CLAUDE.md             ← project bible (start here)
 ├── docs/
-│   ├── VISION.md         ← the why, the four pillars, the not-list
-│   ├── ROADMAP.md        ← phased build order
-│   ├── ARCHITECTURE.md   ← stack, folders, data model, auth, deploy
+│   ├── VISION.md         ← the why, the pillars, the not-list
+│   ├── ROADMAP.md        ← v2 phases A-F + post-v2 directions
+│   ├── ARCHITECTURE.md   ← stack, folders, data model, auth, deploy (v1 — will be updated as v2 lands)
 │   ├── DESIGN.md         ← visual identity, tokens, Bear rules
 │   ├── plans/            ← per-phase implementation plans
 │   └── investment/       ← personal content (not project docs)

@@ -1,87 +1,95 @@
 # Vision
 
-> Last revised: 2026-05-28 — after the "what is this, actually?" conversation.
+> Last revised: 2026-05-29 — multi-tenant v2 direction (the "private 2-person app" framing from 2026-05-28 has been reversed; see `plans/2026-05-29-multi-tenant-v2.md`).
 
 ## 1. What this is
 
-A private knowledge and decision app for two people who live together.
+A multi-tenant knowledge and decision app where any small group — couples, families, friend circles, hobby clubs, work teams — can have their own shared workspace.
 
-It exists because off-the-shelf tools fail couples in specific, recurring ways:
+One user belongs to many workspaces. Each workspace is its own world: its own notes, calendar, calculator history, todos, anniversaries, recipes. Within a workspace, everything is shared by default; the author can flag a note PRIVATE if they want it to themselves. Across workspaces, the author can also grant individual documents to specific people (viewer or editor) — like sharing a Google Doc.
 
-- **Notion** is built for individuals or teams; "two-person shared workspace" is an afterthought, expensive, and the affordances point the wrong way.
+The intended use is *small*: 2–10 people per workspace, 20–100 total users. Not a Notion competitor in scale or polish — a focused tool for the recurring failure modes of group memory: *we decided something, and six months later nobody remembers why.*
+
+## 2. Origin and direction changes
+
+- **2026-02**: Started as a Bear-style memo app for one developer.
+- **2026-03–04**: Grew sideways into a spreadsheet, calendar, purchase tracker, recipe book, investment guide. Codebase became Notion-shaped.
+- **2026-05-22**: First "going public" initiative (per-doc sharing, public link viewer). Built, then abandoned.
+- **2026-05-28**: Reset — narrowed to "private 2-person app for me + wife." Deleted ~4000 lines of share/ACL code. New four-pillar framing.
+- **2026-05-29 (this revision)**: Reversed again — colleagues and friends actually want to use this. Going back to multi-tenant, with workspaces this time (didn't exist in the earlier public direction). Per-doc ACL revived from the 2026-05-28 deletion. Existing data wiped; v2 ships on a clean DB.
+
+These reversals are documented because future readers will get confused otherwise. The current direction is multi-tenant; if a doc anywhere says "private 2-person app," it's stale.
+
+## 3. Why this exists (the actual gap)
+
+Off-the-shelf tools fail small groups in specific, recurring ways:
+
+- **Notion** is built for individuals or large teams. Small-group sharing is awkward and the affordances point the wrong way.
 - **Kakao / iMessage** preserves conversations but not decisions. Six months later, "왜 우리가 마포로 정했더라?" has no answer.
 - **Bear** is a beautiful solo notebook. There is no "us" mode.
 - **Splitwise / Bank Salad** track money but not the conversation around the money.
+- **Google Docs / Drive** scales fine but its sharing UI is enterprise-shaped — a couple sharing a recipe shouldn't need to think about "permission levels" and "link sharing settings."
 
-The product fills the gap: **a place where two people write together, decide together, and can read the audit trail of how they got there.**
+The product fills the gap: **a place where small groups write together, decide together, and can read the audit trail of how they got there.**
 
-## 2. Origin
+## 4. The four pillars (preserved through v2)
 
-Started in 2026-02 as a Bear-style memo app, grew sideways into a spreadsheet, a calendar, a purchase tracker, a recipe book, and an investment guide. By 2026-05 the codebase was Notion-shaped and the product was Notion-shaped, which meant it was competing with Notion — and losing on every axis a solo developer can't fix (scale, polish, marketing, billing).
+Inside any workspace, the product is four things. The multi-tenant rebuild doesn't change *what* the product is — it changes *who can use it*.
 
-The 2026-05-28 reset narrows the product to the thing nobody else owns: **shared decisions with history**, supported by personal and shared notes and a small set of daily-use utilities. Everything not in service of that vision either gets cut or coasts unmaintained until it earns its keep.
+### Pillar 1 — Personal notebook
+Each user has private notes (PRIVATE visibility flag). Even in a shared workspace, the author can keep some thoughts to themselves. Already implemented; survives the v2 rebuild with the workspace_id column added.
 
-## 3. The four pillars
+### Pillar 2 — Shared notebook
+Notes the workspace can read and edit. Bear-style Tiptap editor with slash menu, bubble menu, `@`-mention, attachments. Already implemented; survives the v2 rebuild.
 
-The product, after the reset, is four things in priority order. Anything else is supporting cast.
+### Pillar 3 — Decisions (the wedge, deferred until v2 ships)
+A `Plan` (e.g., "우리 첫 집 구하기") is broken into `SubPlan`s ("동네 정하기", "예산 정하기"). Each subplan has `Option`s with each member's rating + comments. A `Decision` locks in the chosen option with the reasoning. The timeline view is what people will screenshot.
 
-### Pillar 1 — Personal notebook  ✅ shipped 2026-05-28
+This is the feature that doesn't exist anywhere else. It was Phase 3 in the old roadmap; now it's the first thing we build after v2 ships.
 
-Each person has private notes. This is the table-stakes "I want a place to think" surface. Without it, the app feels like a Slack channel, not a notebook.
+### Pillar 4 — Calculator (daily utility)
+Tape-style engineering calculator with Korean-relevant modes (기본 multi-line scratchpad with variables, 할부, 대출, 더치페이, 날짜). Already implemented; survives the v2 rebuild with the workspace_id column added.
 
-Implementation: `visibility` flag on `Note` (PRIVATE / SHARED). Default PRIVATE on create.
+## 5. The two cross-cutting features that emerge from v2
 
-### Pillar 2 — Shared notebook  ✅ existing memo system
+The multi-workspace model makes two new directions cheap that weren't possible before:
 
-Notes both partners can read and edit. Eventually with presence (an avatar showing who's reading), much later with real-time collaboration. For now, last-write-wins is fine — couples don't race the same paragraph.
+### Cross-workspace sharing
+Individual documents can be granted to specific users *outside* the workspace as viewer or editor. The recipient sees them in a top-level "공유받은 항목" view. This is how a colleague shares one specific work note with a friend's family workspace, or how I share a recipe with my mother's hobby group.
 
-This is the existing memo system, household-shared by default after the Phase 1 split.
+### Multi-calendar overlay (post-v2 "sweet spot")
+Each workspace has its own calendar (anniversaries + todos + purchases + settlements within it). Post-v2, a unified "전체 일정" view overlays the calendars of every workspace a user belongs to — work + family + hobby in one view, each color-coded, each toggleable. This is the next direction worth investing in after v2 ships.
 
-### Pillar 3 — Decisions (the wedge)  — next
+## 6. What this is NOT
 
-The differentiated feature. A `Plan` (e.g., "우리 첫 집 구하기") is broken into `SubPlan`s ("동네 정하기", "예산 정하기"). Each subplan has `Option`s with both partners' ratings and comments. A `Decision` locks in the chosen option with the reasoning. The timeline view is the screen people will screenshot to friends.
+A short, deliberate list of things this product will not become:
 
-This is the feature that doesn't exist anywhere else, and the one we will spend the most time on.
-
-### Pillar 4 — Calculator (the daily utility)  ✅ shipped 2026-05-29
-
-A tape-style engineering calculator with Korean-relevant modes (기본 multi-line scratchpad with variables, 할부, 대출 상환, 더치페이, 날짜). The 기본 mode runs Soulver-style: `# comments`, `name = expr` assignments flow variables to later lines, click a result to insert at the cursor. History is shared between partners and clickable — click a row to load it back into the editor; saving with a row loaded creates a new entry (tape entries are immutable). **Calculations embed as frozen blocks in notes** via `/계산 스냅샷` (same pattern as `DataSnapshot`).
-
-Deferred from Pillar 4: 적금/예금 만기, 단위 환산 (특히 평↔㎡), drag-to-insert (click-to-insert covers the common case).
-
-## 4. What this is NOT
-
-A short, deliberate list of things this product will not become — to keep us from drifting back to "Notion clone for couples."
-
-- ❌ **Not a productivity app for individuals.** Solo users are not the target. If a feature only makes sense for one person, it doesn't ship.
-- ❌ **Not a SaaS.** No billing, no pricing, no public sign-up, no commercial intent. The 2-person allowlist stays.
-- ❌ **Not a Notion competitor.** No database views, no multi-page hierarchies, no permissions matrix.
+- ❌ **Not a Notion / Slack at scale.** Workspaces stay small (designed for 2–10, not 200). No org-charts, no @everyone, no notification systems.
+- ❌ **Not a real-time CRDT editor.** Last-write-wins for the foreseeable future; presence (avatar + cursor) only.
 - ❌ **Not an iMessage/SMS/email scraper.** We will never read your messages. Hard rule.
-- ❌ **Not a Bank Salad alternative.** No financial-institution integration (마이데이터). Manual entry only.
-- ❌ **Not real-time-first.** Last-write-wins for years; CRDT only if needed.
+- ❌ **Not a Bank Salad alternative.** No 마이데이터, no bank integration. Manual entry only.
+- ❌ **Not commercial.** No billing, no pricing, no plans, no upsells. Free for everyone who can sign in with Google. (May eventually need a "pay for storage above X" model if costs grow, but not before there's a reason to.)
 - ❌ **Not mobile-native.** Responsive web + PWA install. No iOS/Android binaries.
+- ❌ **Not a public document host.** Documents can be shared with specific users; there is no "publish this to the open web" mode.
 
-## 5. The non-negotiable feel
+## 7. The non-negotiable feel
 
-Three rules carry over from before the reset because they're orthogonal to scope:
+Three rules carry across every direction change:
 
 1. **Bear is the visual baseline.** Calm typography, hairline borders, no card lift, single sparingly-used accent. Dark by default (Dracula). The product is for nighttime prose; the aesthetic is calm, not "designed."
-2. **All UI text is in Korean.** The product is for two specific Korean speakers. No English chrome.
+2. **All UI text is in Korean.** No English chrome. (The product is built by and for Korean speakers, even though it's now open to anyone with a Google account.)
 3. **Lucide icons, never emoji.** Emoji rendering depends on OS; Lucide gives us a consistent line-icon vocabulary across themes. Users can write emoji in their notes — chrome cannot.
 
-These predate the reset and survive it.
+## 8. Success criteria
 
-## 6. Success criteria
+- **v2 ship date**: 4–5 weeks after Phase A starts. All 6 phases (A → F) green, allowlist removed, sign-up open.
+- **6 months after v2 ship**: at least 5 active workspaces beyond mine. Real users using the per-doc share feature.
+- **12 months after v2 ship**: the multi-calendar overlay shipped; Decisions feature shipped; at least one documented "decision archive" in production use across multiple workspaces.
 
-What does success look like?
+## 9. Pointers
 
-- **6 months from now**: both partners reach for this app before reaching for Notion / Kakao / 메모장 for the things it does well. The decision history for at least one major life decision (apartment, car, big trip) lives entirely inside the app.
-- **12 months from now**: the calculator is used weekly, the shared notebook holds more than 100 notes between us, and there's a visible "decision archive" both partners can browse.
-- **Never**: a third user. This is the line that keeps the product focused.
-
-## 7. Pointers
-
+- v2 spec (this is the active build target): [`plans/2026-05-29-multi-tenant-v2.md`](plans/2026-05-29-multi-tenant-v2.md)
 - Build order and milestones: [`ROADMAP.md`](ROADMAP.md)
-- Stack, folder layout, data model: [`ARCHITECTURE.md`](ARCHITECTURE.md)
+- Stack, folder layout, data model: [`ARCHITECTURE.md`](ARCHITECTURE.md) *(will be updated as v2 lands)*
 - Visual rules and tokens: [`DESIGN.md`](DESIGN.md)
 - Day-to-day project bible: [`../CLAUDE.md`](../CLAUDE.md)
