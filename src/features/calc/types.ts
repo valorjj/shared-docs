@@ -30,8 +30,25 @@ export type CalcEntry = {
 // Mode-specific shapes — discriminated by the parent CalcEntry.mode field.
 // Stored as JSON strings on the entry and parsed at render time.
 
-export type BasicInput = { expr: string }
-export type BasicOutput = { value: number; formatted: string }
+/** Multi-line scratchpad. Each line is a comment (`#`), blank, an
+ *  assignment (`name = expr`), or a bare expression. Variables defined
+ *  on an earlier line are visible to later lines. */
+export type BasicInput = { body: string }
+
+export type BasicLineKind = 'blank' | 'comment' | 'assign' | 'expr' | 'error'
+export type BasicLine = {
+  source: string
+  kind: BasicLineKind
+  name?: string         // assignments only
+  value?: number        // expr / assign success
+  formatted?: string    // expr / assign success (display form)
+  error?: string        // error kind only
+}
+export type BasicOutput = {
+  lines: BasicLine[]
+  finalValue: number | null
+  finalFormatted: string
+}
 
 export type InstallmentInput = { principal: number; annualRate: number; months: number }
 export type InstallmentOutput = { monthly: number; totalInterest: number; totalPaid: number }

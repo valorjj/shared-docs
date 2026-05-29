@@ -156,7 +156,7 @@ function safeParse(json: string): any {
 function renderSummary(mode: CalcMode, input: any, result: any): string {
   switch (mode) {
     case 'BASIC':
-      return `${input.expr ?? ''} = ${result.formatted ?? result.value ?? '?'}`
+      return summarizeBasic(input, result)
     case 'INSTALLMENT':
       return `${formatKRW(input.principal ?? 0)} / ${input.months ?? 0}개월 → 월 ${formatKRW(result.monthly ?? 0)}`
     case 'LOAN':
@@ -173,6 +173,25 @@ function renderSummary(mode: CalcMode, input: any, result: any): string {
     default:
       return JSON.stringify({ input, result })
   }
+}
+
+function summarizeBasic(input: any, result: any): string {
+  // Legacy single-line shape kept for back-compat with pre-2026-05-29 entries.
+  if (typeof input?.expr === 'string') {
+    return `${input.expr} = ${result?.formatted ?? result?.value ?? '?'}`
+  }
+  const lines = Array.isArray(result?.lines) ? result.lines : []
+  const meaningful = lines.filter(
+    (l: any) => l?.kind !== 'blank' && l?.kind !== 'comment',
+  )
+  if (meaningful.length === 0) return '(빈 계산)'
+  if (meaningful.length === 1) {
+    const only = meaningful[0]
+    const src = String(only.source ?? '').trim()
+    return src && only.formatted ? `${src} = ${only.formatted}` : (only.formatted ?? '?')
+  }
+  const fin = result?.finalFormatted
+  return fin ? `${meaningful.length}단계 · 최종 ${fin}` : `${meaningful.length}단계`
 }
 
 function formatCapturedAt(iso: string): string {
