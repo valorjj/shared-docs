@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import BasicMode from './modes/BasicMode'
+import InstallmentMode from './modes/InstallmentMode'
+import LoanMode from './modes/LoanMode'
 import ModeTabs from './modes/ModeTabs'
 import TapeView from './tape/TapeView'
 import type { CalcMode } from './types'
@@ -15,9 +17,11 @@ export default function CalcWorkspace() {
         </div>
         <div className={styles.modePane}>
           {mode === 'BASIC' && <BasicMode />}
-          {mode !== 'BASIC' && (
+          {mode === 'INSTALLMENT' && <InstallmentMode />}
+          {mode === 'LOAN' && <LoanMode />}
+          {(mode === 'DUTCH' || mode === 'DATE') && (
             <p className={styles.placeholder}>
-              {/* Filled in Stage 3 — placeholder keeps the tabs functional in v1 */}
+              {/* Wired in Stage 3b */}
               이 모드는 곧 추가됩니다.
             </p>
           )}

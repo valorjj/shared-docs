@@ -1,0 +1,99 @@
+/* Shared form styles for the four specialized modes (할부 / 대출 / 더치페이 / 날짜). */
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  max-width: 720px;
+}
+
+.fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--sp-3);
+}
+
+.resultCard {
+  padding: var(--sp-4);
+  background: var(--c-surface-tint);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.resultPrimary {
+  font-size: var(--fs-lg);
+  font-family: var(--font-serif);
+  color: var(--c-text);
+}
+
+.resultPrimary strong {
+  font-weight: var(--fw-semi);
+}
+
+.resultMeta {
+  font-size: var(--fs-sm);
+  color: var(--c-text-muted);
+}
+
+.scheduleToggle {
+  align-self: flex-start;
+  border: none;
+  background: transparent;
+  color: var(--c-primary);
+  cursor: pointer;
+  padding: 0;
+  font-size: var(--fs-sm);
+  text-decoration: underline;
+}
+
+.schedule {
+  border-collapse: collapse;
+  font-size: var(--fs-sm);
+  font-family: var(--font-mono);
+  margin-top: var(--sp-2);
+  width: 100%;
+  max-width: 720px;
+}
+
+.schedule th,
+.schedule td {
+  padding: var(--sp-1) var(--sp-3);
+  text-align: right;
+  border-bottom: 1px solid var(--c-border);
+}
+
+.schedule th:first-child,
+.schedule td:first-child {
+  text-align: left;
+}
+
+.schedule th {
+  color: var(--c-text-muted);
+  font-weight: var(--fw-medium);
+}
+
+.schedule tr:hover {
+  background: var(--c-surface-tint);
+}
+
+/* DutchMode share rows */
+
+.shareRow {
+  display: grid;
+  grid-template-columns: 1fr 100px 32px;
+  gap: var(--sp-2);
+  align-items: end;
+}
+
+.shareRowAdd {
+  align-self: flex-start;
+}
+
+/* DateMode sub-tabs */
+
+.dateSubTabs {
+  margin-bottom: var(--sp-3);
+}
