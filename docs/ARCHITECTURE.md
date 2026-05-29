@@ -1,6 +1,6 @@
 # Architecture
 
-> Last revised: 2026-05-28. Visual rules live in [`DESIGN.md`](DESIGN.md); product scope lives in [`VISION.md`](VISION.md).
+> Last revised: 2026-05-29 (Phase 2 ship — added `calc/` feature). Visual rules live in [`DESIGN.md`](DESIGN.md); product scope lives in [`VISION.md`](VISION.md).
 
 ## 1. Stack
 
@@ -62,6 +62,11 @@ shared-docs/
     │   │   ├── editor/                 ← right pane + Tiptap extensions
     │   │   └── shared/                 ← formatters, tag extraction
     │   ├── sheets/                     ← 2-pane spreadsheet (frozen — see ROADMAP)
+    │   ├── calc/                       ← /calc — tape + 5 modes + CalcSnapshot embed
+    │   │   ├── compute/                ← pure per-mode functions (basic/installment/loan/dutch/date)
+    │   │   ├── modes/                  ← per-mode UI (BasicMode, InstallmentMode, etc.)
+    │   │   ├── tape/                   ← TapeView + TapeLine + TapeEmpty
+    │   │   └── embed/                  ← CalcSnapshot Tiptap atom + Card + Picker
     │   ├── snapshots/                  ← DataSnapshot block atom
     │   ├── settings/                   ← theme / font / line-height
     │   ├── search/                     ← ⌘K palette
@@ -88,6 +93,7 @@ shared-docs/
 shared-docs-backend/
 └── src/main/kotlin/com/shareddocs/backend/
     ├── note/           ← Note + Attachment + FileStorage + EntityRef indexer
+    ├── calc/           ← CalcEntry — shared tape ledger; client-side math
     ├── sheet/          ← Sheet entity (frozen)
     ├── purchase/       ← Purchase + SplitMode + Category (deferred)
     ├── settlement/     ← 정산 (deferred)

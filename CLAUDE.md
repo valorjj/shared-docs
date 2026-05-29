@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-> Project bible. Last revised: 2026-05-28 after the vision reset.
+> Project bible. Last revised: 2026-05-29 (Phase 2 — Calculator shipped).
 
 ## What this is
 
@@ -86,8 +86,8 @@ ESLint enforces 1–6 mechanically. The rest is review discipline.
 | 할 일 / 기념일 / 링크 / 레시피 | **Stable** — bug-fixes only |
 | Calendar | **Stable** — will source Decisions in Phase 3 |
 | Settings, Auth, Search palette | **Stable** |
-| Calculator | **Phase 2 — not yet built** |
-| Decisions | **Phase 3 — not yet built** |
+| Calculator | **Stable** — shipped 2026-05-29. `/calc` route, 5 modes, shared tape, CalcSnapshot embed. |
+| Decisions | **Phase 3 — not yet built (next)** |
 | Presence on shared notes | **Phase 4 — not yet built** |
 
 ## Routes
@@ -105,6 +105,7 @@ ESLint enforces 1–6 mechanically. The rest is review discipline.
 | `/data/recipes` | RecipeList | required | yes |
 | `/data/recipes/:id` | RecipeEditor | required | yes |
 | `/calendar` | CalendarPage | required | yes |
+| `/calc` | CalcWorkspace | required | yes |
 | `/admin` | Admin | ADMIN | yes |
 | `/admin/categories` | AdminCategories | ADMIN | yes |
 

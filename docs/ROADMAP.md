@@ -1,6 +1,6 @@
 # Roadmap
 
-> Last revised: 2026-05-28 — post-reset.
+> Last revised: 2026-05-29 — Phase 2 shipped.
 
 The product has four pillars (see [`VISION.md`](VISION.md)). This document is the build order, with explicit deferrals.
 
@@ -27,6 +27,7 @@ Status of each, after the reset:
 | Calendar | **Stable.** Will grow to source from Decisions in Phase 3. |
 | Settings | **Stable.** |
 | Auth | **Stable.** No public-launch work. |
+| Calculator | **Stable.** Phase 2 shipped 2026-05-29 — see plan + commits e3b619d … 85ca214. |
 
 ## Phase 0 — Doc reset (this session, 2026-05-28)
 
@@ -42,23 +43,26 @@ Add `visibility: PRIVATE | SHARED` to notes. Default PRIVATE on create. Sidebar 
 
 **Plan:** [`plans/2026-05-28-personal-shared-notes.md`](plans/2026-05-28-personal-shared-notes.md)
 
-## Phase 2 — Calculator with tape history (1–2 weeks)
+## Phase 2 — Calculator with tape history ✅ shipped 2026-05-29
 
-New `/data/calc` feature. Tape-style scrollable history, expressions re-runnable, results draggable into new expressions, embeddable as a frozen block in notes (same atom pattern as `DataSnapshot`).
+`/calc` feature (peer to `/`, `/sheets`, `/calendar` — moved from the original `/data/calc` because it's a daily utility, not data tracking). Tape is shared between both partners; entries are immutable (rerun creates a new one), with `pinned` and `label` mutable.
 
-Modes:
-- **할부** (installment): 원금 / 이율 / 개월 → 월 납입 + 총이자 + 상환 스케줄
-- **대출 상환** (amortization, 원리금균등 vs 원금균등)
+Modes that shipped (daily-five):
+- **기본** (basic) — expr-eval-backed expression parser
+- **할부** (installment) — equal-monthly-payment formula
+- **대출 상환** — 원리금균등 + 원금균등 with full amortization schedule
+- **더치페이** — weighted shares + tip across multiple currencies
+- **날짜 계산** — D-day / 사이 일수 / 영업일 (no holiday table)
+
+Deferred per the picker:
 - **적금 / 예금 만기**
-- **더치페이** (unequal shares + tip)
-- **날짜 계산** (D-day, between, working days)
 - **단위 환산** (특히 평↔㎡)
 
-**Why second:** smallest scope, daily-use value, builds the "embed as frozen block" muscle reused for Decisions.
+CalcSnapshot embed: same Tiptap atom pattern as DataSnapshot — slash menu `/계산 스냅샷` opens the picker, picking a tape entry inserts a frozen block with refresh kebab; 404 on refresh switches the card to a tombstone state.
 
-**Plan:** to be written when Phase 1 completes.
+**Plan:** [`plans/2026-05-29-calculator-tape-history.md`](plans/2026-05-29-calculator-tape-history.md)
 
-## Phase 3 — Decisions (4–8 weeks) — the wedge
+## Phase 3 — Decisions (4–8 weeks) — the wedge — **next**
 
 The differentiated feature. Data model:
 
