@@ -10,7 +10,7 @@ Not a SaaS, not for sale, not open to the public — the codebase is shared for 
 - **Editor:** Tiptap v3 (with custom Tag, EntityLink, DataSnapshot, LinkCard, SlashCommand, MentionCommand extensions)
 - **Data:** TanStack React Query + axios with a Bearer-token interceptor
 - **Backend:** Spring Boot 3.5 + Kotlin, JPA on MariaDB
-- **Auth:** Google OAuth2 → JWT (2-email allowlist, no public signup)
+- **Auth:** Google OAuth2 → JWT, gated by `app.auth.allowed-emails` (2-person allowlist; no public signup)
 - **Deploy:** Vercel (frontend) + Cloudflare Tunnel → Mac Mini Docker (backend + DB)
 
 Live (allowlisted only): `https://shared-docs-nine.vercel.app`

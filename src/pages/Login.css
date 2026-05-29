@@ -99,11 +99,3 @@
   flex-shrink: 0;
 }
 
-.login__hint {
-  margin: var(--sp-6) 0 0;
-  font-size: var(--fs-sm);
-  line-height: var(--lh-snug);
-  color: var(--c-text-subtle);
-  max-width: 28ch;
-}
-
