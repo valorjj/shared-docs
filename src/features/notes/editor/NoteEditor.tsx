@@ -9,6 +9,7 @@ import {
 import type { Note } from '../types'
 import DataSnapshotPicker from '../../snapshots/DataSnapshotPicker'
 import type { SnapshotAttrs } from '../../snapshots/types'
+import CalcSnapshotPicker, { type CalcSnapshotAttrs } from '../../calc/embed/CalcSnapshotPicker'
 import LinkCardPicker from './LinkCardPicker'
 import type { LinkCardAttrs } from './extensions/LinkCard'
 import LinkDialog from './LinkDialog'
@@ -41,6 +42,7 @@ export default function NoteEditor({ note, onDeleted, onBack }: Props) {
   const [editor, setEditor] = useState<Editor | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const [snapshotOpen, setSnapshotOpen] = useState(false)
+  const [calcSnapshotOpen, setCalcSnapshotOpen] = useState(false)
   const [linkCardOpen, setLinkCardOpen] = useState(false)
   const [linkDialogOpen, setLinkDialogOpen] = useState(false)
   const openLinkDialog = useCallback(() => setLinkDialogOpen(true), [])
@@ -109,11 +111,17 @@ export default function NoteEditor({ note, onDeleted, onBack }: Props) {
 
   const onPickFile = useCallback(() => fileInputRef.current?.click(), [])
   const onPickSnapshot = useCallback(() => setSnapshotOpen(true), [])
+  const onPickCalcSnapshot = useCallback(() => setCalcSnapshotOpen(true), [])
   const onPickLinkCard = useCallback(() => setLinkCardOpen(true), [])
 
   const handleInsertSnapshot = (attrs: SnapshotAttrs) => {
     if (!editor) return
     editor.chain().focus().insertContent({ type: 'dataSnapshot', attrs }).run()
+  }
+
+  const handleInsertCalcSnapshot = (attrs: CalcSnapshotAttrs) => {
+    if (!editor) return
+    editor.chain().focus().insertContent({ type: 'calcSnapshot', attrs }).run()
   }
 
   const handleInsertLinkCard = (attrs: LinkCardAttrs) => {
@@ -200,6 +208,7 @@ export default function NoteEditor({ note, onDeleted, onBack }: Props) {
             onPickFile={onPickFile}
             onPickSnapshot={onPickSnapshot}
             onPickLinkCard={onPickLinkCard}
+            onPickCalcSnapshot={onPickCalcSnapshot}
             registerEditor={setEditor}
             onRequestLinkDialog={openLinkDialog}
           />
@@ -210,6 +219,11 @@ export default function NoteEditor({ note, onDeleted, onBack }: Props) {
         open={snapshotOpen}
         onOpenChange={setSnapshotOpen}
         onInsert={handleInsertSnapshot}
+      />
+      <CalcSnapshotPicker
+        open={calcSnapshotOpen}
+        onOpenChange={setCalcSnapshotOpen}
+        onInsert={handleInsertCalcSnapshot}
       />
       <LinkCardPicker
         open={linkCardOpen}

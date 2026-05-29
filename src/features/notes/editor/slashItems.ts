@@ -1,4 +1,5 @@
 import {
+  Calculator,
   Heading1,
   Heading2,
   Heading3,
@@ -15,15 +16,16 @@ import {
 import type { SlashItem } from './extensions/SlashCommand'
 
 /**
- * Slash menu command list. The `onPickFile` / `onPickSnapshot` /
- * `onPickLinkCard` handlers are injected from the editor since they
- * live outside the Tiptap chain (file picking opens a hidden <input>;
- * snapshot + link-card picking open Radix Dialogs owned by NoteEditor).
+ * Slash menu command list. The pick callbacks are injected from the
+ * editor since they live outside the Tiptap chain (file picking opens
+ * a hidden <input>; the other three open Radix Dialogs owned by
+ * NoteEditor).
  */
 export function buildSlashItems(
   onPickFile: () => void,
   onPickSnapshot: () => void,
   onPickLinkCard: () => void,
+  onPickCalcSnapshot: () => void,
 ): SlashItem[] {
   return [
     {
@@ -131,6 +133,16 @@ export function buildSlashItems(
       run: (editor, range) => {
         editor.chain().focus().deleteRange(range).run()
         onPickSnapshot()
+      },
+    },
+    {
+      id: 'calc-snapshot',
+      title: '계산 스냅샷',
+      hint: 'calculation snapshot',
+      Icon: Calculator,
+      run: (editor, range) => {
+        editor.chain().focus().deleteRange(range).run()
+        onPickCalcSnapshot()
       },
     },
   ]

@@ -9,6 +9,7 @@ import { TaskItem } from '@tiptap/extension-task-item'
 import { Table, TableRow, TableCell, TableHeader } from '@tiptap/extension-table'
 import { Highlight } from '@tiptap/extension-highlight'
 import { absoluteFileUrl, useNotes } from '../api'
+import { CalcSnapshot } from '../../calc/embed/CalcSnapshot'
 import { DataSnapshot } from '../../snapshots/DataSnapshot'
 import { Tag } from './extensions/Tag'
 import { EntityLink } from './extensions/EntityLink'
@@ -48,6 +49,7 @@ type Props = {
   onPickFile: () => void
   onPickSnapshot: () => void
   onPickLinkCard: () => void
+  onPickCalcSnapshot: () => void
   registerEditor: (editor: Editor | null) => void
   /** Single source of truth for the link dialog lives in NoteEditor —
    *  both this body's context menu and the toolbar's link button
@@ -67,6 +69,7 @@ export default function NoteEditorBody({
   onPickFile,
   onPickSnapshot,
   onPickLinkCard,
+  onPickCalcSnapshot,
   registerEditor,
   onRequestLinkDialog,
 }: Props) {
@@ -76,8 +79,8 @@ export default function NoteEditorBody({
   const [slashState, setSlashState] = useState<SlashState | null>(null)
   const slashKeyHandlerRef = useRef<SlashKeyHandler | null>(null)
   const slashItems = useMemo(
-    () => buildSlashItems(onPickFile, onPickSnapshot, onPickLinkCard),
-    [onPickFile, onPickSnapshot, onPickLinkCard],
+    () => buildSlashItems(onPickFile, onPickSnapshot, onPickLinkCard, onPickCalcSnapshot),
+    [onPickFile, onPickSnapshot, onPickLinkCard, onPickCalcSnapshot],
   )
 
   // @-mention state — popup owns search, this just plumbs trigger state.
@@ -128,6 +131,7 @@ export default function NoteEditorBody({
         currentNoteIdRef,
       }),
       DataSnapshot,
+      CalcSnapshot,
       LinkCard,
       NoteSearch,
       // Ref is stored on the extension and only read inside ProseMirror
