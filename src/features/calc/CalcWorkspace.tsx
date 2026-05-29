@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import BasicMode from './modes/BasicMode'
+import DateMode from './modes/DateMode'
+import DutchMode from './modes/DutchMode'
 import InstallmentMode from './modes/InstallmentMode'
 import LoanMode from './modes/LoanMode'
 import ModeTabs from './modes/ModeTabs'
@@ -19,12 +21,8 @@ export default function CalcWorkspace() {
           {mode === 'BASIC' && <BasicMode />}
           {mode === 'INSTALLMENT' && <InstallmentMode />}
           {mode === 'LOAN' && <LoanMode />}
-          {(mode === 'DUTCH' || mode === 'DATE') && (
-            <p className={styles.placeholder}>
-              {/* Wired in Stage 3b */}
-              이 모드는 곧 추가됩니다.
-            </p>
-          )}
+          {mode === 'DUTCH' && <DutchMode />}
+          {mode === 'DATE' && <DateMode />}
         </div>
       </div>
       <aside className={styles.tape}>
