@@ -25,29 +25,29 @@ The 2026-05-28 reset narrows the product to the thing nobody else owns: **shared
 
 The product, after the reset, is four things in priority order. Anything else is supporting cast.
 
-### Pillar 1 — Personal notebook
+### Pillar 1 — Personal notebook  ✅ shipped 2026-05-28
 
 Each person has private notes. This is the table-stakes "I want a place to think" surface. Without it, the app feels like a Slack channel, not a notebook.
 
-Implementation: visibility flag on `Note` (PRIVATE / SHARED). Default PRIVATE on create.
+Implementation: `visibility` flag on `Note` (PRIVATE / SHARED). Default PRIVATE on create.
 
-### Pillar 2 — Shared notebook
+### Pillar 2 — Shared notebook  ✅ existing memo system
 
 Notes both partners can read and edit. Eventually with presence (an avatar showing who's reading), much later with real-time collaboration. For now, last-write-wins is fine — couples don't race the same paragraph.
 
-This is the existing memo system, scoped down to the SHARED visibility.
+This is the existing memo system, household-shared by default after the Phase 1 split.
 
-### Pillar 3 — Decisions (the wedge)
+### Pillar 3 — Decisions (the wedge)  — next
 
 The differentiated feature. A `Plan` (e.g., "우리 첫 집 구하기") is broken into `SubPlan`s ("동네 정하기", "예산 정하기"). Each subplan has `Option`s with both partners' ratings and comments. A `Decision` locks in the chosen option with the reasoning. The timeline view is the screen people will screenshot to friends.
 
 This is the feature that doesn't exist anywhere else, and the one we will spend the most time on.
 
-### Pillar 4 — Calculator (the daily utility)
+### Pillar 4 — Calculator (the daily utility)  ✅ shipped 2026-05-29
 
-A tape-style engineering calculator with Korean-relevant modes (할부, 대출 상환, 적금/예금, 더치페이, 날짜, 단위 환산). History is editable, results are draggable into the next expression, and **calculations can be embedded as frozen blocks in notes** (same pattern as the existing DataSnapshot).
+A tape-style engineering calculator with Korean-relevant modes (기본 multi-line scratchpad with variables, 할부, 대출 상환, 더치페이, 날짜). The 기본 mode runs Soulver-style: `# comments`, `name = expr` assignments flow variables to later lines, click a result to insert at the cursor. History is shared between partners and clickable — click a row to load it back into the editor; saving with a row loaded creates a new entry (tape entries are immutable). **Calculations embed as frozen blocks in notes** via `/계산 스냅샷` (same pattern as `DataSnapshot`).
 
-This is the feature both partners will use weekly without thinking about it.
+Deferred from Pillar 4: 적금/예금 만기, 단위 환산 (특히 평↔㎡), drag-to-insert (click-to-insert covers the common case).
 
 ## 4. What this is NOT
 

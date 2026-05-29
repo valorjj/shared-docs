@@ -185,6 +185,13 @@ After Phase 3 ships, `to_kind` extends with `'plan'`, `'subplan'`, `'option'`, `
 - Sheets match on title only (cell-level search is a deferred enhancement).
 - Phase 1 adds a defensive visibility filter so cached entries can't leak.
 
+### Calculator (`/calc`)
+- All math runs **client-side**; the backend `calc/` package is a ledger that stores immutable `CalcEntry` rows (mode + input JSON + result JSON + label + pinned).
+- Tape is shared between both partners — no visibility filter; same household-shared model as everything except notes.
+- BASIC mode is a multi-line Soulver-style scratchpad: `# comments`, `name = expr` assignments flow variables downward, errors are line-scoped. Live evaluation on every keystroke via `expr-eval`. The scratchpad persists in `localStorage` between sessions; only explicit 저장 writes a `CalcEntry`.
+- Click any tape row → loads that entry into the matching mode's editor. The mode component is keyed on `seedEntry?.id ?? 'fresh'` (wrapper + keyed inner) so its `useState` initializers re-run cleanly. Save while a seed is loaded creates a **new** entry — tape entries are immutable.
+- `CalcSnapshot` Tiptap atom mirrors `DataSnapshot` 1:1: same `data-*` JSON round-trip, same refresh-kebab, tombstone on source delete. Embedded in notes via the slash menu (`/계산 스냅샷`).
+
 ## 9. File uploads
 
 - `POST /api/files/upload` — multipart, returns `{ url: "/files/{uuid.ext}" }`. Used by recipes (hero images) and generic file picker.
@@ -231,7 +238,7 @@ After Phase 3 ships, `to_kind` extends with `'plan'`, `'subplan'`, `'option'`, `
 | Routes | Code-split with `React.lazy` for feature pages. Eager only for auth / 404 |
 | Mobile | Mobile-first; desktop overrides via `@media (min-width: 768px)`. ≥44×44 touch targets |
 | URL ↔ state | Derive state from `useSearchParams` directly — no `useState` copy |
-| Wrapper + keyed inner | Forms that take an initial-value prop must use `key=` to remount; never `setState` in effect |
+| Wrapper + keyed inner | Forms that take an initial-value prop must use `key=` to remount; never `setState` in effect. Canonical examples: `NoteEditorTitle` re-keyed by note id; the 5 calc mode components re-keyed by `seedEntry?.id ?? 'fresh'` in `CalcWorkspace` when the user clicks a tape row |
 
 ## 12. ESLint-enforced anti-patterns
 

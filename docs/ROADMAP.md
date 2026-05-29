@@ -1,10 +1,10 @@
 # Roadmap
 
-> Last revised: 2026-05-29 — Phase 2 shipped.
+> Last revised: 2026-05-29 — Phase 2 shipped, with two same-day follow-ups (multi-line scratchpad + clickable history).
 
 The product has four pillars (see [`VISION.md`](VISION.md)). This document is the build order, with explicit deferrals.
 
-## Today (2026-05-28) — current state
+## Today (2026-05-29) — current state
 
 What exists and is stable:
 
@@ -19,7 +19,7 @@ Status of each, after the reset:
 
 | Feature | Status |
 |---|---|
-| Memo | **Active development.** Phase 1 adds personal/shared split. |
+| Memo | **Stable.** Phase 1 personal/shared split shipped 2026-05-28. |
 | Sheets | **Frozen.** Works today; no new features. Will likely be removed in 2026-H2 if unused. |
 | 구매 / 정산 / 반복 항목 | **Deferred.** Phase X+, not before Phase 4. |
 | 할 일 / 기념일 | **Stable.** Bug-fixes only. |
@@ -27,7 +27,7 @@ Status of each, after the reset:
 | Calendar | **Stable.** Will grow to source from Decisions in Phase 3. |
 | Settings | **Stable.** |
 | Auth | **Stable.** No public-launch work. |
-| Calculator | **Stable.** Phase 2 shipped 2026-05-29 — see plan + commits e3b619d … 85ca214. |
+| Calculator | **Stable.** Phase 2 shipped 2026-05-29 — see plan + commits e3b619d … 2d6ec85. Includes 2.1 multi-line scratchpad and 2.2 click-history-to-load. |
 
 ## Phase 0 — Doc reset (this session, 2026-05-28)
 
@@ -48,7 +48,7 @@ Add `visibility: PRIVATE | SHARED` to notes. Default PRIVATE on create. Sidebar 
 `/calc` feature (peer to `/`, `/sheets`, `/calendar` — moved from the original `/data/calc` because it's a daily utility, not data tracking). Tape is shared between both partners; entries are immutable (rerun creates a new one), with `pinned` and `label` mutable.
 
 Modes that shipped (daily-five):
-- **기본** (basic) — expr-eval-backed expression parser
+- **기본** (basic) — Soulver-style multi-line scratchpad (added 2.1, see below)
 - **할부** (installment) — equal-monthly-payment formula
 - **대출 상환** — 원리금균등 + 원금균등 with full amortization schedule
 - **더치페이** — weighted shares + tip across multiple currencies
@@ -60,7 +60,12 @@ Deferred per the picker:
 
 CalcSnapshot embed: same Tiptap atom pattern as DataSnapshot — slash menu `/계산 스냅샷` opens the picker, picking a tape entry inserts a frozen block with refresh kebab; 404 on refresh switches the card to a tombstone state.
 
-**Plan:** [`plans/2026-05-29-calculator-tape-history.md`](plans/2026-05-29-calculator-tape-history.md)
+### Same-day follow-ups
+
+- **2.1 multi-line scratchpad** (commit `385d478`) — the original single-line BASIC was rebuilt as a two-column Soulver-style scratchpad: comments with `#`, assignments (`name = expr`) flowing variables to later lines, line-scoped errors, live evaluation, click-a-result to insert-at-cursor, `localStorage` recovery, and explicit 저장 to snapshot the whole pad as one entry. Old single-line entries still render via back-compat in `summarizeBasic`.
+- **2.2 click history → load** (commit `2d6ec85`) — every tape row is now interactive. Clicking a row switches to that mode's editor and seeds the form fields from the entry. The active row gets a primary-soft background; clicking it again deselects. Wrapper+keyed-inner pattern: `CalcWorkspace` owns `seedEntry` and keys each mode component on `seedEntry?.id ?? 'fresh'` so the mode's `useState` initializers re-run cleanly. While a seed is loaded BASIC's `localStorage` write pauses, so the user's fresh scratchpad survives untouched in the background.
+
+**Plan:** [`plans/2026-05-29-calculator-tape-history.md`](plans/2026-05-29-calculator-tape-history.md) (with post-ship appendix)
 
 ## Phase 3 — Decisions (4–8 weeks) — the wedge — **next**
 
@@ -85,7 +90,7 @@ Surfaces:
 
 This is where the product earns its name.
 
-**Plan:** to be written when Phase 2 completes.
+**Plan:** to be written when work on Phase 3 actually starts (Phase 2 is complete; the plan is held until the user signals "let's start Phase 3" so the design reflects what we learned from Phases 1–2).
 
 ## Phase 4 — Presence on shared notes (1 weekend)
 

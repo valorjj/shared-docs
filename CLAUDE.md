@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-> Project bible. Last revised: 2026-05-29 (Phase 2 — Calculator shipped).
+> Project bible. Last revised: 2026-05-29 — Phase 2 Calculator shipped (including 2.1 multi-line scratchpad and 2.2 click-history-to-load).
 
 ## What this is
 
@@ -70,7 +70,7 @@ These survive the reset because they're orthogonal to scope:
 3. **CSS Modules + tokens.** No Tailwind, no styled-components, no hardcoded hex. See [`docs/DESIGN.md`](docs/DESIGN.md).
 4. **One primary button per screen.** Browse / navigate / add are `outline`. The single primary is for the screen's one commit action.
 5. **Card never lifts.** Hairline border + `--c-surface-tint` hover. Shadow is for floating surfaces only.
-6. **No setState in effect.** Derive from `useSearchParams`, or use the wrapper+keyed-inner pattern for forms with `initial` props.
+6. **No setState in effect.** Derive from `useSearchParams`, or use the wrapper+keyed-inner pattern for forms with `initial` props. Canonical examples: `NoteEditorTitle` re-keyed by `note.id`; calc mode components re-keyed by `seedEntry?.id ?? 'fresh'` in `CalcWorkspace`.
 7. **No backwards-compat shims, no feature flags.** Two-person app. Ship to main or don't ship.
 8. **Comments default to none.** Only write a comment when the *why* is non-obvious.
 
@@ -80,13 +80,13 @@ ESLint enforces 1–6 mechanically. The rest is review discipline.
 
 | Feature | Status |
 |---|---|
-| Memo | **Active development** — Phase 1 adds personal/shared split |
+| Memo | **Stable** — Phase 1 personal/shared split shipped 2026-05-28 |
 | Sheets | **Frozen** — works today, no new features; removal candidate in H2 |
 | 구매 / 정산 / 반복 항목 | **Deferred** — Phase X+ |
 | 할 일 / 기념일 / 링크 / 레시피 | **Stable** — bug-fixes only |
 | Calendar | **Stable** — will source Decisions in Phase 3 |
 | Settings, Auth, Search palette | **Stable** |
-| Calculator | **Stable** — shipped 2026-05-29. `/calc` route, 5 modes, shared tape, CalcSnapshot embed. |
+| Calculator | **Stable** — shipped 2026-05-29 (Phase 2 + 2.1 multi-line scratchpad + 2.2 click-history-to-load). `/calc` route, 5 modes, shared tape, CalcSnapshot embed. |
 | Decisions | **Phase 3 — not yet built (next)** |
 | Presence on shared notes | **Phase 4 — not yet built** |
 

@@ -1,6 +1,6 @@
 # shared-docs
 
-A private web app for two people — built for me and my wife to keep our notes and our decisions in one place. Bear-style memo editor, a soon-to-arrive engineering calculator, and (the headline feature) a decision-history surface so we never lose track of *why* we chose what we chose.
+A private web app for two people — built for me and my wife to keep our notes and our decisions in one place. Bear-style memo editor, a Soulver-style engineering calculator, and (the headline feature, still ahead) a decision-history surface so we never lose track of *why* we chose what we chose.
 
 Not a SaaS, not for sale, not open to the public — the codebase is shared for reference and learning.
 
@@ -20,6 +20,7 @@ Live (allowlisted only): `https://shared-docs-nine.vercel.app`
 - **메모** — Bear-style markdown editor (Tiptap). Tables, task lists, slash menu, bubble menu, `@`-mention with entity search, `#hashtag`, attachments, drag-and-drop / paste image upload, soft-delete trash, frozen data snapshots and link cards.
 - **시트** — JSON-blob spreadsheet with react-data-grid on desktop and a card-per-row view on mobile.
 - **데이터** — typed mini-apps: 구매, 정산, 반복 항목, 할 일, 기념일, 유용한 링크 (OpenGraph auto-fetch), 레시피 (dnd-kit sortable, 인분 환산).
+- **계산** — `/calc`. Five modes (기본 multi-line scratchpad with variables and `#` comments, 할부, 대출 with amortization schedule, 더치페이, 날짜). Shared tape between partners; click any history row to load it back into the editor. Calculations embed as frozen blocks in notes via `/계산 스냅샷`.
 - **캘린더** — aggregates 4 sources (기념일, 할 일, 구매, 정산) with per-source filters.
 - **설정** — 4 themes (Dracula default), 3 fonts, 3 line-heights, click-to-apply, localStorage-persisted.
 - **⌘K** — global search across memo + sheet titles and bodies.
@@ -28,10 +29,10 @@ Live (allowlisted only): `https://shared-docs-nine.vercel.app`
 
 The product has been narrowed to four pillars:
 
-1. **Personal notes** — private notes per person (Phase 1, in progress)
-2. **Shared notes** — the existing memo system
-3. **Decisions** — Plan → SubPlan → Option → Decision with audit-trail UI (Phase 3, the wedge)
-4. **Calculator** — tape-style engineering calc with Korean modes, embeddable in notes (Phase 2)
+1. **Personal notes** — ✅ shipped 2026-05-28. `visibility` flag on `Note`; sidebar splits into 내 비공개 / 함께 / 상대의 메모.
+2. **Shared notes** — the existing memo system, household-shared by default.
+3. **Calculator** — ✅ shipped 2026-05-29. `/calc` route, 5 modes, shared tape, multi-line scratchpad with variables, click-to-load history, embeddable in notes.
+4. **Decisions** — Plan → SubPlan → Option → Decision with audit-trail UI (Phase 3, the wedge) — **next**.
 
 Sheets is frozen. Expenses are deferred. Email/SMS/Open-Banking integrations are off the table for good.
 
