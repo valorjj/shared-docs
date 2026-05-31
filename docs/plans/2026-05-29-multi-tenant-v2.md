@@ -98,7 +98,7 @@ Unique constraint: `(resource_kind, resource_id, granted_to_user_id)` — one ro
 
 ### 3.2 Changes to existing entities
 
-Every resource entity gets a non-null `workspace_id` foreign key. Hibernate `ddl-auto: update` won't add a NOT NULL column to an existing populated table without a default, but **we are wiping the DB**, so this is moot.
+Every resource entity gets a non-null `workspace_id` foreign key, declared with an explicit FK constraint in a Flyway migration (per [`../ENGINEERING-STANDARDS.md`](../ENGINEERING-STANDARDS.md) §2.1). Because the DB is wiped on cutover, the baseline migration creates every table with `workspace_id NOT NULL` from the start — no backfill needed.
 
 Affected entities (one `workspace_id` column added to each):
 
@@ -276,7 +276,7 @@ DROP DATABASE shared_docs;
 CREATE DATABASE shared_docs CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
-Then Hibernate `ddl-auto: update` recreates everything with the new schema on first boot.
+Then **Flyway** replays `V1__baseline.sql` (and subsequent migrations) on first boot, building the entire v2 schema. Hibernate runs `ddl-auto: validate` — it asserts the entity model matches the migrated schema and refuses to start on mismatch, but never mutates the schema itself. (This supersedes the original "Hibernate `ddl-auto: update` recreates everything" plan — see [`../ENGINEERING-STANDARDS.md`](../ENGINEERING-STANDARDS.md) §1.)
 
 **What's lost:**
 - All current notes, sheets, calc entries, purchases, settlements, todos, anniversaries, links, recipes for both me (jeongjin@ecoletree.com) and wife (채연).

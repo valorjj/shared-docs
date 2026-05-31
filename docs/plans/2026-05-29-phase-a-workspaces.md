@@ -6,13 +6,15 @@
 
 **Architecture:** New `Workspace` + `WorkspaceMember` entities. `WorkspaceContextFilter` reads `X-Workspace-Id` from each request, validates the caller is an active member, and exposes the resolved workspace via a `@CurrentWorkspace` argument resolver. Every existing repository gains a `workspaceId` parameter. The OAuth handler creates a personal workspace on first sign-in. Frontend axios interceptor injects the header from `localStorage`; an `ActiveWorkspaceProvider` syncs the state into React context.
 
-**Tech Stack:** Spring Boot 3.5 + Kotlin + JPA + MariaDB (`ddl-auto: update`). Vite + React 19 + TypeScript + axios + React Query.
+**Tech Stack:** Spring Boot 3.5 + Kotlin + JPA + MariaDB. **Flyway** versioned migrations with `ddl-auto: validate` (per [`../ENGINEERING-STANDARDS.md`](../ENGINEERING-STANDARDS.md) §1 — *not* `ddl-auto: update`). Vite + React 19 + TypeScript + axios + React Query.
 
 **Branch:** all work on `v2-multi-tenant` (both repos). Nothing merges to `main` until v2 cutover.
 
-**Test posture:** the codebase currently has no automated tests. This phase **adds** integration tests at the workspace-isolation boundary (the place where v2's defining bug — "user A sees user B's data" — would be born), but does not retroactively unit-test existing services. Foundation tasks (Workspace, Filter, OAuth integration) use full TDD. Per-feature scoping tasks use one integration test per feature, verifying isolation.
+**Engineering standards:** every backend change in this plan conforms to [`../ENGINEERING-STANDARDS.md`](../ENGINEERING-STANDARDS.md) — Flyway migrations, `BaseEntity` + auditing, `@Version` optimistic locking, reference-by-ID + explicit FK constraints, RFC 7807 errors, Bean Validation. **Section 0 below retrofits the already-committed Tasks 1–4 to that standard before the controller (Task 5) lands.**
 
-**Estimated effort:** 7–10 working days.
+**Test posture:** tests run against a dedicated `shared_docs_test` database on the existing :3307 MariaDB container (ENGINEERING-STANDARDS §7.1) — never against `shared_docs`. This phase adds integration tests at the workspace-isolation boundary (the place where v2's defining bug — "user A sees user B's data" — would be born). Foundation tasks use full TDD. Per-feature scoping tasks use one isolation integration test per feature.
+
+**Estimated effort:** 9–12 working days (was 7–10; +2 for the standards retrofit and per-feature migrations).
 
 ---
 
@@ -21,19 +23,29 @@
 ### Backend — new files
 
 ```
-src/main/kotlin/com/shareddocs/backend/workspace/
-├── Workspace.kt
-├── WorkspaceRepository.kt
-├── WorkspaceMember.kt
-├── WorkspaceMemberRepository.kt
-├── WorkspaceRole.kt
-├── WorkspaceService.kt
-├── WorkspaceController.kt
-├── WorkspaceDto.kt
-├── CurrentWorkspace.kt           ← argument-resolver annotation
-├── WorkspaceContextFilter.kt     ← reads X-Workspace-Id, validates membership
-├── WorkspaceContextHolder.kt     ← ThreadLocal/request-scoped store
-└── WorkspaceWebConfig.kt         ← registers the resolver
+src/main/kotlin/com/shareddocs/backend/
+├── common/
+│   └── BaseEntity.kt              ← id/createdAt/updatedAt/version superclass (§0)
+├── config/
+│   ├── JpaAuditingConfig.kt       ← @EnableJpaAuditing (§0)
+│   └── ApiExceptionHandler.kt     ← @RestControllerAdvice, RFC 7807 (§0)
+└── workspace/
+    ├── Workspace.kt
+    ├── WorkspaceRepository.kt
+    ├── WorkspaceMember.kt
+    ├── WorkspaceMemberRepository.kt
+    ├── WorkspaceRole.kt
+    ├── WorkspaceService.kt
+    ├── WorkspaceSlugTakenException.kt   ← typed domain exception (§0)
+    ├── WorkspaceController.kt
+    ├── WorkspaceDto.kt
+    ├── CurrentWorkspace.kt              ← argument-resolver annotation
+    ├── WorkspaceContextFilter.kt        ← reads X-Workspace-Id, validates membership
+    ├── WorkspaceContextHolder.kt        ← request-scoped store
+    └── WorkspaceWebConfig.kt            ← registers the resolver
+
+src/main/resources/db/migration/
+└── V1__baseline.sql               ← full v2 schema, FK constraints, indexes (§0)
 
 src/test/kotlin/com/shareddocs/backend/workspace/
 ├── WorkspaceServiceTest.kt
@@ -60,11 +72,14 @@ every resource entity (add workspace_id):
 ├── link/Link.kt + LinkCategory.kt
 ├── recipe/Recipe.kt + RecipeStep.kt + RecipeIngredient.kt
 
+every resource entity also extends BaseEntity (id/createdAt/updatedAt/version)
 every resource repository (filter by workspaceId)
 every resource service (read currentWorkspace from @CurrentWorkspace)
 every resource controller (declare @CurrentWorkspace parameter)
+every feature ships its workspace_id column + FK constraint in a Flyway migration
 
-src/main/resources/application.yml   ← add a temporary kill-switch flag
+build.gradle.kts                     ← add Flyway dependency (org.flywaydb:flyway-mysql)
+src/main/resources/application.yml   ← Flyway config; ddl-auto: validate; test profile
 ```
 
 ### Frontend — new files
@@ -88,16 +103,143 @@ src/App.tsx                        ← wire provider
 
 ---
 
-## Prerequisites (before Task 1)
+## Prerequisites
 
 - [ ] Both repos checked out on `v2-multi-tenant` branch (verify: `git rev-parse --abbrev-ref HEAD` returns `v2-multi-tenant`).
-- [ ] Local MariaDB running on port 3307. Wipe it now to match the v2 cutover model: `mysql -h 127.0.0.1 -P 3307 -u root -p1qaz!QAZ -e "DROP DATABASE IF EXISTS shared_docs; CREATE DATABASE shared_docs;"`.
-- [ ] Backend starts cleanly on `v2-multi-tenant` baseline: `./gradlew bootRun` until `Started ShareDocsBackendApplication`. Stop and proceed.
+- [ ] The shared MariaDB container is running on :3307 (`docker ps` → `lunch-select-db`). It is shared with the lunch-select project; the `shared_docs` DB lives inside it.
+- [ ] Tasks 1–4 are already committed (entities, repositories, `WorkspaceService` + 6 tests). **Section 0 retrofits them to the engineering standard before Task 5.**
 - [ ] Frontend dev server starts: `npm run dev` from `shared-docs/`.
+
+> **Note on the v1 dev DB:** Section 0 introduces Flyway with `ddl-auto: validate`. Because the current `shared_docs` dev DB was built by Hibernate `ddl-auto: update` (v1 schema), Flyway `validate` will fail against it. Per the v2 cutover model, wipe the dev DB so Flyway owns the schema cleanly: `mysql -h 127.0.0.1 -P 3307 -u root -p1qaz!QAZ -e "DROP DATABASE IF EXISTS shared_docs; CREATE DATABASE shared_docs;"`. The `shared_docs_test` DB is created automatically by the test profile.
+
+---
+
+# Section 0 — Engineering-standards retrofit
+
+> Executed AFTER the already-committed Tasks 1–4, BEFORE the controller (Task 5). Brings the foundation up to [`../ENGINEERING-STANDARDS.md`](../ENGINEERING-STANDARDS.md). No new feature behavior — this is infrastructure the rest of Phase A builds on.
+
+## Task 0a: Add Flyway + switch to `ddl-auto: validate`
+
+**Files:**
+- Modify: `shared-docs-backend/build.gradle.kts`
+- Modify: `shared-docs-backend/src/main/resources/application.yml`
+- Create: `shared-docs-backend/src/main/resources/db/migration/V1__baseline.sql`
+
+- [ ] **Step 1: Add the Flyway dependency**
+
+```kotlin
+// build.gradle.kts dependencies
+implementation("org.flywaydb:flyway-core")
+implementation("org.flywaydb:flyway-mysql")   // MariaDB uses the MySQL-family module
+```
+
+- [ ] **Step 2: Author `V1__baseline.sql`** — the full schema for everything that exists so far, with FK constraints and indexes. This will GROW as each feature in Section 4 adds its tables (or each feature can author its own `V<n>__<feature>.sql` — decide in Task 0a; recommended: one baseline for workspace + user tables, then per-feature migrations for resource tables so the diffs stay reviewable).
+
+```sql
+-- V1__baseline.sql (workspace + membership; user table already exists in v1 form)
+CREATE TABLE workspaces (
+    id                  BIGINT       NOT NULL AUTO_INCREMENT,
+    name                VARCHAR(80)  NOT NULL,
+    slug                VARCHAR(40)  NOT NULL,
+    created_by_user_id  BIGINT       NOT NULL,
+    created_at          DATETIME(6)  NOT NULL,
+    updated_at          DATETIME(6)  NOT NULL,
+    version             BIGINT       NOT NULL DEFAULT 0,
+    deleted_at          DATETIME(6)  NULL,
+    PRIMARY KEY (id),
+    CONSTRAINT uq_workspaces_slug_per_user UNIQUE (created_by_user_id, slug),
+    CONSTRAINT fk_workspaces_created_by FOREIGN KEY (created_by_user_id) REFERENCES users(id),
+    INDEX idx_workspaces_created_by (created_by_user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE workspace_members (
+    id            BIGINT       NOT NULL AUTO_INCREMENT,
+    workspace_id  BIGINT       NOT NULL,
+    user_id       BIGINT       NOT NULL,
+    role          VARCHAR(16)  NOT NULL,
+    joined_at     DATETIME(6)  NOT NULL,
+    left_at       DATETIME(6)  NULL,
+    created_at    DATETIME(6)  NOT NULL,
+    updated_at    DATETIME(6)  NOT NULL,
+    version       BIGINT       NOT NULL DEFAULT 0,
+    PRIMARY KEY (id),
+    CONSTRAINT uq_ws_members_active UNIQUE (workspace_id, user_id, left_at),
+    CONSTRAINT fk_ws_members_workspace FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,
+    CONSTRAINT fk_ws_members_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_ws_members_workspace (workspace_id),
+    INDEX idx_ws_members_user (user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+
+> The `users` table is created by an earlier part of `V1__baseline.sql` (port the v1 Hibernate-generated `users` DDL by hand). Since the dev DB is wiped, Flyway owns the entire schema from boot.
+
+- [ ] **Step 3: Configure Flyway + validate in `application.yml`**
+
+```yaml
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+```
+
+- [ ] **Step 4: Wipe dev DB, boot, confirm Flyway applies V1 and `validate` passes**
+
+```bash
+mysql -h 127.0.0.1 -P 3307 -u root -p1qaz!QAZ -e "DROP DATABASE IF EXISTS shared_docs; CREATE DATABASE shared_docs;"
+./gradlew bootRun   # expect: Flyway "Migrating schema to version 1 - baseline"; Hibernate validate OK
+```
+
+- [ ] **Step 5: Commit** — `feat(db): adopt Flyway + ddl-auto:validate, V1 baseline (Phase A T0a)`
+
+## Task 0b: `BaseEntity` + JPA auditing
+
+**Files:**
+- Create: `shared-docs-backend/src/main/kotlin/com/shareddocs/backend/common/BaseEntity.kt`
+- Create: `shared-docs-backend/src/main/kotlin/com/shareddocs/backend/config/JpaAuditingConfig.kt`
+- Modify: `workspace/Workspace.kt`, `workspace/WorkspaceMember.kt` to extend `BaseEntity`
+
+- [ ] **Step 1: `BaseEntity`** (exact shape in ENGINEERING-STANDARDS §2.2).
+- [ ] **Step 2: `JpaAuditingConfig`** — `@Configuration @EnableJpaAuditing`.
+- [ ] **Step 3:** make `Workspace` and `WorkspaceMember` extend `BaseEntity`; drop their now-inherited `id` and `createdAt` fields; add nothing else (version/updatedAt come from the superclass).
+- [ ] **Step 4:** re-run `WorkspaceServiceTest` — all 6 still green against `shared_docs_test`.
+- [ ] **Step 5: Commit** — `feat(workspace): extend BaseEntity (auditing + @Version) (Phase A T0b)`
+
+## Task 0c: Typed exception + RFC 7807 advice
+
+**Files:**
+- Create: `workspace/WorkspaceSlugTakenException.kt`
+- Create: `config/ApiExceptionHandler.kt`
+- Modify: `workspace/WorkspaceService.kt`
+
+- [ ] **Step 1:** `WorkspaceSlugTakenException(slug: String) : RuntimeException(...)`.
+- [ ] **Step 2:** in `WorkspaceService.create`, replace `throw IllegalStateException(...)` with the typed exception, AND wrap the `memberRepository.save` / `workspaceRepository.save` so a `DataIntegrityViolationException` from the unique constraint is caught and rethrown as `WorkspaceSlugTakenException` (the TOCTOU backstop, ENGINEERING-STANDARDS §2.4).
+- [ ] **Step 3:** `ApiExceptionHandler` (`@RestControllerAdvice`) mapping the §4 table to `ProblemDetail` responses — start with `WorkspaceSlugTakenException`→409, `MissingWorkspaceContextException`→400, `OptimisticLockingFailureException`→409, `ResourceNotFoundException`→404, validation→400, fallback→500.
+- [ ] **Step 4:** update the slug-collision test to assert `WorkspaceSlugTakenException`. Add a `@WebMvcTest` slice test asserting it renders as 409 `problem+json`.
+- [ ] **Step 5: Commit** — `feat(workspace): typed exceptions + RFC 7807 advice (Phase A T0c)`
+
+## Task 0d: Test profile → `shared_docs_test`
+
+**Files:**
+- Modify: `application.yml` (add `test` profile per ENGINEERING-STANDARDS §7.1)
+- Modify: existing test classes to add `@ActiveProfiles("test")` (replacing `"local"`)
+
+- [ ] **Step 1:** add the `test` profile datasource pointing at `shared_docs_test` (`createDatabaseIfNotExist=true`), Flyway enabled, `ddl-auto: validate`.
+- [ ] **Step 2:** switch the 3 workspace test classes from `@ActiveProfiles("local")` to `@ActiveProfiles("test")`.
+- [ ] **Step 3:** run `./gradlew test` — confirm tests now target `shared_docs_test`, not `shared_docs`. Verify by checking the dev DB is untouched (`SELECT COUNT(*) FROM shared_docs.workspaces;` unaffected by a test run).
+- [ ] **Step 4: Commit** — `test(workspace): isolate tests to shared_docs_test DB (Phase A T0d)`
 
 ---
 
 # Section 1 — Workspace + Membership foundation
+
+> ✅ **Tasks 1–4 are already committed** (`1c3d887`, `e18899f`, `07461ec`). They were written before the engineering-standards doc; Section 0 above retrofits them. Tasks 1–4 remain documented below for reference. Resume new work at Task 5.
+
+These tasks have no per-feature repetition. Full TDD: write the test, see it fail, implement, see it pass.
+
+## Task 1: `WorkspaceRole` enum + `Workspace` entity
 
 These tasks have no per-feature repetition. Full TDD: write the test, see it fail, implement, see it pass.
 
@@ -1011,18 +1153,32 @@ This section is repetitive: every existing resource entity gets `workspace_id`, 
 
 ## Task 10: The per-feature scoping pattern (template)
 
-Use this as the recipe for every feature in Tasks 11–19.
+Use this as the recipe for every feature in Tasks 11–19. Every step conforms to [`../ENGINEERING-STANDARDS.md`](../ENGINEERING-STANDARDS.md).
 
-### Pattern step 1: Add `workspace_id` to the entity
+### Pattern step 0: Author the Flyway migration
+
+Each feature ships its table(s) as a versioned migration `V<n>__<feature>.sql` under `src/main/resources/db/migration/`. The migration creates the resource table **with** `workspace_id BIGINT NOT NULL`, the `BaseEntity` columns (`created_at`, `updated_at`, `version`), the FK constraint to `workspaces(id)`, and indexes.
+
+```sql
+-- e.g. V2__notes.sql
+ALTER TABLE notes
+  ADD COLUMN workspace_id BIGINT NOT NULL,
+  ADD CONSTRAINT fk_notes_workspace FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE RESTRICT,
+  ADD INDEX idx_notes_workspace (workspace_id);
+```
+
+`ON DELETE RESTRICT` on resource→workspace FKs (a workspace can't be hard-deleted while it owns resources; soft-delete + purge handles teardown — ENGINEERING-STANDARDS §2.1). After writing the migration, `ddl-auto: validate` will confirm the entity model matches.
+
+### Pattern step 1: Extend `BaseEntity` + add `workspace_id` to the entity
+
+The entity extends `BaseEntity` (inherits id/createdAt/updatedAt/version — remove any now-duplicate `id`/`createdAt` fields it declared) and adds:
 
 ```kotlin
 @Column(name = "workspace_id", nullable = false, updatable = false)
 val workspaceId: Long,
 ```
 
-Place it after the existing `id` field but before computed columns. Mark `updatable = false` — a resource never moves between workspaces (locked decision §11.3 of the v2 spec).
-
-If the entity uses `var` for fields, use `val` for `workspaceId` since it's immutable.
+Mark `updatable = false` — a resource never moves between workspaces (locked decision §11.3 of the v2 spec). Use `val`, since it's immutable.
 
 ### Pattern step 2: Update the repository
 
