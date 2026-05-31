@@ -1,6 +1,14 @@
 # Phase A: Workspaces + Memberships + Scoped Reads — Implementation Plan
 
-> **▶ RESUME POINT (2026-06-01): Task 10+** — start Section 4 (per-feature workspace scoping). Sections 0–3 are DONE.
+> **▶ RESUME POINT (2026-06-01): Section 5 (frontend)** — `X-Workspace-Id` axios interceptor + `ActiveWorkspaceProvider` + workspace API client. **Sections 0–4 (all backend) are DONE.**
+>
+> **Section 4 COMPLETE (backend per-feature scoping):** all 10 resource roots (note, sheet, calc, purchase, recurring, settlement, todo, anniversary, link, recipe) + comments now extend BaseEntity (id/createdAt/updatedAt/@Version) and carry `workspace_id` (NOT NULL, FK ON DELETE RESTRICT). Every repo/service/controller is workspace-scoped via `@CurrentWorkspace`; the cross-cutting consumers (EntitySearch all 7 kinds, CalendarController all 4 event sources, EntityRefIndexer all 7 kinds) are scoped too. 11 Flyway migrations V1–V11. 10 workspace-isolation integration tests, all green; full suite green. Boot-verified on dev `shared_docs` (V2–V11 applied over existing rows, validate passed) + live cross-workspace HTTP smoke (note in ws1 invisible in ws2; missing header→400 problem+json; non-member ws→403). Backend `v2-multi-tenant` HEAD `f7386d9`.
+> Per-feature commits `76348f2`(note) `a8eef0a`(sheet) `314d337`(calc) `e7a3ab7`(purchase+recurring) `5e79e0f`(settlement) `32744a7`(todo) `1d587c5`(anniversary) `00003de`(link) `704c39c`(recipe) `f7386d9`(comment).
+> Deferred (documented in code): SHARED→WORKSPACE literal rename (cross-stack, fold into Section 5); per-workspace categories + seeding (Phase C — categories stay global/admin-managed in Phase A, so the 5 category bootstrappers were left untouched).
+
+---
+
+> **(historical) ▶ Task 10+** — Section 4 per-feature workspace scoping. Sections 0–3 were DONE when this section started.
 > Done so far: **Section 0** (Flyway, BaseEntity, RFC 7807, test profile), **Section 1** (entities, repos, service, controller + DTOs), **Section 2** (WorkspaceContextHolder + `@CurrentWorkspace` + WorkspaceContextFilter registered in SecurityConfig + argument resolver + MissingWorkspaceContextException→400 problem+json), **Section 3** (OAuth + dev-login auto-create personal workspace). Backend `v2-multi-tenant` HEAD = `710dd65`. 16/16 tests green; smoke-tested live on :8091 (dev-login→workspace seed, detail 200/404, validation 400 problem+json, create 201). Both repos on branch `v2-multi-tenant`.
 > DB access for tooling: `localhost:3307`, user `root`, pwd `1qaz!QAZ`, databases `shared_docs` (dev, Flyway-owned) / `shared_docs_test` (tests). NOTE: port **8090** is the user's Docker backend (docker profile, no dev-login) — leave it; run local builds on another port (e.g. 8091).
 >
