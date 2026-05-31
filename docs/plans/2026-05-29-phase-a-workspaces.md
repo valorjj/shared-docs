@@ -1,7 +1,10 @@
 # Phase A: Workspaces + Memberships + Scoped Reads — Implementation Plan
 
-> **▶ RESUME POINT (2026-06-01): Task 5** — `WorkspaceDto` + `WorkspaceController`.
-> Done so far: Section 1 Tasks 1–4 (entities, repos, service+tests) and **all of Section 0** (engineering-standards retrofit: Flyway, BaseEntity, RFC 7807, test profile). Backend `v2-multi-tenant` HEAD = `00bf5d9`. Both repos on branch `v2-multi-tenant`. Local dev DB `shared_docs` is now Flyway-owned (wiped + rebuilt from V1). DB access for tooling: `localhost:3307`, user `root`, pwd `1qaz!QAZ`, databases `shared_docs` (dev) / `shared_docs_test` (tests).
+> **▶ RESUME POINT (2026-06-01): Task 6** — `WorkspaceContextHolder` + `@CurrentWorkspace` annotation (start of Section 2, request-context plumbing).
+> Done so far: **all of Section 0** (Flyway, BaseEntity, RFC 7807, test profile), Section 1 Tasks 1–5 (entities, repos, service, **controller** + DTOs), and the deferred Task 0c `@WebMvcTest` (now `WorkspaceControllerProblemJsonTest`). Backend `v2-multi-tenant` HEAD = `a27b00a`. Both repos on branch `v2-multi-tenant`. Local dev DB `shared_docs` is now Flyway-owned (wiped + rebuilt from V1). DB access for tooling: `localhost:3307`, user `root`, pwd `1qaz!QAZ`, databases `shared_docs` (dev) / `shared_docs_test` (tests).
+>
+> Task 5 notes: added Bean Validation on `CreateWorkspaceRequest` (slug kebab-pattern); chose a standalone-MockMvc slice over `@WebMvcTest` (no `spring-security-test`/`mockito-kotlin` on the classpath). 9/9 backend tests green.
+> Heads-up for Task 8: the plan snippet shows `MissingWorkspaceContextException` returning an ad-hoc `Map` — instead route it through the existing `ApiExceptionHandler` as a 400 `ProblemDetail` (type `missing-workspace-context`) to keep the RFC 7807 contract consistent.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
