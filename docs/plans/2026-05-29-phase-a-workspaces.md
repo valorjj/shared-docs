@@ -1,5 +1,8 @@
 # Phase A: Workspaces + Memberships + Scoped Reads — Implementation Plan
 
+> **▶ RESUME POINT (2026-06-01): Task 5** — `WorkspaceDto` + `WorkspaceController`.
+> Done so far: Section 1 Tasks 1–4 (entities, repos, service+tests) and **all of Section 0** (engineering-standards retrofit: Flyway, BaseEntity, RFC 7807, test profile). Backend `v2-multi-tenant` HEAD = `00bf5d9`. Both repos on branch `v2-multi-tenant`. Local dev DB `shared_docs` is now Flyway-owned (wiped + rebuilt from V1). DB access for tooling: `localhost:3307`, user `root`, pwd `1qaz!QAZ`, databases `shared_docs` (dev) / `shared_docs_test` (tests).
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Introduce workspace tenancy throughout the backend and frontend. Every resource gains a `workspace_id`; every read/write filters by it; every API request carries `X-Workspace-Id`. The existing app keeps working — on first sign-in a personal workspace is auto-created and the app behaves as if it always had one.
@@ -116,6 +119,10 @@ src/App.tsx                        ← wire provider
 
 # Section 0 — Engineering-standards retrofit
 
+> ✅ **COMPLETE (2026-06-01)** — backend commits `6121cab` (delete EntityRefBackfill), `f5a1c1a` (BaseEntity + auditing), `165048f` (Flyway + V1 baseline + validate + test profile), `00bf5d9` (typed exception + RFC 7807 advice). 6/6 WorkspaceServiceTest green against `shared_docs_test`; local-profile bootRun verified (Flyway applies V1, validate passes, Tomcat starts).
+>
+> **One deferred item:** the `@WebMvcTest` asserting the advice renders `problem+json` waits for Task 5 (needs a controller to throw through). The service test already asserts the typed exception.
+>
 > Executed AFTER the already-committed Tasks 1–4, BEFORE the controller (Task 5). Brings the foundation up to [`../ENGINEERING-STANDARDS.md`](../ENGINEERING-STANDARDS.md). No new feature behavior — this is infrastructure the rest of Phase A builds on.
 
 ## Task 0a: Add Flyway + switch to `ddl-auto: validate`
