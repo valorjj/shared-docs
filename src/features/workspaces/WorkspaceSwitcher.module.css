@@ -1,0 +1,31 @@
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  max-width: 200px;
+  padding: 4px 8px;
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--c-text);
+  font-family: var(--font-sans);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  cursor: pointer;
+}
+
+.trigger:hover {
+  background: var(--c-surface-tint);
+}
+
+.name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.checkSpacer {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+}

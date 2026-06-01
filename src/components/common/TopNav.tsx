@@ -15,6 +15,7 @@ import { useIsMobile } from '../../lib/useMediaQuery'
 import { useAuth } from '../../auth/useAuth'
 import { useSearchPalette } from '../../features/search/searchContext'
 import { useSettings } from '../../features/settings/settingsContext'
+import WorkspaceSwitcher from '../../features/workspaces/WorkspaceSwitcher'
 import { Kbd } from '../ui'
 import { Menu, MenuItem, MenuSeparator } from '../ui/Menu'
 import './TopNav.css'
@@ -65,6 +66,8 @@ export default function TopNav() {
           </span>
           <span className="top-nav__brand-text">우리의 가이드북</span>
         </Link>
+
+        <WorkspaceSwitcher />
 
         <nav className="top-nav__items">
           {items.map((it) => (

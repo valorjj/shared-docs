@@ -7,6 +7,7 @@ import {
 } from 'react'
 import { jwtDecode } from 'jwt-decode'
 import { clearToken, getToken, setToken, TOKEN_STORAGE_KEY } from './tokenStorage'
+import { clearActiveWorkspaceId } from './workspaceStorage'
 import { AuthContext, type AuthUser, type Role } from './authContext'
 
 type JwtClaims = {
@@ -47,6 +48,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(() => {
     clearToken()
+    clearActiveWorkspaceId()
     setUser(null)
   }, [])
 
