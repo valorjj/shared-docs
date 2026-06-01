@@ -2,6 +2,7 @@ import { Outlet, useLocation } from 'react-router-dom'
 import { SearchPaletteProvider } from '../../features/search/SearchPaletteProvider'
 import { SettingsProvider } from '../../features/settings/SettingsProvider'
 import { useActiveWorkspace } from '../../auth/useActiveWorkspace'
+import WorkspaceOnboarding from '../../features/workspaces/WorkspaceOnboarding'
 import { Spinner } from '../ui'
 import BottomNav from './BottomNav'
 import TopNav from './TopNav'
@@ -11,7 +12,7 @@ const NO_PAD_PREFIXES = ['/login', '/auth', '/doc']
 
 export default function MobileShell() {
   const location = useLocation()
-  const { ready } = useActiveWorkspace()
+  const { ready, active } = useActiveWorkspace()
   const hasBottomNav = !NO_PAD_PREFIXES.some((p) => location.pathname.startsWith(p))
 
   // Hold the authed app until the active workspace is resolved. Resource pages
@@ -32,6 +33,12 @@ export default function MobileShell() {
         <Spinner label="워크스페이스 불러오는 중…" />
       </div>
     )
+  }
+
+  // Authenticated but no workspace (edge case: wiped / left last workspace).
+  // Show onboarding instead of the resource hub — never the silent 400-storm.
+  if (!active) {
+    return <WorkspaceOnboarding />
   }
 
   return (
