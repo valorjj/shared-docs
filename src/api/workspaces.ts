@@ -12,7 +12,8 @@ export type Workspace = {
 
 export type CreateWorkspacePayload = {
   name: string
-  slug: string
+  // Optional — the server generates one when omitted (slug isn't user-facing).
+  slug?: string
 }
 
 export const workspaceKeys = {
