@@ -75,9 +75,9 @@ export default function NoteWorkspace() {
     const minePrivate = allNotes.filter(
       (n) => n.visibility === 'PRIVATE' && n.createdBy.userId === user?.userId,
     ).length
-    const shared = allNotes.filter((n) => n.visibility === 'SHARED').length
+    const shared = allNotes.filter((n) => n.visibility === 'WORKSPACE').length
     const partner = allNotes.filter(
-      (n) => n.visibility === 'SHARED' && n.createdBy.userId !== user?.userId,
+      (n) => n.visibility === 'WORKSPACE' && n.createdBy.userId !== user?.userId,
     ).length
     return {
       all: allNotes.length,
@@ -100,10 +100,10 @@ export default function NoteWorkspace() {
           (n) => n.visibility === 'PRIVATE' && n.createdBy.userId === user?.userId,
         )
       case 'shared':
-        return allNotes.filter((n) => n.visibility === 'SHARED')
+        return allNotes.filter((n) => n.visibility === 'WORKSPACE')
       case 'partner':
         return allNotes.filter(
-          (n) => n.visibility === 'SHARED' && n.createdBy.userId !== user?.userId,
+          (n) => n.visibility === 'WORKSPACE' && n.createdBy.userId !== user?.userId,
         )
       case 'trash':
         return [] // Trash is rendered through TrashList, not NoteList — guard.

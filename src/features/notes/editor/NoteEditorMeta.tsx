@@ -25,7 +25,7 @@ export default function NoteEditorMeta({ note, saving, canEdit = true, onToggleP
   const toggleVisibility = () => {
     updateNote.mutate({
       id: note.id,
-      payload: { visibility: isPrivate ? 'SHARED' : 'PRIVATE' },
+      payload: { visibility: isPrivate ? 'WORKSPACE' : 'PRIVATE' },
     })
   }
 

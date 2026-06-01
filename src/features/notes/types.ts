@@ -4,10 +4,10 @@ export type NoteUserRef = {
   pictureUrl: string | null
 }
 
-/** Whether a note is visible to both partners (SHARED, default) or only
- *  its author (PRIVATE). The 2026-05-28 reset replaced the per-note ACL
- *  with this binary — see docs/plans/2026-05-28-personal-shared-notes.md. */
-export type NoteVisibility = 'PRIVATE' | 'SHARED'
+/** Whether a note is visible to every member of its workspace (WORKSPACE,
+ *  default) or only its author (PRIVATE). Renamed from SHARED → WORKSPACE in v2
+ *  (the "group" is now the workspace). Must match backend Visibility. */
+export type NoteVisibility = 'PRIVATE' | 'WORKSPACE'
 
 export type Note = {
   id: number
