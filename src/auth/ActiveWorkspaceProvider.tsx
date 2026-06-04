@@ -1,4 +1,4 @@
-import { useCallback, useMemo, type ReactNode } from 'react'
+import { useCallback, useMemo, useState, type ReactNode } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useWorkspaces, type Workspace } from '../api/workspaces'
 import { useAuth } from './useAuth'
@@ -9,20 +9,25 @@ import { ActiveWorkspaceContext } from './workspaceContext'
  * Owns "which workspace am I looking at". Mounted above the app (inside
  * AuthProvider + QueryClientProvider). When signed out it's a transparent
  * passthrough (ready=true, no gating). When signed in it loads the user's
- * workspaces and resolves the active one as: explicit switch → last stored →
+ * workspaces and resolves the active one as: explicit intent → last stored →
  * first workspace.
  *
- * The resolved id is written to localStorage *synchronously during render*
- * (not in an effect): the axios interceptor reads it outside React on the very
- * resource requests this provider is about to unblock, so the value must be in
- * storage before those requests fire. The write is idempotent and fully
- * derived from query data, so it's safe under StrictMode's double-render and
- * never triggers a re-render loop.
+ * The selected id is React state (`intentId`) so switching is reactive — a
+ * switch re-renders the provider and recomputes `active` from the already-loaded
+ * list, with no refetch needed for the switch itself. The resolved id is also
+ * written to localStorage *synchronously during render* (not in an effect)
+ * because the axios interceptor reads it outside React on the resource requests
+ * this provider unblocks, so it must be in storage before those fire. The write
+ * is idempotent and derived from query data, so it's StrictMode-safe and never
+ * loops.
  */
 export function ActiveWorkspaceProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth()
   const queryClient = useQueryClient()
   const { data: workspaces = [], isLoading } = useWorkspaces(!!user)
+
+  // The user's selection intent. Seeded from storage; updated by setActiveId.
+  const [intentId, setIntentId] = useState<number | null>(() => getActiveWorkspaceId())
 
   let active: Workspace | null = null
   let ready = true
@@ -31,9 +36,8 @@ export function ActiveWorkspaceProvider({ children }: { children: ReactNode }) {
     if (isLoading) {
       ready = false
     } else {
-      const stored = getActiveWorkspaceId()
       active =
-        workspaces.find((w) => w.id === stored) ??
+        workspaces.find((w) => w.id === intentId) ??
         workspaces[0] ??
         null
       ready = true
@@ -52,13 +56,15 @@ export function ActiveWorkspaceProvider({ children }: { children: ReactNode }) {
 
   const setActiveId = useCallback(
     (id: number) => {
-      setActiveWorkspaceId(id)
-      // Query keys aren't workspace-scoped, so the previous workspace's cached
-      // data would otherwise leak in until each query refetched. Dropping the
-      // cache forces a clean refetch under the new X-Workspace-Id header.
-      queryClient.clear()
+      setActiveWorkspaceId(id) // persist for the interceptor + next reload
+      setIntentId(id) // reactive: re-render → `active` recomputes from the list
+      // Resource query keys aren't workspace-scoped, so the previous workspace's
+      // cached data would leak in until each query refetched. Drop every query
+      // EXCEPT the workspaces list (we still need it to render the switcher and
+      // resolve `active`); the resource queries refetch under the new header.
+      queryClient.removeQueries({ predicate: (q) => q.queryKey[0] !== 'workspaces' })
     },
-    [queryClient],
+    [queryClient, setIntentId],
   )
 
   const value = useMemo(
