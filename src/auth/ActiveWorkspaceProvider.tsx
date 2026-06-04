@@ -1,5 +1,4 @@
 import { useCallback, useMemo, useState, type ReactNode } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
 import { useWorkspaces, type Workspace } from '../api/workspaces'
 import { useAuth } from './useAuth'
 import { clearActiveWorkspaceId, getActiveWorkspaceId, setActiveWorkspaceId } from './workspaceStorage'
@@ -23,7 +22,6 @@ import { ActiveWorkspaceContext } from './workspaceContext'
  */
 export function ActiveWorkspaceProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth()
-  const queryClient = useQueryClient()
   const { data: workspaces = [], isLoading } = useWorkspaces(!!user)
 
   // The user's selection intent. Seeded from storage; updated by setActiveId.
@@ -57,18 +55,14 @@ export function ActiveWorkspaceProvider({ children }: { children: ReactNode }) {
   const setActiveId = useCallback(
     (id: number) => {
       setActiveWorkspaceId(id) // persist for the interceptor + next reload
-      setIntentId(id) // reactive: re-render → `active` recomputes from the list
-      // Resource query keys aren't workspace-scoped (they reuse the same key
-      // across workspaces), so we must force the mounted resource queries to
-      // refetch under the new X-Workspace-Id. resetQueries clears them to their
-      // loading state AND refetches the active ones immediately (a plain
-      // removeQueries leaves mounted observers stale until they re-subscribe —
-      // which is why data only appeared after a manual sidebar click). The
-      // workspaces list (queryKey[0] === 'workspaces') is left intact so the
-      // switcher keeps rendering and `active` stays resolvable.
-      void queryClient.resetQueries({ predicate: (q) => q.queryKey[0] !== 'workspaces' })
+      // Reactive switch: re-render recomputes `active` AND re-scopes every
+      // resource query key to the new workspace (keys now include the workspace
+      // id), so React Query mounts the new workspace's queries and fetches them
+      // automatically — while serving cached data instantly on switch-back. No
+      // manual cache reset needed.
+      setIntentId(id)
     },
-    [queryClient, setIntentId],
+    [setIntentId],
   )
 
   const value = useMemo(
