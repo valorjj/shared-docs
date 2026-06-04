@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '../../api/client'
+import { useActiveWorkspace } from '../../auth/useActiveWorkspace'
 
 export type TodoStatus = 'OPEN' | 'DONE'
 
@@ -42,7 +43,10 @@ export type TodoPayload = {
 }
 
 export const todoKeys = {
-  list: (filter: TodoFilter) => ['todos', 'list', filter] as const,
+  // Workspace-scoped: prefix for invalidating all of a workspace's todo queries.
+  scope: (wsId: number | null) => ['todos', wsId] as const,
+  list: (wsId: number | null, filter: TodoFilter) => ['todos', wsId, 'list', filter] as const,
+  // Categories are global (admin-managed), not workspace-scoped (Phase A decision).
   categories: () => ['todo-categories'] as const,
 }
 
@@ -77,9 +81,11 @@ async function deleteReq(id: number): Promise<void> {
 }
 
 export function useTodos(filter: TodoFilter) {
+  const { activeId } = useActiveWorkspace()
   return useQuery({
-    queryKey: todoKeys.list(filter),
+    queryKey: todoKeys.list(activeId, filter),
     queryFn: () => fetchList(filter),
+    enabled: activeId != null,
   })
 }
 
@@ -93,34 +99,38 @@ export function useTodoCategories() {
 
 export function useCreateTodo() {
   const qc = useQueryClient()
+  const { activeId } = useActiveWorkspace()
   return useMutation({
     mutationFn: (payload: TodoPayload) => createReq(payload),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['todos', 'list'] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: todoKeys.scope(activeId) }),
   })
 }
 
 export function useUpdateTodo() {
   const qc = useQueryClient()
+  const { activeId } = useActiveWorkspace()
   return useMutation({
     mutationFn: ({ id, payload }: { id: number; payload: TodoPayload }) =>
       updateReq(id, payload),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['todos', 'list'] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: todoKeys.scope(activeId) }),
   })
 }
 
 export function useToggleTodo() {
   const qc = useQueryClient()
+  const { activeId } = useActiveWorkspace()
   return useMutation({
     mutationFn: ({ id, done }: { id: number; done: boolean }) => toggleReq(id, done),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['todos', 'list'] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: todoKeys.scope(activeId) }),
   })
 }
 
 export function useDeleteTodo() {
   const qc = useQueryClient()
+  const { activeId } = useActiveWorkspace()
   return useMutation({
     mutationFn: (id: number) => deleteReq(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['todos', 'list'] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: todoKeys.scope(activeId) }),
   })
 }
 
