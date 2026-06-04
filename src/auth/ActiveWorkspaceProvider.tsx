@@ -58,11 +58,15 @@ export function ActiveWorkspaceProvider({ children }: { children: ReactNode }) {
     (id: number) => {
       setActiveWorkspaceId(id) // persist for the interceptor + next reload
       setIntentId(id) // reactive: re-render → `active` recomputes from the list
-      // Resource query keys aren't workspace-scoped, so the previous workspace's
-      // cached data would leak in until each query refetched. Drop every query
-      // EXCEPT the workspaces list (we still need it to render the switcher and
-      // resolve `active`); the resource queries refetch under the new header.
-      queryClient.removeQueries({ predicate: (q) => q.queryKey[0] !== 'workspaces' })
+      // Resource query keys aren't workspace-scoped (they reuse the same key
+      // across workspaces), so we must force the mounted resource queries to
+      // refetch under the new X-Workspace-Id. resetQueries clears them to their
+      // loading state AND refetches the active ones immediately (a plain
+      // removeQueries leaves mounted observers stale until they re-subscribe —
+      // which is why data only appeared after a manual sidebar click). The
+      // workspaces list (queryKey[0] === 'workspaces') is left intact so the
+      // switcher keeps rendering and `active` stays resolvable.
+      void queryClient.resetQueries({ predicate: (q) => q.queryKey[0] !== 'workspaces' })
     },
     [queryClient, setIntentId],
   )
