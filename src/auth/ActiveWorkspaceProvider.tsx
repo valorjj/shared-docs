@@ -2,7 +2,7 @@ import { useCallback, useMemo, type ReactNode } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useWorkspaces, type Workspace } from '../api/workspaces'
 import { useAuth } from './useAuth'
-import { getActiveWorkspaceId, setActiveWorkspaceId } from './workspaceStorage'
+import { clearActiveWorkspaceId, getActiveWorkspaceId, setActiveWorkspaceId } from './workspaceStorage'
 import { ActiveWorkspaceContext } from './workspaceContext'
 
 /**
@@ -37,8 +37,15 @@ export function ActiveWorkspaceProvider({ children }: { children: ReactNode }) {
         workspaces[0] ??
         null
       ready = true
-      if (active && getActiveWorkspaceId() !== active.id) {
-        setActiveWorkspaceId(active.id)
+      if (active) {
+        // Keep storage in sync with the resolved workspace (also overwrites a
+        // stale stored id that pointed at a workspace no longer in the list).
+        if (getActiveWorkspaceId() !== active.id) setActiveWorkspaceId(active.id)
+      } else if (getActiveWorkspaceId() != null) {
+        // No resolvable workspace, but a stale id is still stored — drop it so
+        // the axios interceptor stops attaching a now-invalid X-Workspace-Id
+        // (which the backend 403s) to resource requests.
+        clearActiveWorkspaceId()
       }
     }
   }

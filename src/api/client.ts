@@ -40,14 +40,18 @@ apiClient.interceptors.request.use((config) => {
     config.headers.Authorization = `Bearer ${token}`
   }
   // v2 tenancy: every resource endpoint requires the active workspace. Read it
-  // synchronously from storage (interceptors can't use hooks). It's harmless on
-  // the few workspace-agnostic endpoints (/api/workspaces, /api/auth) — the
-  // backend simply ignores it there. When no workspace is active yet, the
-  // header is omitted; the app gates resource rendering until one is set
-  // (see ActiveWorkspaceProvider + MobileShell), so resource calls never fire
-  // headerless.
+  // synchronously from storage (interceptors can't use hooks).
+  //
+  // CRUCIAL: do NOT attach the header to the workspace-management or auth
+  // endpoints. Those are workspace-agnostic AND are the recovery path: if the
+  // stored id is stale (e.g. the workspace was deleted, or the DB was rebuilt),
+  // WorkspaceContextFilter 403s any request carrying it — so attaching it to
+  // /api/workspaces would 403 the very call the client uses to re-discover its
+  // workspaces, leaving the app permanently stuck.
+  const url = config.url ?? ''
+  const workspaceAgnostic = url.startsWith('/api/workspaces') || url.startsWith('/api/auth')
   const workspaceId = getActiveWorkspaceId()
-  if (workspaceId != null) {
+  if (workspaceId != null && !workspaceAgnostic) {
     config.headers['X-Workspace-Id'] = String(workspaceId)
   }
   return config
