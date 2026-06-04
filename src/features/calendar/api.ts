@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { apiClient } from '../../api/client'
+import { useActiveWorkspace } from '../../auth/useActiveWorkspace'
 
 export type CalendarEventType = 'anniversary' | 'todo' | 'purchase' | 'settlement'
 
@@ -18,7 +19,8 @@ export type CalendarEvent = {
 }
 
 export const calendarKeys = {
-  events: (from: string, to: string) => ['calendar', 'events', from, to] as const,
+  scope: (wsId: number | null) => ['calendar', wsId] as const,
+  events: (wsId: number | null, from: string, to: string) => ['calendar', wsId, 'events', from, to] as const,
 }
 
 async function fetchEvents(from: string, to: string): Promise<CalendarEvent[]> {
@@ -27,10 +29,11 @@ async function fetchEvents(from: string, to: string): Promise<CalendarEvent[]> {
 }
 
 export function useCalendarEvents(from: string, to: string) {
+  const { activeId } = useActiveWorkspace()
   return useQuery({
-    queryKey: calendarKeys.events(from, to),
+    queryKey: calendarKeys.events(activeId, from, to),
     queryFn: () => fetchEvents(from, to),
-    enabled: !!(from && to),
+    enabled: activeId != null && !!(from && to),
   })
 }
 

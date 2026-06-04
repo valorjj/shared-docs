@@ -6,6 +6,7 @@ import { ArrowUpRight, MoreHorizontal, RefreshCw, Trash2 } from 'lucide-react'
 import { Menu, MenuItem } from '../../../components/ui/Menu'
 import ConfirmDialog from '../../../components/ui/ConfirmDialog'
 import { apiClient } from '../../../api/client'
+import { useActiveWorkspace } from '../../../auth/useActiveWorkspace'
 import { calcKeys } from '../api'
 import { formatCurrency, formatKRW } from '../format'
 import { CALC_MODE_LABELS, type CalcEntry, type CalcMode } from '../types'
@@ -24,6 +25,7 @@ type Attrs = {
 export default function CalcSnapshotCard(props: NodeViewProps) {
   const attrs = props.node.attrs as Attrs
   const qc = useQueryClient()
+  const { activeId } = useActiveWorkspace()
   const [refreshing, setRefreshing] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
 
@@ -36,7 +38,7 @@ export default function CalcSnapshotCard(props: NodeViewProps) {
     setRefreshing(true)
     try {
       const fresh = await qc.fetchQuery<CalcEntry>({
-        queryKey: calcKeys.detail(attrs.entryId),
+        queryKey: calcKeys.detail(activeId, attrs.entryId),
         queryFn: async () => {
           const { data } = await apiClient.get<CalcEntry>(`/api/calc/${attrs.entryId}`)
           return data

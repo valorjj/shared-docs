@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '../../api/client'
+import { useActiveWorkspace } from '../../auth/useActiveWorkspace'
 import { MAX_IMAGE_BYTES, MAX_IMAGE_LABEL, absoluteFileUrl } from '../../lib/files'
 import type {
   Attachment,
@@ -15,13 +16,16 @@ import type {
 export { MAX_IMAGE_BYTES, absoluteFileUrl }
 
 export const noteKeys = {
-  list: () => ['notes', 'list'] as const,
-  attachments: (noteId: number) => ['notes', 'attachments', noteId] as const,
+  // Workspace-scoped: prefix for invalidating all of a workspace's note queries.
+  scope: (wsId: number | null) => ['notes', wsId] as const,
+  list: (wsId: number | null) => ['notes', wsId, 'list'] as const,
+  attachments: (wsId: number | null, noteId: number) =>
+    ['notes', wsId, 'attachments', noteId] as const,
   // Tombstone hydration cache — keyed separately from list so referrer
   // resolves for soft-deleted notes don't poison the active list.
-  tombstone: (id: number) => ['notes', 'tombstone', id] as const,
-  referrers: (id: number) => ['notes', 'referrers', id] as const,
-  trash: () => ['notes', 'trash'] as const,
+  tombstone: (wsId: number | null, id: number) => ['notes', wsId, 'tombstone', id] as const,
+  referrers: (wsId: number | null, id: number) => ['notes', wsId, 'referrers', id] as const,
+  trash: (wsId: number | null) => ['notes', wsId, 'trash'] as const,
 }
 
 async function fetchNotes(): Promise<Note[]> {
@@ -93,27 +97,33 @@ async function deleteAttachmentReq(id: number): Promise<void> {
 }
 
 export function useNotes() {
-  return useQuery({ queryKey: noteKeys.list(), queryFn: fetchNotes })
+  const { activeId } = useActiveWorkspace()
+  return useQuery({
+    queryKey: noteKeys.list(activeId),
+    queryFn: fetchNotes,
+    enabled: activeId != null,
+  })
 }
 
 export function useCreateNote() {
   const qc = useQueryClient()
+  const { activeId } = useActiveWorkspace()
   return useMutation({
     mutationFn: (payload: CreateNotePayload) => createNoteReq(payload),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: noteKeys.list() })
-      qc.invalidateQueries({ queryKey: ['notes', 'referrers'] })
+      qc.invalidateQueries({ queryKey: noteKeys.scope(activeId) })
     },
   })
 }
 
 export function useUpdateNote() {
   const qc = useQueryClient()
+  const { activeId } = useActiveWorkspace()
   return useMutation({
     mutationFn: ({ id, payload }: { id: number; payload: UpdateNotePayload }) =>
       updateNoteReq(id, payload),
     onSuccess: (updated, vars) => {
-      qc.setQueryData<Note[]>(noteKeys.list(), (prev) => {
+      qc.setQueryData<Note[]>(noteKeys.list(activeId), (prev) => {
         if (!prev) return prev
         return prev
           .map((n) => (n.id === updated.id ? updated : n))
@@ -124,9 +134,11 @@ export function useUpdateNote() {
       })
       // Body edit may have added/removed backlinks — every other note's
       // referrer list could be affected. Coarse invalidation is the
-      // simplest correct option; payload counts are small.
+      // simplest correct option; payload counts are small. Scoped to the
+      // active workspace's referrer queries so the optimistic list update
+      // above survives.
       if (vars.payload.body !== undefined) {
-        qc.invalidateQueries({ queryKey: ['notes', 'referrers'] })
+        qc.invalidateQueries({ queryKey: ['notes', activeId, 'referrers'] })
       }
     },
   })
@@ -134,46 +146,47 @@ export function useUpdateNote() {
 
 export function useDeleteNote() {
   const qc = useQueryClient()
+  const { activeId } = useActiveWorkspace()
   return useMutation({
     mutationFn: (id: number) => deleteNoteReq(id),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: noteKeys.list() })
-      // Trash counter in the sidebar reflects this query — invalidate
-      // so the badge updates without waiting for a trash visit.
-      qc.invalidateQueries({ queryKey: noteKeys.trash() })
-      // Soft-deleted notes survive as tombstones in referrer panels —
-      // every existing referrer query may now show a different shell.
-      qc.invalidateQueries({ queryKey: ['notes', 'referrers'] })
-      qc.invalidateQueries({ queryKey: ['notes', 'tombstone'] })
+      // Broad scope invalidation covers list, trash (sidebar badge),
+      // referrers, and tombstone in one shot — can't miss a subkey.
+      // Trash counter in the sidebar updates without waiting for a visit;
+      // referrer/tombstone panels re-resolve the new soft-deleted shell.
+      qc.invalidateQueries({ queryKey: noteKeys.scope(activeId) })
     },
   })
 }
 
 export function useAttachments(noteId: number | null) {
+  const { activeId } = useActiveWorkspace()
   return useQuery({
-    queryKey: noteKeys.attachments(noteId ?? 0),
+    queryKey: noteKeys.attachments(activeId, noteId ?? 0),
     queryFn: () => listAttachmentsReq(noteId as number),
-    enabled: noteId !== null,
+    enabled: noteId !== null && activeId != null,
   })
 }
 
 export function useUploadAttachment() {
   const qc = useQueryClient()
+  const { activeId } = useActiveWorkspace()
   return useMutation({
     mutationFn: ({ noteId, file }: { noteId: number; file: File }) =>
       uploadAttachmentReq(noteId, file),
     onSuccess: (att) => {
-      qc.invalidateQueries({ queryKey: noteKeys.attachments(att.noteId) })
+      qc.invalidateQueries({ queryKey: noteKeys.attachments(activeId, att.noteId) })
     },
   })
 }
 
 export function useDeleteAttachment() {
   const qc = useQueryClient()
+  const { activeId } = useActiveWorkspace()
   return useMutation({
     mutationFn: ({ id }: { id: number; noteId: number }) => deleteAttachmentReq(id),
     onSuccess: (_void, vars) => {
-      qc.invalidateQueries({ queryKey: noteKeys.attachments(vars.noteId) })
+      qc.invalidateQueries({ queryKey: noteKeys.attachments(activeId, vars.noteId) })
     },
   })
 }
@@ -186,20 +199,22 @@ export function useDeleteAttachment() {
  *  deleted note (DELETE /forever) — retrying gains nothing and would burn
  *  4 round-trips for every chip pointing at a missing id. */
 export function useTombstoneNote(id: number | null) {
+  const { activeId } = useActiveWorkspace()
   return useQuery({
-    queryKey: id == null ? [] : noteKeys.tombstone(id),
+    queryKey: id == null ? [] : noteKeys.tombstone(activeId, id),
     queryFn: () => fetchNoteIncludingDeletedReq(id as number),
-    enabled: id !== null,
+    enabled: id !== null && activeId != null,
     staleTime: 5 * 60 * 1000,
     retry: false,
   })
 }
 
 export function useNoteReferrers(id: number | null) {
+  const { activeId } = useActiveWorkspace()
   return useQuery({
-    queryKey: id == null ? [] : noteKeys.referrers(id),
+    queryKey: id == null ? [] : noteKeys.referrers(activeId, id),
     queryFn: () => fetchReferrersReq(id as number),
-    enabled: id !== null,
+    enabled: id !== null && activeId != null,
   })
 }
 
@@ -208,33 +223,34 @@ export function useNoteReferrers(id: number | null) {
  *  Previously gated on `filter.kind === 'trash'`, but the lazy version
  *  showed a stale "0" on the badge until the user visited trash. */
 export function useTrashNotes() {
+  const { activeId } = useActiveWorkspace()
   return useQuery({
-    queryKey: noteKeys.trash(),
+    queryKey: noteKeys.trash(activeId),
     queryFn: fetchTrashReq,
+    enabled: activeId != null,
   })
 }
 
 export function useRestoreNote() {
   const qc = useQueryClient()
+  const { activeId } = useActiveWorkspace()
   return useMutation({
     mutationFn: (id: number) => restoreNoteReq(id),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: noteKeys.list() })
-      qc.invalidateQueries({ queryKey: noteKeys.trash() })
-      qc.invalidateQueries({ queryKey: ['notes', 'referrers'] })
-      qc.invalidateQueries({ queryKey: ['notes', 'tombstone'] })
+      // Broad scope covers list, trash, referrers, and tombstone at once.
+      qc.invalidateQueries({ queryKey: noteKeys.scope(activeId) })
     },
   })
 }
 
 export function useDeleteForever() {
   const qc = useQueryClient()
+  const { activeId } = useActiveWorkspace()
   return useMutation({
     mutationFn: (id: number) => deleteForeverReq(id),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: noteKeys.trash() })
-      qc.invalidateQueries({ queryKey: ['notes', 'referrers'] })
-      qc.invalidateQueries({ queryKey: ['notes', 'tombstone'] })
+      // Broad scope covers trash, referrers, and tombstone at once.
+      qc.invalidateQueries({ queryKey: noteKeys.scope(activeId) })
     },
   })
 }

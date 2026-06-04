@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '../../api/client'
+import { useActiveWorkspace } from '../../auth/useActiveWorkspace'
 import type {
   CreateSheetPayload,
   SheetFull,
@@ -8,8 +9,9 @@ import type {
 } from './types'
 
 export const sheetKeys = {
-  list: () => ['sheets', 'list'] as const,
-  detail: (id: number) => ['sheets', 'detail', id] as const,
+  scope: (wsId: number | null) => ['sheets', wsId] as const,
+  list: (wsId: number | null) => ['sheets', wsId, 'list'] as const,
+  detail: (wsId: number | null, id: number) => ['sheets', wsId, 'detail', id] as const,
 }
 
 async function fetchSheets(): Promise<SheetSummary[]> {
@@ -37,36 +39,44 @@ async function deleteSheetReq(id: number): Promise<void> {
 }
 
 export function useSheets() {
-  return useQuery({ queryKey: sheetKeys.list(), queryFn: fetchSheets })
+  const { activeId } = useActiveWorkspace()
+  return useQuery({
+    queryKey: sheetKeys.list(activeId),
+    queryFn: fetchSheets,
+    enabled: activeId != null,
+  })
 }
 
 export function useSheet(id: number | null) {
+  const { activeId } = useActiveWorkspace()
   return useQuery({
-    queryKey: sheetKeys.detail(id ?? 0),
+    queryKey: sheetKeys.detail(activeId, id ?? 0),
     queryFn: () => fetchSheet(id as number),
-    enabled: id !== null,
+    enabled: id !== null && activeId != null,
   })
 }
 
 export function useCreateSheet() {
   const qc = useQueryClient()
+  const { activeId } = useActiveWorkspace()
   return useMutation({
     mutationFn: (payload: CreateSheetPayload) => createSheetReq(payload),
     onSuccess: (created) => {
-      qc.invalidateQueries({ queryKey: sheetKeys.list() })
-      qc.setQueryData(sheetKeys.detail(created.id), created)
+      qc.invalidateQueries({ queryKey: sheetKeys.list(activeId) })
+      qc.setQueryData(sheetKeys.detail(activeId, created.id), created)
     },
   })
 }
 
 export function useUpdateSheet() {
   const qc = useQueryClient()
+  const { activeId } = useActiveWorkspace()
   return useMutation({
     mutationFn: ({ id, payload }: { id: number; payload: UpdateSheetPayload }) =>
       updateSheetReq(id, payload),
     onSuccess: (updated) => {
-      qc.setQueryData(sheetKeys.detail(updated.id), updated)
-      qc.setQueryData<SheetSummary[]>(sheetKeys.list(), (prev) => {
+      qc.setQueryData(sheetKeys.detail(activeId, updated.id), updated)
+      qc.setQueryData<SheetSummary[]>(sheetKeys.list(activeId), (prev) => {
         if (!prev) return prev
         const summary: SheetSummary = {
           id: updated.id,
@@ -89,11 +99,12 @@ export function useUpdateSheet() {
 
 export function useDeleteSheet() {
   const qc = useQueryClient()
+  const { activeId } = useActiveWorkspace()
   return useMutation({
     mutationFn: (id: number) => deleteSheetReq(id),
     onSuccess: (_v, id) => {
-      qc.invalidateQueries({ queryKey: sheetKeys.list() })
-      qc.removeQueries({ queryKey: sheetKeys.detail(id) })
+      qc.invalidateQueries({ queryKey: sheetKeys.list(activeId) })
+      qc.removeQueries({ queryKey: sheetKeys.detail(activeId, id) })
     },
   })
 }

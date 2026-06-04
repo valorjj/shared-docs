@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '../../api/client'
+import { useActiveWorkspace } from '../../auth/useActiveWorkspace'
 
 export type UsefulLinkUserRef = {
   userId: number
@@ -64,7 +65,10 @@ export type UpdateUsefulLinkPayload = {
 }
 
 export const linkKeys = {
-  list: () => ['links', 'list'] as const,
+  // Workspace-scoped: prefix for invalidating all of a workspace's link queries.
+  scope: (wsId: number | null) => ['links', wsId] as const,
+  list: (wsId: number | null) => ['links', wsId, 'list'] as const,
+  // Categories are global (admin-managed), not workspace-scoped.
   categories: () => ['link-categories'] as const,
   preview: (url: string) => ['links', 'preview', url] as const,
 }
@@ -104,7 +108,12 @@ async function deleteLinkReq(id: number): Promise<void> {
 }
 
 export function useUsefulLinks() {
-  return useQuery({ queryKey: linkKeys.list(), queryFn: fetchLinks })
+  const { activeId } = useActiveWorkspace()
+  return useQuery({
+    queryKey: linkKeys.list(activeId),
+    queryFn: fetchLinks,
+    enabled: activeId != null,
+  })
 }
 
 export function useUsefulLinkCategories() {
@@ -132,19 +141,21 @@ export function useLinkPreview(url: string, enabled: boolean) {
 
 export function useCreateUsefulLink() {
   const qc = useQueryClient()
+  const { activeId } = useActiveWorkspace()
   return useMutation({
     mutationFn: (payload: CreateUsefulLinkPayload) => createLinkReq(payload),
-    onSuccess: () => qc.invalidateQueries({ queryKey: linkKeys.list() }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: linkKeys.list(activeId) }),
   })
 }
 
 export function useUpdateUsefulLink() {
   const qc = useQueryClient()
+  const { activeId } = useActiveWorkspace()
   return useMutation({
     mutationFn: ({ id, payload }: { id: number; payload: UpdateUsefulLinkPayload }) =>
       updateLinkReq(id, payload),
     onSuccess: (updated) => {
-      qc.setQueryData<UsefulLink[]>(linkKeys.list(), (prev) => {
+      qc.setQueryData<UsefulLink[]>(linkKeys.list(activeId), (prev) => {
         if (!prev) return prev
         return prev
           .map((l) => (l.id === updated.id ? updated : l))
@@ -159,16 +170,18 @@ export function useUpdateUsefulLink() {
 
 export function useRefreshLinkMeta() {
   const qc = useQueryClient()
+  const { activeId } = useActiveWorkspace()
   return useMutation({
     mutationFn: (id: number) => refreshLinkMetaReq(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: linkKeys.list() }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: linkKeys.list(activeId) }),
   })
 }
 
 export function useDeleteUsefulLink() {
   const qc = useQueryClient()
+  const { activeId } = useActiveWorkspace()
   return useMutation({
     mutationFn: (id: number) => deleteLinkReq(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: linkKeys.list() }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: linkKeys.list(activeId) }),
   })
 }

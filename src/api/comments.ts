@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from './client'
+import { useActiveWorkspace } from '../auth/useActiveWorkspace'
 
 export type CommentAuthor = {
   userId: number | null     // null for legacy pre-auth comments
@@ -27,7 +28,8 @@ export type UpdateCommentRequest = {
 
 export const commentKeys = {
   all: ['comments'] as const,
-  byPage: (pageId: string) => ['comments', pageId] as const,
+  scope: (wsId: number | null) => ['comments', wsId] as const,
+  byPage: (wsId: number | null, pageId: string) => ['comments', wsId, pageId] as const,
 }
 
 async function listComments(pageId: string): Promise<Comment[]> {
@@ -50,20 +52,22 @@ async function deleteComment(id: number): Promise<void> {
 }
 
 export function useComments(pageId: string) {
+  const { activeId } = useActiveWorkspace()
   return useQuery({
-    queryKey: commentKeys.byPage(pageId),
+    queryKey: commentKeys.byPage(activeId, pageId),
     queryFn: () => listComments(pageId),
-    enabled: !!pageId,
+    enabled: activeId != null && !!pageId,
   })
 }
 
 export function useCreateComment(pageId: string) {
   const qc = useQueryClient()
+  const { activeId } = useActiveWorkspace()
   return useMutation({
     mutationFn: (request: Omit<CreateCommentRequest, 'pageId'>) =>
       createComment({ ...request, pageId }),
     onSuccess: (created) => {
-      qc.setQueryData<Comment[]>(commentKeys.byPage(pageId), (prev) =>
+      qc.setQueryData<Comment[]>(commentKeys.byPage(activeId, pageId), (prev) =>
         prev ? [...prev, created] : [created],
       )
     },
@@ -72,11 +76,12 @@ export function useCreateComment(pageId: string) {
 
 export function useUpdateComment(pageId: string) {
   const qc = useQueryClient()
+  const { activeId } = useActiveWorkspace()
   return useMutation({
     mutationFn: ({ id, content }: { id: number; content: string }) =>
       updateComment(id, { content }),
     onSuccess: (updated) => {
-      qc.setQueryData<Comment[]>(commentKeys.byPage(pageId), (prev) =>
+      qc.setQueryData<Comment[]>(commentKeys.byPage(activeId, pageId), (prev) =>
         prev?.map((c) => (c.id === updated.id ? updated : c)) ?? [updated],
       )
     },
@@ -85,10 +90,11 @@ export function useUpdateComment(pageId: string) {
 
 export function useDeleteComment(pageId: string) {
   const qc = useQueryClient()
+  const { activeId } = useActiveWorkspace()
   return useMutation({
     mutationFn: (id: number) => deleteComment(id),
     onSuccess: (_void, id) => {
-      qc.setQueryData<Comment[]>(commentKeys.byPage(pageId), (prev) =>
+      qc.setQueryData<Comment[]>(commentKeys.byPage(activeId, pageId), (prev) =>
         prev?.filter((c) => c.id !== id) ?? [],
       )
     },

@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '../../api/client'
+import { useActiveWorkspace } from '../../auth/useActiveWorkspace'
 
 export type SettlementUserRef = {
   userId: number
@@ -29,7 +30,10 @@ export type CreateSettlementPayload = {
 }
 
 export const settlementKeys = {
-  list: (yearMonth: string) => ['settlements', 'list', yearMonth] as const,
+  // Workspace-scoped: prefix for invalidating all of a workspace's settlement queries.
+  scope: (wsId: number | null) => ['settlements', wsId] as const,
+  list: (wsId: number | null, yearMonth: string) =>
+    ['settlements', wsId, 'list', yearMonth] as const,
 }
 
 export async function fetchSettlementList(yearMonth: string): Promise<SettlementRecord[]> {
@@ -50,26 +54,29 @@ async function deleteSettlementReq(id: number): Promise<void> {
 }
 
 export function useSettlements(yearMonth: string) {
+  const { activeId } = useActiveWorkspace()
   return useQuery({
-    queryKey: settlementKeys.list(yearMonth),
+    queryKey: settlementKeys.list(activeId, yearMonth),
     queryFn: () => fetchList(yearMonth),
-    enabled: !!yearMonth,
+    enabled: activeId != null && !!yearMonth,
   })
 }
 
 export function useCreateSettlement() {
   const qc = useQueryClient()
+  const { activeId } = useActiveWorkspace()
   return useMutation({
     mutationFn: (payload: CreateSettlementPayload) => createSettlement(payload),
     onSuccess: (_data, vars) =>
-      qc.invalidateQueries({ queryKey: settlementKeys.list(vars.yearMonth) }),
+      qc.invalidateQueries({ queryKey: settlementKeys.list(activeId, vars.yearMonth) }),
   })
 }
 
 export function useDeleteSettlement(yearMonth: string) {
   const qc = useQueryClient()
+  const { activeId } = useActiveWorkspace()
   return useMutation({
     mutationFn: (id: number) => deleteSettlementReq(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: settlementKeys.list(yearMonth) }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: settlementKeys.list(activeId, yearMonth) }),
   })
 }

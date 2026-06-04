@@ -1,4 +1,5 @@
 import type { QueryClient } from '@tanstack/react-query'
+import { getActiveWorkspaceId } from '../../auth/workspaceStorage'
 import { monthBounds } from '../../lib/format'
 import { fetchPurchaseList, purchaseKeys } from '../purchases/api'
 import { fetchSettlementList, settlementKeys } from '../purchases/settlementApi'
@@ -23,12 +24,16 @@ export async function refreshSnapshot(
   attrs: SnapshotAttrs,
   currentUserId: number | undefined,
 ): Promise<SnapshotFrozen> {
+  // This is a plain helper (no hooks), so read the active workspace from storage
+  // — the same synchronous source the axios interceptor uses — so the cache key
+  // matches the X-Workspace-Id the fetch sends.
+  const wsId = getActiveWorkspaceId()
   switch (attrs.kind) {
     case 'purchase-total': {
       const f = attrs.filter as { month: string; category?: string }
       const range = monthBounds(f.month)
       const rows = await qc.fetchQuery({
-        queryKey: purchaseKeys.list(range),
+        queryKey: purchaseKeys.list(wsId, range),
         queryFn: () => fetchPurchaseList(range.from, range.to),
       })
       return computePurchaseTotal(f, rows)
@@ -38,11 +43,11 @@ export async function refreshSnapshot(
       const range = monthBounds(f.month)
       const [rows, records] = await Promise.all([
         qc.fetchQuery({
-          queryKey: purchaseKeys.list(range),
+          queryKey: purchaseKeys.list(wsId, range),
           queryFn: () => fetchPurchaseList(range.from, range.to),
         }),
         qc.fetchQuery({
-          queryKey: settlementKeys.list(f.month),
+          queryKey: settlementKeys.list(wsId, f.month),
           queryFn: () => fetchSettlementList(f.month),
         }),
       ])
@@ -51,7 +56,7 @@ export async function refreshSnapshot(
     case 'todo-subset': {
       const f = attrs.filter as { status: 'open' | 'done' | 'all'; category?: string }
       const todos = await qc.fetchQuery({
-        queryKey: todoKeys.list('all'),
+        queryKey: todoKeys.list(wsId, 'all'),
         queryFn: () => fetchTodoList('all'),
       })
       return computeTodoSubset(f, todos)
@@ -59,7 +64,7 @@ export async function refreshSnapshot(
     case 'anniversary': {
       const f = attrs.filter as { window: 'upcoming-30' | 'past-year' | 'all' }
       const rows = await qc.fetchQuery({
-        queryKey: anniversaryKeys.list(),
+        queryKey: anniversaryKeys.list(wsId),
         queryFn: fetchAnniversaryList,
       })
       return computeAnniversarySnapshot(f, rows)

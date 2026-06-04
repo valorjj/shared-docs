@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '../../api/client'
+import { useActiveWorkspace } from '../../auth/useActiveWorkspace'
 import type { SplitMode } from './api'
 
 export type RecurringAuthor = {
@@ -41,7 +42,9 @@ export type UpdateRecurringPayload = CreateRecurringPayload & {
 }
 
 export const recurringKeys = {
-  list: () => ['recurring-purchases', 'list'] as const,
+  // Workspace-scoped: prefix for invalidating all of a workspace's recurring queries.
+  scope: (wsId: number | null) => ['recurring-purchases', wsId] as const,
+  list: (wsId: number | null) => ['recurring-purchases', wsId, 'list'] as const,
 }
 
 async function fetchList(): Promise<RecurringPurchase[]> {
@@ -64,34 +67,39 @@ async function deleteRecurringReq(id: number): Promise<void> {
 }
 
 export function useRecurringPurchases() {
+  const { activeId } = useActiveWorkspace()
   return useQuery({
-    queryKey: recurringKeys.list(),
+    queryKey: recurringKeys.list(activeId),
     queryFn: fetchList,
     staleTime: 60_000,
+    enabled: activeId != null,
   })
 }
 
 export function useCreateRecurring() {
   const qc = useQueryClient()
+  const { activeId } = useActiveWorkspace()
   return useMutation({
     mutationFn: (payload: CreateRecurringPayload) => createRecurring(payload),
-    onSuccess: () => qc.invalidateQueries({ queryKey: recurringKeys.list() }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: recurringKeys.list(activeId) }),
   })
 }
 
 export function useUpdateRecurring() {
   const qc = useQueryClient()
+  const { activeId } = useActiveWorkspace()
   return useMutation({
     mutationFn: ({ id, payload }: { id: number; payload: UpdateRecurringPayload }) =>
       updateRecurringReq(id, payload),
-    onSuccess: () => qc.invalidateQueries({ queryKey: recurringKeys.list() }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: recurringKeys.list(activeId) }),
   })
 }
 
 export function useDeleteRecurring() {
   const qc = useQueryClient()
+  const { activeId } = useActiveWorkspace()
   return useMutation({
     mutationFn: (id: number) => deleteRecurringReq(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: recurringKeys.list() }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: recurringKeys.list(activeId) }),
   })
 }

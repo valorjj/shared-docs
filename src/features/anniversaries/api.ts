@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '../../api/client'
+import { useActiveWorkspace } from '../../auth/useActiveWorkspace'
 
 export type AnniversaryUserRef = {
   userId: number
@@ -39,7 +40,10 @@ export type AnniversaryPayload = {
 }
 
 export const anniversaryKeys = {
-  list: () => ['anniversaries', 'list'] as const,
+  // Workspace-scoped: prefix for invalidating all of a workspace's anniversary queries.
+  scope: (wsId: number | null) => ['anniversaries', wsId] as const,
+  list: (wsId: number | null) => ['anniversaries', wsId, 'list'] as const,
+  // Categories are global (admin-managed), not workspace-scoped.
   categories: () => ['anniversary-categories'] as const,
 }
 
@@ -69,7 +73,12 @@ async function deleteReq(id: number): Promise<void> {
 }
 
 export function useAnniversaries() {
-  return useQuery({ queryKey: anniversaryKeys.list(), queryFn: fetchList })
+  const { activeId } = useActiveWorkspace()
+  return useQuery({
+    queryKey: anniversaryKeys.list(activeId),
+    queryFn: fetchList,
+    enabled: activeId != null,
+  })
 }
 
 export function useAnniversaryCategories() {
@@ -82,10 +91,11 @@ export function useAnniversaryCategories() {
 
 export function useCreateAnniversary() {
   const qc = useQueryClient()
+  const { activeId } = useActiveWorkspace()
   return useMutation({
     mutationFn: (payload: AnniversaryPayload) => createReq(payload),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: anniversaryKeys.list() })
+      qc.invalidateQueries({ queryKey: anniversaryKeys.list(activeId) })
       qc.invalidateQueries({ queryKey: ['calendar'] })
     },
   })
@@ -93,11 +103,12 @@ export function useCreateAnniversary() {
 
 export function useUpdateAnniversary() {
   const qc = useQueryClient()
+  const { activeId } = useActiveWorkspace()
   return useMutation({
     mutationFn: ({ id, payload }: { id: number; payload: AnniversaryPayload }) =>
       updateReq(id, payload),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: anniversaryKeys.list() })
+      qc.invalidateQueries({ queryKey: anniversaryKeys.list(activeId) })
       qc.invalidateQueries({ queryKey: ['calendar'] })
     },
   })
@@ -105,10 +116,11 @@ export function useUpdateAnniversary() {
 
 export function useDeleteAnniversary() {
   const qc = useQueryClient()
+  const { activeId } = useActiveWorkspace()
   return useMutation({
     mutationFn: (id: number) => deleteReq(id),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: anniversaryKeys.list() })
+      qc.invalidateQueries({ queryKey: anniversaryKeys.list(activeId) })
       qc.invalidateQueries({ queryKey: ['calendar'] })
     },
   })

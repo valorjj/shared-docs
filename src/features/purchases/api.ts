@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Gift, User, Users, type LucideIcon } from 'lucide-react'
 import { apiClient } from '../../api/client'
+import { useActiveWorkspace } from '../../auth/useActiveWorkspace'
 
 export type Currency = 'KRW' | 'USD' | 'EUR' | 'JPY' | 'GBP' | 'CNY'
 export const SUPPORTED_CURRENCIES: Currency[] = ['KRW', 'USD', 'EUR', 'JPY', 'GBP', 'CNY']
@@ -56,8 +57,10 @@ export type PurchasePayload = {
 }
 
 export const purchaseKeys = {
-  list: (range: { from: string; to: string }) =>
-    ['purchases', 'list', range.from, range.to] as const,
+  // Workspace-scoped: prefix for invalidating all of a workspace's purchase queries.
+  scope: (wsId: number | null) => ['purchases', wsId] as const,
+  list: (wsId: number | null, range: { from: string; to: string }) =>
+    ['purchases', wsId, 'list', range.from, range.to] as const,
   categories: () => ['purchase-categories'] as const,
 }
 
@@ -87,10 +90,11 @@ async function fetchCategories(): Promise<PurchaseCategory[]> {
 }
 
 export function usePurchases(range: { from: string; to: string }) {
+  const { activeId } = useActiveWorkspace()
   return useQuery({
-    queryKey: purchaseKeys.list(range),
+    queryKey: purchaseKeys.list(activeId, range),
     queryFn: () => fetchList(range.from, range.to),
-    enabled: !!(range.from && range.to),
+    enabled: activeId != null && !!(range.from && range.to),
   })
 }
 
@@ -104,26 +108,29 @@ export function usePurchaseCategories() {
 
 export function useCreatePurchase() {
   const qc = useQueryClient()
+  const { activeId } = useActiveWorkspace()
   return useMutation({
     mutationFn: (payload: PurchasePayload) => createPurchase(payload),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['purchases', 'list'] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: purchaseKeys.scope(activeId) }),
   })
 }
 
 export function useUpdatePurchase() {
   const qc = useQueryClient()
+  const { activeId } = useActiveWorkspace()
   return useMutation({
     mutationFn: ({ id, payload }: { id: number; payload: PurchasePayload }) =>
       updatePurchaseReq(id, payload),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['purchases', 'list'] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: purchaseKeys.scope(activeId) }),
   })
 }
 
 export function useDeletePurchase() {
   const qc = useQueryClient()
+  const { activeId } = useActiveWorkspace()
   return useMutation({
     mutationFn: (id: number) => deletePurchaseReq(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['purchases', 'list'] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: purchaseKeys.scope(activeId) }),
   })
 }
 

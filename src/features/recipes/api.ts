@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '../../api/client'
+import { useActiveWorkspace } from '../../auth/useActiveWorkspace'
 import {
   MAX_IMAGE_BYTES,
   MAX_IMAGE_LABEL,
@@ -42,8 +43,10 @@ export function useUploadFile() {
 }
 
 export const recipeKeys = {
-  list: () => ['recipes', 'list'] as const,
-  detail: (id: number) => ['recipes', 'detail', id] as const,
+  scope: (wsId: number | null) => ['recipes', wsId] as const,
+  list: (wsId: number | null) => ['recipes', wsId, 'list'] as const,
+  detail: (wsId: number | null, id: number) => ['recipes', wsId, 'detail', id] as const,
+  // Categories are global, not workspace-scoped.
   categories: () => ['recipe-categories'] as const,
 }
 
@@ -77,14 +80,20 @@ async function deleteRecipeReq(id: number): Promise<void> {
 }
 
 export function useRecipes() {
-  return useQuery({ queryKey: recipeKeys.list(), queryFn: fetchRecipes })
+  const { activeId } = useActiveWorkspace()
+  return useQuery({
+    queryKey: recipeKeys.list(activeId),
+    queryFn: fetchRecipes,
+    enabled: activeId != null,
+  })
 }
 
 export function useRecipe(id: number | null) {
+  const { activeId } = useActiveWorkspace()
   return useQuery({
-    queryKey: id == null ? [] : recipeKeys.detail(id),
+    queryKey: id == null ? [] : recipeKeys.detail(activeId, id),
     queryFn: () => fetchRecipe(id as number),
-    enabled: id !== null,
+    enabled: activeId != null && id !== null,
   })
 }
 
@@ -98,20 +107,22 @@ export function useRecipeCategories() {
 
 export function useCreateRecipe() {
   const qc = useQueryClient()
+  const { activeId } = useActiveWorkspace()
   return useMutation({
     mutationFn: (payload: CreateRecipePayload) => createRecipeReq(payload),
-    onSuccess: () => qc.invalidateQueries({ queryKey: recipeKeys.list() }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: recipeKeys.list(activeId) }),
   })
 }
 
 export function useUpdateRecipe() {
   const qc = useQueryClient()
+  const { activeId } = useActiveWorkspace()
   return useMutation({
     mutationFn: ({ id, payload }: { id: number; payload: UpdateRecipePayload }) =>
       updateRecipeReq(id, payload),
     onSuccess: (updated) => {
-      qc.setQueryData<Recipe>(recipeKeys.detail(updated.id), updated)
-      qc.setQueryData<Recipe[]>(recipeKeys.list(), (prev) => {
+      qc.setQueryData<Recipe>(recipeKeys.detail(activeId, updated.id), updated)
+      qc.setQueryData<Recipe[]>(recipeKeys.list(activeId), (prev) => {
         if (!prev) return prev
         return prev
           .map((r) => (r.id === updated.id ? updated : r))
@@ -123,8 +134,9 @@ export function useUpdateRecipe() {
 
 export function useDeleteRecipe() {
   const qc = useQueryClient()
+  const { activeId } = useActiveWorkspace()
   return useMutation({
     mutationFn: (id: number) => deleteRecipeReq(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: recipeKeys.list() }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: recipeKeys.list(activeId) }),
   })
 }
