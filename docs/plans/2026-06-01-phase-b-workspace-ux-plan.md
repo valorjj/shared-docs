@@ -1,5 +1,15 @@
 # Phase B — Workspace Integration UX Implementation Plan
 
+> **▶ STATUS (2026-06-04): SHIPPED + DEPLOYED to `main` on both repos.** All 5 tasks done: DB separation (prod now `shared_docs_prod`, dev `shared_docs`, tests `shared_docs_test`), optional server-generated slug, create-workspace form/modal + switcher "+ 새 워크스페이스", zero-workspace onboarding + MobileShell gate. Backend 28/28 tests green; frontend tsc + build green.
+>
+> **Follow-ups that landed after the original plan (all on `main`):** (1) axios interceptor must NOT attach `X-Workspace-Id` to `/api/workspaces` & `/api/auth` (a stale id 403s the recovery endpoint); (2) provider clears a stale stored id; (3) workspace switching made reactive (active id is React state); (4) **the "recommended follow-up" is DONE** — every resource React Query key is now workspace-scoped `['<feature>', wsId, …]` via a `scope(wsId)` helper, so switching auto-fetches + caches per workspace (the `resetQueries` hack was removed).
+>
+> **▶ RESUME POINT:** the only open item is **live acceptance + tagging**. Have the user confirm on the deployed app (https://shared-docs-nine.vercel.app or their custom domain): sign-in bootstraps a workspace in `shared_docs_prod`; create a 2nd workspace (name only); **switch between workspaces → loader + correct data, switch-back instant (cached)**; zero-workspace onboarding. If all good, **tag `phase-b-complete`** on BOTH repos (`git tag -f phase-b-complete && git push -f origin phase-b-complete`) and update memory.
+>
+> **Branch cleanup (optional):** `phase-b`, `ws-query-keys` (frontend) and `phase-b` (backend) are all == `main` now and can be deleted. `v2-multi-tenant` also == `main`.
+>
+> **Next phase:** Phase C (per-workspace categories + onboarding seed — categories are still global) or Phase D (invitations), per `docs/ROADMAP.md`. Known debt: pre-existing eslint `no-explicit-any` / "component created during render" in unrelated components (calc/embed, notes/editor) — not touched.
+>
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Make the workspace experience never-stuck (zero-workspace onboarding instead of a 400-storm), let users create a workspace with a name only, and stop the deployed backend from sharing a database with local dev.
