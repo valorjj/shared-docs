@@ -13,7 +13,7 @@ import {
 import ConfirmDialog from '../../components/ui/ConfirmDialog'
 import {
   CATEGORY_KIND_LABELS,
-  useAdminCategories,
+  useManagedCategories,
   useCreateCategory,
   useDeleteCategory,
   useUpdateCategory,
@@ -25,7 +25,7 @@ import styles from './CategoryAdminPanel.module.css'
 type Props = { kind: CategoryKind }
 
 export default function CategoryAdminPanel({ kind }: Props) {
-  const { data, isLoading, isError, refetch } = useAdminCategories(kind)
+  const { data, isLoading, isError, refetch } = useManagedCategories(kind)
   const create = useCreateCategory(kind)
   const update = useUpdateCategory(kind)
   const del = useDeleteCategory(kind)
@@ -39,7 +39,7 @@ export default function CategoryAdminPanel({ kind }: Props) {
     const idx = sorted.findIndex((r) => r.id === row.id)
     const swap = sorted[idx + direction]
     if (!swap) return
-    // Swap the two rows' sortOrder values. PATCH /admin/<kind>-categories/:id
+    // Swap the two rows' sortOrder values. PATCH /api/<kind>-categories/:id
     // takes the full payload (name is required), so spread the rest as-is.
     update.mutate({
       id: row.id,

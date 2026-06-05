@@ -43,8 +43,8 @@ export const anniversaryKeys = {
   // Workspace-scoped: prefix for invalidating all of a workspace's anniversary queries.
   scope: (wsId: number | null) => ['anniversaries', wsId] as const,
   list: (wsId: number | null) => ['anniversaries', wsId, 'list'] as const,
-  // Categories are global (admin-managed), not workspace-scoped.
-  categories: () => ['anniversary-categories'] as const,
+  // Workspace-scoped (Phase C): each workspace has its own categories.
+  categories: (wsId: number | null) => ['anniversary-categories', wsId] as const,
 }
 
 export async function fetchAnniversaryList(): Promise<Anniversary[]> {
@@ -82,9 +82,11 @@ export function useAnniversaries() {
 }
 
 export function useAnniversaryCategories() {
+  const { activeId } = useActiveWorkspace()
   return useQuery({
-    queryKey: anniversaryKeys.categories(),
+    queryKey: anniversaryKeys.categories(activeId),
     queryFn: fetchCategories,
+    enabled: activeId != null,
     staleTime: 5 * 60_000,
   })
 }

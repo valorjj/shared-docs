@@ -68,8 +68,8 @@ export const linkKeys = {
   // Workspace-scoped: prefix for invalidating all of a workspace's link queries.
   scope: (wsId: number | null) => ['links', wsId] as const,
   list: (wsId: number | null) => ['links', wsId, 'list'] as const,
-  // Categories are global (admin-managed), not workspace-scoped.
-  categories: () => ['link-categories'] as const,
+  // Workspace-scoped (Phase C): each workspace has its own categories.
+  categories: (wsId: number | null) => ['link-categories', wsId] as const,
   preview: (url: string) => ['links', 'preview', url] as const,
 }
 
@@ -117,10 +117,12 @@ export function useUsefulLinks() {
 }
 
 export function useUsefulLinkCategories() {
+  const { activeId } = useActiveWorkspace()
   return useQuery({
-    queryKey: linkKeys.categories(),
+    queryKey: linkKeys.categories(activeId),
     queryFn: fetchLinkCategories,
-    // Categories rarely change at runtime; admin-curated.
+    enabled: activeId != null,
+    // Categories rarely change at runtime; member-curated per workspace.
     staleTime: 10 * 60 * 1000,
   })
 }

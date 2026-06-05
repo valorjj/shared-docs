@@ -46,8 +46,8 @@ export const todoKeys = {
   // Workspace-scoped: prefix for invalidating all of a workspace's todo queries.
   scope: (wsId: number | null) => ['todos', wsId] as const,
   list: (wsId: number | null, filter: TodoFilter) => ['todos', wsId, 'list', filter] as const,
-  // Categories are global (admin-managed), not workspace-scoped (Phase A decision).
-  categories: () => ['todo-categories'] as const,
+  // Workspace-scoped (Phase C): each workspace has its own categories.
+  categories: (wsId: number | null) => ['todo-categories', wsId] as const,
 }
 
 export async function fetchTodoList(filter: TodoFilter): Promise<Todo[]> {
@@ -90,9 +90,11 @@ export function useTodos(filter: TodoFilter) {
 }
 
 export function useTodoCategories() {
+  const { activeId } = useActiveWorkspace()
   return useQuery({
-    queryKey: todoKeys.categories(),
+    queryKey: todoKeys.categories(activeId),
     queryFn: fetchCategories,
+    enabled: activeId != null,
     staleTime: 5 * 60_000,
   })
 }

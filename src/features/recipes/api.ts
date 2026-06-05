@@ -46,8 +46,8 @@ export const recipeKeys = {
   scope: (wsId: number | null) => ['recipes', wsId] as const,
   list: (wsId: number | null) => ['recipes', wsId, 'list'] as const,
   detail: (wsId: number | null, id: number) => ['recipes', wsId, 'detail', id] as const,
-  // Categories are global, not workspace-scoped.
-  categories: () => ['recipe-categories'] as const,
+  // Workspace-scoped (Phase C): each workspace has its own categories.
+  categories: (wsId: number | null) => ['recipe-categories', wsId] as const,
 }
 
 async function fetchRecipes(): Promise<Recipe[]> {
@@ -98,9 +98,11 @@ export function useRecipe(id: number | null) {
 }
 
 export function useRecipeCategories() {
+  const { activeId } = useActiveWorkspace()
   return useQuery({
-    queryKey: recipeKeys.categories(),
+    queryKey: recipeKeys.categories(activeId),
     queryFn: fetchRecipeCategories,
+    enabled: activeId != null,
     staleTime: 10 * 60 * 1000,
   })
 }

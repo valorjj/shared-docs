@@ -61,7 +61,8 @@ export const purchaseKeys = {
   scope: (wsId: number | null) => ['purchases', wsId] as const,
   list: (wsId: number | null, range: { from: string; to: string }) =>
     ['purchases', wsId, 'list', range.from, range.to] as const,
-  categories: () => ['purchase-categories'] as const,
+  // Workspace-scoped (Phase C): each workspace has its own categories.
+  categories: (wsId: number | null) => ['purchase-categories', wsId] as const,
 }
 
 export async function fetchPurchaseList(from: string, to: string): Promise<Purchase[]> {
@@ -99,9 +100,11 @@ export function usePurchases(range: { from: string; to: string }) {
 }
 
 export function usePurchaseCategories() {
+  const { activeId } = useActiveWorkspace()
   return useQuery({
-    queryKey: purchaseKeys.categories(),
+    queryKey: purchaseKeys.categories(activeId),
     queryFn: fetchCategories,
+    enabled: activeId != null,
     staleTime: 5 * 60_000,
   })
 }

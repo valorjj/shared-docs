@@ -1,5 +1,5 @@
 import * as Dialog from '@radix-ui/react-dialog'
-import { LogOut, X } from 'lucide-react'
+import { LogOut, Tags, X } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
 import { useSettings } from './settingsContext'
@@ -72,6 +72,23 @@ export default function SettingsDialog() {
               />
             ))}
           </Section>
+
+          {user && (
+            <section className={styles.section}>
+              <div className={styles.sectionLabel}>워크스페이스</div>
+              <button
+                type="button"
+                className={styles.navRow}
+                onClick={() => {
+                  s.setDialogOpen(false)
+                  navigate('/settings/categories')
+                }}
+              >
+                <Tags size={15} strokeWidth={1.75} aria-hidden="true" />
+                카테고리 관리
+              </button>
+            </section>
+          )}
 
           {user && (
             <section className={styles.section}>

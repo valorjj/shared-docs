@@ -10,7 +10,7 @@ import {
 } from '../components/ui'
 import CategoryAdminPanel from '../features/admin/CategoryAdminPanel'
 import { CATEGORY_KIND_LABELS, type CategoryKind } from '../api/categoryAdmin'
-import styles from './AdminCategories.module.css'
+import styles from './SettingsCategories.module.css'
 
 const TAB_ITEMS: TabItem<CategoryKind>[] = (
   ['purchase', 'todo', 'anniversary', 'link', 'recipe'] as const
@@ -20,7 +20,13 @@ function isCategoryKind(v: string | null): v is CategoryKind {
   return v === 'purchase' || v === 'todo' || v === 'anniversary' || v === 'link' || v === 'recipe'
 }
 
-export default function AdminCategories() {
+/**
+ * Phase C: per-workspace category management. Any workspace member can manage
+ * the categories of the active workspace here (no longer an ADMIN-only screen).
+ * Reuses CategoryAdminPanel; the hooks are workspace-scoped via the active
+ * workspace + the X-Workspace-Id header.
+ */
+export default function SettingsCategories() {
   const [params, setParams] = useSearchParams()
   // Tab value is *derived* from the URL — no useState/useEffect sync.
   const tabParam = params.get('tab')
@@ -35,12 +41,12 @@ export default function AdminCategories() {
   return (
     <Page>
       <PageHeader>
-        <BackLink to="/admin">관리</BackLink>
-        <PageTitle icon={<Tags size={22} strokeWidth={2} />}>카테고리 관리</PageTitle>
+        <BackLink to="/" mobileOnly>홈</BackLink>
+        <PageTitle icon={<Tags size={22} strokeWidth={2} />}>카테고리</PageTitle>
       </PageHeader>
 
       <p className={styles.intro}>
-        각 피처(구매·할 일·기념일·링크·레시피)에서 쓰는 카테고리를 여기서 관리해요.
+        이 워크스페이스의 카테고리를 관리해요(구매·할 일·기념일·링크·레시피).
         이름 옆 색상은 캘린더의 점이나 그래프에서 사용됩니다.
       </p>
 

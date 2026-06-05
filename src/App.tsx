@@ -20,7 +20,7 @@ const RecipeEditor     = lazy(() => import('./features/recipes/RecipeEditor'))
 const CalendarPage     = lazy(() => import('./pages/CalendarPage'))
 const CalcWorkspace    = lazy(() => import('./features/calc/CalcWorkspace'))
 const Admin            = lazy(() => import('./pages/Admin'))
-const AdminCategories  = lazy(() => import('./pages/AdminCategories'))
+const SettingsCategories = lazy(() => import('./pages/SettingsCategories'))
 
 function RouteFallback() {
   return (
@@ -60,10 +60,11 @@ function App() {
             </Route>
             <Route path="/calendar" element={<CalendarPage />} />
             <Route path="/calc" element={<CalcWorkspace />} />
+            {/* Per-workspace category management — any member (Phase C). */}
+            <Route path="/settings/categories" element={<SettingsCategories />} />
 
             <Route element={<RequireRole role="ADMIN" />}>
               <Route path="/admin" element={<Admin />} />
-              <Route path="/admin/categories" element={<AdminCategories />} />
             </Route>
           </Route>
         </Route>
