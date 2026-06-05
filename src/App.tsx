@@ -21,6 +21,8 @@ const CalendarPage     = lazy(() => import('./pages/CalendarPage'))
 const CalcWorkspace    = lazy(() => import('./features/calc/CalcWorkspace'))
 const Admin            = lazy(() => import('./pages/Admin'))
 const SettingsCategories = lazy(() => import('./pages/SettingsCategories'))
+const SettingsMembers  = lazy(() => import('./pages/SettingsMembers'))
+const InviteClaim      = lazy(() => import('./pages/InviteClaim'))
 
 function RouteFallback() {
   return (
@@ -45,6 +47,8 @@ function App() {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
+        {/* Public: the page itself sends the visitor through Google sign-in if needed. */}
+        <Route path="/invite/:token" element={<InviteClaim />} />
 
         <Route element={<RequireAuth />}>
           <Route element={<MobileShell />}>
@@ -62,6 +66,8 @@ function App() {
             <Route path="/calc" element={<CalcWorkspace />} />
             {/* Per-workspace category management — any member (Phase C). */}
             <Route path="/settings/categories" element={<SettingsCategories />} />
+            {/* Per-workspace member management + invitations (Phase D). */}
+            <Route path="/settings/members" element={<SettingsMembers />} />
 
             <Route element={<RequireRole role="ADMIN" />}>
               <Route path="/admin" element={<Admin />} />

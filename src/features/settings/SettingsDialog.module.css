@@ -165,6 +165,10 @@
   transition: background var(--t-fast), border-color var(--t-fast), color var(--t-fast);
 }
 
+.navRow + .navRow {
+  margin-top: 6px;
+}
+
 .navRow:hover,
 .navRow:focus-visible {
   background: var(--c-surface-tint);

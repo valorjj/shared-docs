@@ -1,0 +1,60 @@
+.screen {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-4);
+  font-family: var(--font-sans);
+  color: var(--c-text);
+}
+
+.card {
+  width: min(420px, 100%);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  background: var(--c-surface);
+  padding: var(--sp-5) var(--sp-5) var(--sp-4);
+  text-align: center;
+}
+
+.icon {
+  color: var(--c-text-muted);
+  margin-bottom: var(--sp-3);
+}
+
+.title {
+  font-family: var(--font-serif);
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-semi);
+  margin: 0 0 var(--sp-2);
+  line-height: 1.4;
+}
+
+.workspace {
+  color: var(--c-accent);
+}
+
+.body {
+  font-size: var(--fs-sm);
+  color: var(--c-text-muted);
+  line-height: 1.6;
+  margin: 0 0 var(--sp-4);
+}
+
+.email {
+  font-weight: var(--fw-medium);
+  color: var(--c-text);
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  align-items: stretch;
+}
+
+.muted {
+  font-size: var(--fs-xs);
+  color: var(--c-text-placeholder);
+  margin: var(--sp-2) 0 0;
+}

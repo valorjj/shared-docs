@@ -48,8 +48,13 @@ apiClient.interceptors.request.use((config) => {
   // WorkspaceContextFilter 403s any request carrying it — so attaching it to
   // /api/workspaces would 403 the very call the client uses to re-discover its
   // workspaces, leaving the app permanently stuck.
+  // /api/invitations is workspace-agnostic too: a brand-new invitee may have a
+  // stale/no active workspace when they hit the claim endpoint, and attaching a
+  // bad X-Workspace-Id would get the request 403'd by WorkspaceContextFilter
+  // before the token-based claim even runs.
   const url = config.url ?? ''
-  const workspaceAgnostic = url.startsWith('/api/workspaces') || url.startsWith('/api/auth')
+  const workspaceAgnostic =
+    url.startsWith('/api/workspaces') || url.startsWith('/api/auth') || url.startsWith('/api/invitations')
   const workspaceId = getActiveWorkspaceId()
   if (workspaceId != null && !workspaceAgnostic) {
     config.headers['X-Workspace-Id'] = String(workspaceId)
