@@ -1,12 +1,25 @@
 # Phase C — Per-workspace categories + onboarding seed
 
-> Status: **PLANNED — not started.** Written 2026-06-04, right after Phase B was tagged
-> `phase-b-complete` (backend `7e4fb98`, frontend `5a6d8f7`).
+> Status: **IMPLEMENTED on `phase-c` branches (both repos) — not yet merged/deployed.** All 10
+> tasks done, builds green. Backend `phase-c` HEAD `320bc6f` (`./gradlew build` green, Flyway V13
+> applied to test DB, `ddl-auto: validate` passes, +5 new tests). Frontend `phase-c` HEAD
+> `e9c8933` (`npm run build` + tsc clean; eslint clean on all changed files — 25 pre-existing
+> errors in untouched files remain).
 >
-> **RESUME POINT:** No code written yet. Start at Task 1 (backend V13 migration + entities).
-> Work on the `phase-c` branch off `main` (both repos are on `main`, clean). When all tasks
-> green + live-accepted, tag `phase-c-complete` on both repos. Next phase after this: Phase D
-> (invitations) or Phase E (per-doc ShareGrant).
+> **RESUME POINT:** the only open items are merge → deploy → live-accept → tag, exactly like
+> Phase B. (1) Merge `phase-c` → `main` on BOTH repos (fast-forward, solo-dev convention). Pushing
+> `main` triggers Backend CD (runs **V13**, which is DESTRUCTIVE to the 5 category tables on
+> `shared_docs_prod` — deletes global rows, reseeds per existing workspace; resource rows
+> untouched) + Vercel. Re-run the workflow, never hand-restart the prod container. (2) Live-accept
+> on the deployed app (see Validation below). (3) Tag `phase-c-complete` on both repos. Next phase:
+> Phase D (invitations) or Phase E (per-doc ShareGrant).
+>
+> Decisions that landed (2026-06-04): any **member** manages categories (no ADMIN guard — the
+> WorkspaceContextFilter enforces membership); management lives at **`/settings/categories`**
+> (entry via SettingsDialog → 워크스페이스 → 카테고리 관리); the global `/admin/categories` page
+> was retired. Seeding moved from 5 startup CommandLineRunners to a per-workspace
+> `WorkspaceCategorySeeder` (listens for `WorkspaceCreatedEvent`, runs in the create transaction).
+> Emoji category icons kept as data (out of scope). FK ON DELETE RESTRICT.
 
 Spec: [`2026-05-29-multi-tenant-v2.md`](2026-05-29-multi-tenant-v2.md) §3.2 (categories belong to a
 workspace) and the Phase C line (§"Phase C: per-workspace category bootstrapping").
