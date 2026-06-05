@@ -1,18 +1,13 @@
 # Phase C — Per-workspace categories + onboarding seed
 
-> Status: **IMPLEMENTED on `phase-c` branches (both repos) — not yet merged/deployed.** All 10
-> tasks done, builds green. Backend `phase-c` HEAD `320bc6f` (`./gradlew build` green, Flyway V13
-> applied to test DB, `ddl-auto: validate` passes, +5 new tests). Frontend `phase-c` HEAD
-> `e9c8933` (`npm run build` + tsc clean; eslint clean on all changed files — 25 pre-existing
-> errors in untouched files remain).
+> Status: **✅ COMPLETE — merged, deployed, accepted, tagged (2026-06-05).** Merged `phase-c` →
+> `main` (fast-forward) and tagged `phase-c-complete` on BOTH repos: backend `320bc6f`, frontend
+> `e0462ef`. Backend CD ran Flyway **V13** against `shared_docs_prod` + Vercel redeployed; live
+> categories accepted. Builds were green pre-merge (`./gradlew build` +5 tests; `npm run build` +
+> tsc clean; eslint clean on changed files — 25 pre-existing errors remain in untouched files).
 >
-> **RESUME POINT:** the only open items are merge → deploy → live-accept → tag, exactly like
-> Phase B. (1) Merge `phase-c` → `main` on BOTH repos (fast-forward, solo-dev convention). Pushing
-> `main` triggers Backend CD (runs **V13**, which is DESTRUCTIVE to the 5 category tables on
-> `shared_docs_prod` — deletes global rows, reseeds per existing workspace; resource rows
-> untouched) + Vercel. Re-run the workflow, never hand-restart the prod container. (2) Live-accept
-> on the deployed app (see Validation below). (3) Tag `phase-c-complete` on both repos. Next phase:
-> Phase D (invitations) or Phase E (per-doc ShareGrant).
+> **Next phase:** Phase D (invitations via Resend + claim flow) or Phase E (per-doc ShareGrant +
+> `/shared` view). Nothing open in Phase C.
 >
 > Decisions that landed (2026-06-04): any **member** manages categories (no ADMIN guard — the
 > WorkspaceContextFilter enforces membership); management lives at **`/settings/categories`**
