@@ -1,12 +1,20 @@
 # Phase D — Workspace invitations (copy-link) + member management
 
-> Status: **PLANNED — not started.** Written 2026-06-05, after Phase C shipped
-> (`phase-c-complete`: backend `320bc6f`, frontend `e0462ef`). Brainstormed + design-approved
-> 2026-06-05.
+> Status: **IMPLEMENTED on `phase-d` branches (both repos) — not yet merged/deployed.** All 10
+> tasks done, builds green. Backend `phase-d` HEAD `900ce92` (`./gradlew build` green, Flyway V14
+> applied to test DB, `validate` passes, +8 tests → 41 total). Frontend `phase-d` HEAD `51f3547`
+> (`npm run build` + tsc clean; eslint clean on changed files).
 >
-> **RESUME POINT:** No code yet. Start at Task 1 (backend V14 + entity). Work on the `phase-d`
-> branch off `main` (both repos clean on `main`). When all tasks green + live-accepted, tag
-> `phase-d-complete` on both repos. Next phase after this: Phase E (per-doc ShareGrant + `/shared`).
+> **RESUME POINT:** only merge → deploy → live-accept → tag remain (like Phase C). (1) Merge
+> `phase-d` → `main` on BOTH repos (fast-forward). Pushing `main` triggers Backend CD (runs **V14**,
+> which is PURELY ADDITIVE — new `workspace_invitations` table, no destructive change) + Vercel.
+> Re-run the workflow, never hand-restart the prod container. (2) Live-accept (see Validation — needs
+> a SECOND Google account to exercise the real email-match claim). (3) Tag `phase-d-complete` on
+> both repos. Next phase: Phase E (per-doc ShareGrant + `/shared` view).
+>
+> Build gotcha fixed: the `test` profile doesn't define `app.frontend-url`, so the
+> `@Value` in InvitationService crashed the whole test context — gave it a default
+> (`:http://localhost:5173`) so it resolves under every profile.
 
 Spec: [`2026-05-29-multi-tenant-v2.md`](2026-05-29-multi-tenant-v2.md) §2 (workspace_invitations,
 workspace_members), §4 (API), §5.1 (sign-in), §6 (invitation flow).
