@@ -32,6 +32,7 @@
     "@tiptap/starter-kit": "^3.23.4",
     "@tiptap/suggestion": "^3.23.4",
     "@types/mdx": "^2.0.13",
+    "@xyflow/react": "^12.11.0",
     "axios": "^1.16.0",
     "expr-eval": "^2.0.2",
     "jwt-decode": "^4.0.0",
