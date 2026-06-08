@@ -10,17 +10,19 @@ export type SubPlanCanvasNodeType = Node<SubPlanCanvasNodeData, 'subplan'>
 const STATUS_LABEL: Record<SubPlanStatus, string> = {
   EMPTY: '대기', IN_PROGRESS: '진행 중', DECIDED: '결정됨',
 }
-const STATUS_CLASS: Record<SubPlanStatus, string> = {
-  EMPTY: 'statusEmpty', IN_PROGRESS: 'statusProgress', DECIDED: 'statusDecided',
-}
 
 export default function SubPlanCanvasNode({ data }: NodeProps<SubPlanCanvasNodeType>) {
   const [open, setOpen] = useState(false)
   const { subPlan } = data
   const chosenId = subPlan.decision?.chosenOptionId ?? null
+  // Explicit map → renames of the CSS class are compile-checked (vs a dynamic key).
+  const statusClass =
+    subPlan.status === 'EMPTY' ? styles.statusEmpty
+    : subPlan.status === 'DECIDED' ? styles.statusDecided
+    : styles.statusProgress
 
   return (
-    <div className={`${styles.node} ${styles[STATUS_CLASS[subPlan.status]]}`}>
+    <div className={`${styles.node} ${statusClass}`}>
       <button type="button" className={`${styles.head} nodrag`} onClick={() => setOpen((v) => !v)} aria-expanded={open}>
         {open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
         <span className={styles.title}>{subPlan.title}</span>

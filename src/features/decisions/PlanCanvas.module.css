@@ -6,6 +6,13 @@
   overflow: hidden;
 }
 
+/* Keep the empty state the same height as a live canvas so the tab doesn't jump. */
+.canvasEmpty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 /* Make the pane background follow the app theme (RF's dark mode bg is fixed). */
 .canvas :global(.react-flow__pane) { background: var(--c-bg); }
 .canvas :global(.react-flow__attribution) {
