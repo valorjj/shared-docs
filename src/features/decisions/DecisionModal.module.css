@@ -1,0 +1,32 @@
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-4);
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+}
+
+.optionOn {
+  border-color: var(--c-primary);
+  background: var(--c-primary-soft);
+}
+
+.optionTitle {
+  flex: 1;
+  font-size: var(--fs-base);
+  color: var(--c-text);
+}
+
+.optionAvg {
+  font-size: var(--fs-xs);
+  color: var(--c-text-muted);
+}
