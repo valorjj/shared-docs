@@ -1,0 +1,11 @@
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.planDesc {
+  font-size: var(--fs-base);
+  color: var(--c-text-muted);
+  margin: 0 0 var(--sp-4);
+}
