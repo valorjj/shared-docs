@@ -28,7 +28,8 @@ export default function PlanDetail() {
   const nameOf = (uid: number) =>
     uid === myUserId ? '나' : members?.find((m) => m.userId === uid)?.name ?? '알 수 없음'
 
-  // mutations (planId threaded for cache invalidation symmetry)
+  // mutations — all invalidate the workspace-wide decisions scope, refreshing
+  // the open tree and the list roll-ups together. addSubPlan needs planId (URL).
   const addSubPlan = useAddSubPlan(planId)
   const updateSubPlan = useUpdateSubPlan()
   const deleteSubPlan = useDeleteSubPlan()
