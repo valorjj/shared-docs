@@ -1,0 +1,99 @@
+.row {
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  background: var(--c-surface);
+  transition: border-color var(--t-fast);
+}
+
+.row:hover {
+  border-color: var(--c-border-strong);
+}
+
+.rowChosen {
+  border-color: var(--c-primary);
+  background: var(--c-primary-soft);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+}
+
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex: 1;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: var(--c-text);
+  text-align: left;
+}
+
+.title {
+  font-size: var(--fs-base);
+  font-weight: var(--fw-medium);
+}
+
+.chosenMark {
+  color: var(--c-primary);
+}
+
+.avg {
+  font-size: var(--fs-xs);
+  color: var(--c-text-muted);
+  white-space: nowrap;
+}
+
+.actions {
+  display: flex;
+  gap: var(--sp-1);
+}
+
+.body {
+  padding: var(--sp-3) var(--sp-3) var(--sp-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  border-top: 1px solid var(--c-border);
+}
+
+.desc {
+  font-size: var(--fs-sm);
+  color: var(--c-text-muted);
+  margin: 0;
+}
+
+.others {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.otherLine {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  font-size: var(--fs-sm);
+}
+
+.otherName {
+  color: var(--c-text);
+  font-weight: var(--fw-medium);
+}
+
+.otherScore {
+  color: var(--c-primary);
+  font-weight: var(--fw-semi);
+}
+
+.otherComment {
+  color: var(--c-text-muted);
+}
