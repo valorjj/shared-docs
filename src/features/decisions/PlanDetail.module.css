@@ -4,6 +4,10 @@
   gap: var(--sp-4);
 }
 
+.viewToggle {
+  margin-bottom: var(--sp-4);
+}
+
 .planDesc {
   font-size: var(--fs-base);
   color: var(--c-text-muted);

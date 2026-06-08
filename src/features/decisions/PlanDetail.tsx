@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { Plus } from 'lucide-react'
-import { Page, PageHeader, PageTitle, BackLink, Button, EmptyState, ErrorState, Skeleton } from '../../components/ui'
+import { Page, PageHeader, PageTitle, BackLink, Button, EmptyState, ErrorState, Skeleton, Tabs } from '../../components/ui'
 import { useAuth } from '../../auth/useAuth'
 import { useActiveWorkspace } from '../../auth/useActiveWorkspace'
 import { useMembers } from '../workspaces/membersApi'
@@ -11,6 +11,7 @@ import {
   useRateOption, useDeleteRating, useLockDecision, useReopenDecision,
 } from './api'
 import SubPlanSection from './SubPlanSection'
+import PlanCanvas from './PlanCanvas'
 import TitleDescModal from './TitleDescModal'
 import DecisionModal from './DecisionModal'
 import styles from './PlanDetail.module.css'
@@ -47,6 +48,7 @@ export default function PlanDetail() {
   const [addingOptionFor, setAddingOptionFor] = useState<number | null>(null)        // subPlanId
   const [editingOption, setEditingOption] = useState<OptionNode | null>(null)
   const [decidingFor, setDecidingFor] = useState<SubPlanNode | null>(null)
+  const [view, setView] = useState<'list' | 'canvas'>('list')
 
   return (
     <Page>
@@ -60,38 +62,52 @@ export default function PlanDetail() {
 
       {tree && (
         <>
-          {tree.description && <p className={styles.planDesc}>{tree.description}</p>}
+          <div className={styles.viewToggle}>
+            <Tabs
+              items={[{ key: 'list', label: '목록' }, { key: 'canvas', label: '캔버스' }]}
+              value={view}
+              onChange={setView}
+            />
+          </div>
 
-          {tree.subPlans.length === 0 ? (
-            <EmptyState title="안건이 없어요" description="결정할 안건을 추가해 보세요."
-              action={<Button variant="outline" size="sm" leading={<Plus size={14} />} onClick={() => setAddingSubPlan(true)}>안건 추가</Button>} />
+          {view === 'canvas' ? (
+            <PlanCanvas subPlans={tree.subPlans} />
           ) : (
-            <div className={styles.list}>
-              {tree.subPlans.map((sp) => (
-                <SubPlanSection
-                  key={sp.id}
-                  subPlan={sp}
-                  myUserId={myUserId}
-                  nameOf={nameOf}
-                  busy={rate.isPending || lock.isPending || reopen.isPending || deleteSubPlan.isPending || deleteOption.isPending}
-                  onEdit={() => setEditingSubPlan(sp)}
-                  onDelete={() => { if (window.confirm('삭제할까요? 되돌릴 수 없어요.')) deleteSubPlan.mutate(sp.id) }}
-                  onAddOption={() => setAddingOptionFor(sp.id)}
-                  onEditOption={(o) => setEditingOption(o)}
-                  onDeleteOption={(o) => {
-                    if (!window.confirm('삭제할까요? 되돌릴 수 없어요.')) return
-                    deleteOption.mutate(o.id, {
-                      onError: (e) => window.alert((e as { body?: { detail?: string } }).body?.detail ?? '삭제할 수 없어요.'),
-                    })
-                  }}
-                  onRate={(optionId, score, comment) => rate.mutate({ optionId, payload: { score, comment } })}
-                  onClearRating={(optionId) => clearRating.mutate(optionId)}
-                  onDecide={() => setDecidingFor(sp)}
-                  onReopen={() => { if (window.confirm('이 결정을 다시 열까요? 기록은 남아요.')) reopen.mutate(sp.id) }}
-                />
-              ))}
-              <Button variant="outline" full leading={<Plus size={16} />} onClick={() => setAddingSubPlan(true)}>안건 추가</Button>
-            </div>
+            <>
+              {tree.description && <p className={styles.planDesc}>{tree.description}</p>}
+
+              {tree.subPlans.length === 0 ? (
+                <EmptyState title="안건이 없어요" description="결정할 안건을 추가해 보세요."
+                  action={<Button variant="outline" size="sm" leading={<Plus size={14} />} onClick={() => setAddingSubPlan(true)}>안건 추가</Button>} />
+              ) : (
+                <div className={styles.list}>
+                  {tree.subPlans.map((sp) => (
+                    <SubPlanSection
+                      key={sp.id}
+                      subPlan={sp}
+                      myUserId={myUserId}
+                      nameOf={nameOf}
+                      busy={rate.isPending || lock.isPending || reopen.isPending || deleteSubPlan.isPending || deleteOption.isPending}
+                      onEdit={() => setEditingSubPlan(sp)}
+                      onDelete={() => { if (window.confirm('삭제할까요? 되돌릴 수 없어요.')) deleteSubPlan.mutate(sp.id) }}
+                      onAddOption={() => setAddingOptionFor(sp.id)}
+                      onEditOption={(o) => setEditingOption(o)}
+                      onDeleteOption={(o) => {
+                        if (!window.confirm('삭제할까요? 되돌릴 수 없어요.')) return
+                        deleteOption.mutate(o.id, {
+                          onError: (e) => window.alert((e as { body?: { detail?: string } }).body?.detail ?? '삭제할 수 없어요.'),
+                        })
+                      }}
+                      onRate={(optionId, score, comment) => rate.mutate({ optionId, payload: { score, comment } })}
+                      onClearRating={(optionId) => clearRating.mutate(optionId)}
+                      onDecide={() => setDecidingFor(sp)}
+                      onReopen={() => { if (window.confirm('이 결정을 다시 열까요? 기록은 남아요.')) reopen.mutate(sp.id) }}
+                    />
+                  ))}
+                  <Button variant="outline" full leading={<Plus size={16} />} onClick={() => setAddingSubPlan(true)}>안건 추가</Button>
+                </div>
+              )}
+            </>
           )}
         </>
       )}
