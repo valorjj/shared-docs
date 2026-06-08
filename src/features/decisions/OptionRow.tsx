@@ -44,7 +44,7 @@ export default function OptionRow({
       {open && (
         <div className={styles.body}>
           {option.description && <p className={styles.desc}>{option.description}</p>}
-          <RatingControl myRating={myRating} busy={busy} onRate={onRate} onClear={onClearRating} />
+          <RatingControl key={myRating ? 'rated' : 'unrated'} myRating={myRating} busy={busy} onRate={onRate} onClear={onClearRating} />
           {others.length > 0 && (
             <ul className={styles.others}>
               {others.map((r) => (

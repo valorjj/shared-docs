@@ -64,8 +64,7 @@ export function useAddSubPlan(planId: number) {
     onSuccess: () => qc.invalidateQueries({ queryKey: decisionKeys.scope(activeId) }),
   })
 }
-export function useUpdateSubPlan(planId: number) {
-  void planId
+export function useUpdateSubPlan() {
   const qc = useQueryClient(); const { activeId } = useActiveWorkspace()
   return useMutation({
     mutationFn: async (v: { id: number; payload: TitleDescPayload }) =>
@@ -73,8 +72,7 @@ export function useUpdateSubPlan(planId: number) {
     onSuccess: () => qc.invalidateQueries({ queryKey: decisionKeys.scope(activeId) }),
   })
 }
-export function useDeleteSubPlan(planId: number) {
-  void planId
+export function useDeleteSubPlan() {
   const qc = useQueryClient(); const { activeId } = useActiveWorkspace()
   return useMutation({
     mutationFn: async (id: number) => { await apiClient.delete(`/api/subplans/${id}`) },
@@ -83,8 +81,7 @@ export function useDeleteSubPlan(planId: number) {
 }
 
 // ── Option (선택지) mutations ──
-export function useAddOption(planId: number) {
-  void planId
+export function useAddOption() {
   const qc = useQueryClient(); const { activeId } = useActiveWorkspace()
   return useMutation({
     mutationFn: async (v: { subPlanId: number; payload: TitleDescPayload }) =>
@@ -92,8 +89,7 @@ export function useAddOption(planId: number) {
     onSuccess: () => qc.invalidateQueries({ queryKey: decisionKeys.scope(activeId) }),
   })
 }
-export function useUpdateOption(planId: number) {
-  void planId
+export function useUpdateOption() {
   const qc = useQueryClient(); const { activeId } = useActiveWorkspace()
   return useMutation({
     mutationFn: async (v: { id: number; payload: TitleDescPayload }) =>
@@ -101,8 +97,7 @@ export function useUpdateOption(planId: number) {
     onSuccess: () => qc.invalidateQueries({ queryKey: decisionKeys.scope(activeId) }),
   })
 }
-export function useDeleteOption(planId: number) {
-  void planId
+export function useDeleteOption() {
   const qc = useQueryClient(); const { activeId } = useActiveWorkspace()
   return useMutation({
     mutationFn: async (id: number) => { await apiClient.delete(`/api/options/${id}`) },
@@ -111,8 +106,7 @@ export function useDeleteOption(planId: number) {
 }
 
 // ── Rating (평가) mutations ──
-export function useRateOption(planId: number) {
-  void planId
+export function useRateOption() {
   const qc = useQueryClient(); const { activeId } = useActiveWorkspace()
   return useMutation({
     mutationFn: async (v: { optionId: number; payload: RatePayload }) =>
@@ -120,8 +114,7 @@ export function useRateOption(planId: number) {
     onSuccess: () => qc.invalidateQueries({ queryKey: decisionKeys.scope(activeId) }),
   })
 }
-export function useDeleteRating(planId: number) {
-  void planId
+export function useDeleteRating() {
   const qc = useQueryClient(); const { activeId } = useActiveWorkspace()
   return useMutation({
     mutationFn: async (optionId: number) => { await apiClient.delete(`/api/options/${optionId}/rating`) },
@@ -130,8 +123,7 @@ export function useDeleteRating(planId: number) {
 }
 
 // ── Decision (결정) mutations ──
-export function useLockDecision(planId: number) {
-  void planId
+export function useLockDecision() {
   const qc = useQueryClient(); const { activeId } = useActiveWorkspace()
   return useMutation({
     mutationFn: async (v: { subPlanId: number; payload: LockDecisionPayload }) =>
@@ -139,8 +131,7 @@ export function useLockDecision(planId: number) {
     onSuccess: () => qc.invalidateQueries({ queryKey: decisionKeys.scope(activeId) }),
   })
 }
-export function useReopenDecision(planId: number) {
-  void planId
+export function useReopenDecision() {
   const qc = useQueryClient(); const { activeId } = useActiveWorkspace()
   return useMutation({
     mutationFn: async (subPlanId: number) => { await apiClient.post(`/api/subplans/${subPlanId}/decision/reopen`) },

@@ -30,15 +30,15 @@ export default function PlanDetail() {
 
   // mutations (planId threaded for cache invalidation symmetry)
   const addSubPlan = useAddSubPlan(planId)
-  const updateSubPlan = useUpdateSubPlan(planId)
-  const deleteSubPlan = useDeleteSubPlan(planId)
-  const addOption = useAddOption(planId)
-  const updateOption = useUpdateOption(planId)
-  const deleteOption = useDeleteOption(planId)
-  const rate = useRateOption(planId)
-  const clearRating = useDeleteRating(planId)
-  const lock = useLockDecision(planId)
-  const reopen = useReopenDecision(planId)
+  const updateSubPlan = useUpdateSubPlan()
+  const deleteSubPlan = useDeleteSubPlan()
+  const addOption = useAddOption()
+  const updateOption = useUpdateOption()
+  const deleteOption = useDeleteOption()
+  const rate = useRateOption()
+  const clearRating = useDeleteRating()
+  const lock = useLockDecision()
+  const reopen = useReopenDecision()
 
   // modal state
   const [addingSubPlan, setAddingSubPlan] = useState(false)
@@ -72,7 +72,7 @@ export default function PlanDetail() {
                   subPlan={sp}
                   myUserId={myUserId}
                   nameOf={nameOf}
-                  busy={rate.isPending || lock.isPending || reopen.isPending}
+                  busy={rate.isPending || lock.isPending || reopen.isPending || deleteSubPlan.isPending || deleteOption.isPending}
                   onEdit={() => setEditingSubPlan(sp)}
                   onDelete={() => { if (window.confirm('삭제할까요? 되돌릴 수 없어요.')) deleteSubPlan.mutate(sp.id) }}
                   onAddOption={() => setAddingOptionFor(sp.id)}
@@ -101,6 +101,7 @@ export default function PlanDetail() {
         onSubmit={(payload) => addSubPlan.mutate(payload, { onSuccess: () => setAddingSubPlan(false) })}
       />
       <TitleDescModal
+        key={`sp-edit-${editingSubPlan?.id ?? 'none'}`}
         open={editingSubPlan != null} onClose={() => setEditingSubPlan(null)} entityLabel="안건"
         initial={editingSubPlan ? { title: editingSubPlan.title, description: editingSubPlan.description } : null}
         busy={updateSubPlan.isPending}
@@ -113,6 +114,7 @@ export default function PlanDetail() {
         onSubmit={(payload) => { if (addingOptionFor != null) addOption.mutate({ subPlanId: addingOptionFor, payload }, { onSuccess: () => setAddingOptionFor(null) }) }}
       />
       <TitleDescModal
+        key={`opt-edit-${editingOption?.id ?? 'none'}`}
         open={editingOption != null} onClose={() => setEditingOption(null)} entityLabel="선택지"
         initial={editingOption ? { title: editingOption.title, description: editingOption.description } : null}
         busy={updateOption.isPending}

@@ -67,6 +67,7 @@ export default function DecisionList() {
         onSubmit={(payload) => create.mutate(payload, { onSuccess: () => setAdding(false) })}
       />
       <TitleDescModal
+        key={`plan-edit-${editing?.id ?? 'none'}`}
         open={editing != null} onClose={() => setEditing(null)} entityLabel="계획"
         initial={editing ? { title: editing.title, description: editing.description } : null}
         busy={update.isPending}
