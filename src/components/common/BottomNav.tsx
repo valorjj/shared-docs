@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from 'react-router-dom'
-import { BookOpen, Calculator, Database, Calendar, Search, Settings, Settings2, Table2, type LucideIcon } from 'lucide-react'
+import { BookOpen, Calculator, Database, Calendar, Search, Settings, Settings2, Table2, Vote, type LucideIcon } from 'lucide-react'
 import { useIsMobile } from '../../lib/useMediaQuery'
 import { useAuth } from '../../auth/useAuth'
 import { useSearchPalette } from '../../features/search/searchContext'
@@ -19,6 +19,7 @@ const ITEMS: NavItem[] = [
   { to: '/data',     Icon: Database,   label: '데이터' },
   { to: '/calc',     Icon: Calculator, label: '계산' },
   { to: '/calendar', Icon: Calendar,   label: '캘린더' },
+  { to: '/decisions', Icon: Vote,      label: '결정' },
   { to: '/admin',    Icon: Settings,   label: '관리', adminOnly: true },
 ]
 
