@@ -31,3 +31,6 @@ skills-lock.json
 # Env (local-only env files should not be committed; *.local already covered above)
 .env
 
+
+# Brainstorming visual-companion scratch
+.superpowers/
