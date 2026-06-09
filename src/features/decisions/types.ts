@@ -47,6 +47,12 @@ export type SubPlanNode = {
   decision: DecisionInfo | null
 }
 
+export type SubPlanEdge = {
+  id: number
+  sourceSubPlanId: number
+  targetSubPlanId: number
+}
+
 export type PlanTree = {
   id: number
   title: string
@@ -58,6 +64,7 @@ export type PlanTree = {
   createdByUserId: number
   createdAt: string
   subPlans: SubPlanNode[]
+  edges: SubPlanEdge[]
 }
 
 // ── Payloads ──
@@ -66,3 +73,5 @@ export type UpdatePlanPayload = { title?: string; description?: string; status?:
 export type TitleDescPayload = { title: string; description?: string }
 export type RatePayload = { score: number; comment?: string }
 export type LockDecisionPayload = { chosenOptionId: number; reason: string }
+export type CanvasPositionPayload = { canvasX: number; canvasY: number }
+export type CreateEdgePayload = { sourceSubPlanId: number; targetSubPlanId: number }

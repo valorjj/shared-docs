@@ -2,8 +2,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '../../api/client'
 import { useActiveWorkspace } from '../../auth/useActiveWorkspace'
 import type {
-  CreatePlanPayload, LockDecisionPayload, OptionNode, PlanSummary, PlanTree,
-  Rating, RatePayload, SubPlanNode, TitleDescPayload, UpdatePlanPayload,
+  CanvasPositionPayload, CreateEdgePayload, CreatePlanPayload, LockDecisionPayload,
+  OptionNode, PlanSummary, PlanTree, Rating, RatePayload, SubPlanEdge, SubPlanNode,
+  TitleDescPayload, UpdatePlanPayload,
 } from './types'
 
 export const decisionKeys = {
@@ -135,6 +136,48 @@ export function useReopenDecision() {
   const qc = useQueryClient(); const { activeId } = useActiveWorkspace()
   return useMutation({
     mutationFn: async (subPlanId: number) => { await apiClient.post(`/api/subplans/${subPlanId}/decision/reopen`) },
+    onSuccess: () => qc.invalidateQueries({ queryKey: decisionKeys.scope(activeId) }),
+  })
+}
+
+// ── Canvas (D3): drag positions + edges ──
+
+/**
+ * Persist a node's dragged position. Positions don't affect list/roadmap roll-ups
+ * or the 목록 view, so this does NOT invalidate any query — the mounted canvas owns
+ * its node state; the next mount reads the persisted value. Fire-and-forget.
+ */
+export function useMoveSubPlan() {
+  return useMutation({
+    mutationFn: async (v: { id: number; payload: CanvasPositionPayload }) => {
+      await apiClient.patch(`/api/subplans/${v.id}`, v.payload)
+    },
+  })
+}
+
+/** Create an edge. Edges aren't shown in 목록/roll-ups, so no invalidation — the
+ *  canvas appends the returned edge (with its real id) to local state. */
+export function useCreateEdge(planId: number) {
+  return useMutation({
+    mutationFn: async (payload: CreateEdgePayload) =>
+      (await apiClient.post<SubPlanEdge>(`/api/plans/${planId}/edges`, payload)).data,
+  })
+}
+
+export function useDeleteEdge() {
+  return useMutation({
+    mutationFn: async (id: number) => { await apiClient.delete(`/api/edges/${id}`) },
+  })
+}
+
+/** Create a 안건 from the canvas. Unlike useAddSubPlan, this DOES invalidate the
+ *  scope so 목록 + roadmap roll-ups stay correct; the mounted canvas keeps its
+ *  local node state (it ignores the prop refetch), so there is no remount/flash. */
+export function useAddSubPlanOnCanvas(planId: number) {
+  const qc = useQueryClient(); const { activeId } = useActiveWorkspace()
+  return useMutation({
+    mutationFn: async (p: TitleDescPayload) =>
+      (await apiClient.post<SubPlanNode>(`/api/plans/${planId}/subplans`, p)).data,
     onSuccess: () => qc.invalidateQueries({ queryKey: decisionKeys.scope(activeId) }),
   })
 }
