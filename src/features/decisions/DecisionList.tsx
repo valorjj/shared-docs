@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Vote, Pencil, Trash2, Plus } from 'lucide-react'
 import {
@@ -6,9 +6,32 @@ import {
   EmptyState, ErrorState, Skeleton,
 } from '../../components/ui'
 import { usePlans, useCreatePlan, useUpdatePlan, useDeletePlan } from './api'
-import TitleDescModal from './TitleDescModal'
+import PlanModal from './PlanModal'
 import styles from './DecisionList.module.css'
 import type { PlanSummary } from './types'
+
+const UNGROUPED = '분류 없음'
+
+type Section = { key: string; label: string; named: boolean; plans: PlanSummary[] }
+
+/** Group plans into sections: named groups sorted Korean-aware, "분류 없음" last.
+ *  Within a section the API order (createdAt desc) is preserved. */
+function toSections(plans: PlanSummary[]): { sections: Section[]; hasNamedGroup: boolean; groupOptions: string[] } {
+  const byGroup = new Map<string, PlanSummary[]>()
+  for (const p of plans) {
+    const g = p.groupLabel?.trim() || ''
+    const key = g || UNGROUPED
+    const arr = byGroup.get(key)
+    if (arr) arr.push(p)
+    else byGroup.set(key, [p])
+  }
+  const named = [...byGroup.keys()].filter((k) => k !== UNGROUPED).sort((a, b) => a.localeCompare(b, 'ko'))
+  const sections: Section[] = named.map((label) => ({ key: label, label, named: true, plans: byGroup.get(label)! }))
+  if (byGroup.has(UNGROUPED)) {
+    sections.push({ key: UNGROUPED, label: UNGROUPED, named: false, plans: byGroup.get(UNGROUPED)! })
+  }
+  return { sections, hasNamedGroup: named.length > 0, groupOptions: named }
+}
 
 export default function DecisionList() {
   const navigate = useNavigate()
@@ -19,6 +42,31 @@ export default function DecisionList() {
 
   const [adding, setAdding] = useState(false)
   const [editing, setEditing] = useState<PlanSummary | null>(null)
+
+  const { sections, hasNamedGroup, groupOptions } = useMemo(
+    () => toSections(plans ?? []),
+    [plans],
+  )
+
+  const renderCard = (p: PlanSummary) => (
+    <Card key={p.id} padding="none" className={styles.card}>
+      <button type="button" className={styles.cardMain} onClick={() => navigate(`/decisions/${p.id}`)}>
+        <div className={styles.cardTop}>
+          <span className={styles.cardTitle}>{p.title}</span>
+          <Badge>{p.status === 'ARCHIVED' ? '보관됨' : '진행 중'}</Badge>
+        </div>
+        {p.description && <span className={styles.cardDesc}>{p.description}</span>}
+        <span className={styles.cardMeta}>안건 {p.subPlanCount} · 결정 {p.decidedCount}</span>
+      </button>
+      <div className={styles.cardActions}>
+        <IconButton variant="ghost" size="sm" label="계획 수정" onClick={() => setEditing(p)}><Pencil size={14} /></IconButton>
+        <IconButton variant="ghost" size="sm" label="계획 삭제"
+          onClick={() => { if (window.confirm('삭제할까요? 되돌릴 수 없어요.')) remove.mutate(p.id) }}>
+          <Trash2 size={14} />
+        </IconButton>
+      </div>
+    </Card>
+  )
 
   return (
     <Page>
@@ -37,39 +85,34 @@ export default function DecisionList() {
       )}
 
       {plans && plans.length > 0 && (
-        <div className={styles.list}>
-          {plans.map((p) => (
-            <Card key={p.id} padding="none" className={styles.card}>
-              <button type="button" className={styles.cardMain} onClick={() => navigate(`/decisions/${p.id}`)}>
-                <div className={styles.cardTop}>
-                  <span className={styles.cardTitle}>{p.title}</span>
-                  <Badge>{p.status === 'ARCHIVED' ? '보관됨' : '진행 중'}</Badge>
-                </div>
-                {p.description && <span className={styles.cardDesc}>{p.description}</span>}
-                <span className={styles.cardMeta}>안건 {p.subPlanCount} · 결정 {p.decidedCount}</span>
-              </button>
-              <div className={styles.cardActions}>
-                <IconButton variant="ghost" size="sm" label="계획 수정" onClick={() => setEditing(p)}><Pencil size={14} /></IconButton>
-                <IconButton variant="ghost" size="sm" label="계획 삭제"
-                  onClick={() => { if (window.confirm('삭제할까요? 되돌릴 수 없어요.')) remove.mutate(p.id) }}>
-                  <Trash2 size={14} />
-                </IconButton>
-              </div>
-            </Card>
-          ))}
-        </div>
+        // No named groups → flat list (today's behavior). Otherwise → titled sections.
+        hasNamedGroup ? (
+          <div className={styles.board}>
+            {sections.map((sec) => (
+              <section key={sec.key} className={styles.section}>
+                <header className={styles.sectionHead}>
+                  <span className={styles.sectionLabel}>{sec.label}</span>
+                  <span className={styles.sectionCount}>계획 {sec.plans.length}</span>
+                </header>
+                <div className={styles.list}>{sec.plans.map(renderCard)}</div>
+              </section>
+            ))}
+          </div>
+        ) : (
+          <div className={styles.list}>{(plans ?? []).map(renderCard)}</div>
+        )
       )}
 
       <Fab label="계획 추가" icon={<Plus size={26} strokeWidth={2.5} />} onClick={() => setAdding(true)} />
 
-      <TitleDescModal
-        open={adding} onClose={() => setAdding(false)} entityLabel="계획" busy={create.isPending}
+      <PlanModal
+        open={adding} onClose={() => setAdding(false)} groupOptions={groupOptions} busy={create.isPending}
         onSubmit={(payload) => create.mutate(payload, { onSuccess: () => setAdding(false) })}
       />
-      <TitleDescModal
+      <PlanModal
         key={`plan-edit-${editing?.id ?? 'none'}`}
-        open={editing != null} onClose={() => setEditing(null)} entityLabel="계획"
-        initial={editing ? { title: editing.title, description: editing.description } : null}
+        open={editing != null} onClose={() => setEditing(null)} groupOptions={groupOptions}
+        initial={editing ? { title: editing.title, description: editing.description, groupLabel: editing.groupLabel } : null}
         busy={update.isPending}
         onSubmit={(payload) => {
           if (!editing) return

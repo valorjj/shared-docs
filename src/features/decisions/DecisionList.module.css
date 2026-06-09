@@ -51,3 +51,35 @@
   gap: var(--sp-1);
   padding-right: var(--sp-2);
 }
+
+.board {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+/* Quiet lane header — hairline divider, not a heavy band (Bear-minimal). */
+.sectionHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding-bottom: var(--sp-2);
+  border-bottom: 1px solid var(--c-border);
+}
+
+.sectionLabel {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--c-text);
+}
+
+.sectionCount {
+  font-size: var(--fs-xs);
+  color: var(--c-text-subtle);
+}
