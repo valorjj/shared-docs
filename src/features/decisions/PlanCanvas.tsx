@@ -11,6 +11,7 @@ import SubPlanCanvasNode, { type SubPlanCanvasNodeType } from './SubPlanCanvasNo
 import DeletableEdge, { type DeletableEdgeType } from './DeletableEdge'
 import TitleDescModal from './TitleDescModal'
 import { useMoveSubPlan, useCreateEdge, useDeleteEdge, useAddSubPlanOnCanvas } from './api'
+import { useSettings } from '../settings/settingsContext'
 import styles from './PlanCanvas.module.css'
 import type { PlanTree, SubPlanNode } from './types'
 
@@ -84,6 +85,9 @@ function Flow({ tree }: Props) {
   const [edges, setEdges, onEdgesChange] = useEdgesState<DeletableEdgeType>(tree.edges.map(toEdge))
   const [adding, setAdding] = useState(false)
 
+  const { theme } = useSettings()
+  const colorMode = theme === 'light' ? 'light' : 'dark'
+
   const move = useMoveSubPlan()
   const createEdgeM = useCreateEdge(tree.id)
   const deleteEdgeM = useDeleteEdge()
@@ -151,7 +155,7 @@ function Flow({ tree }: Props) {
         onEdgesDelete={onEdgesDelete}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
-        colorMode="dark"
+        colorMode={colorMode}
         fitView
         fitViewOptions={{ padding: 0.2 }}
         minZoom={0.3}
