@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { type Node, type NodeProps } from '@xyflow/react'
+import { Handle, Position, type Node, type NodeProps } from '@xyflow/react'
 import { ChevronDown, ChevronRight, Check } from 'lucide-react'
 import styles from './SubPlanCanvasNode.module.css'
 import type { SubPlanNode, SubPlanStatus } from './types'
@@ -23,6 +23,8 @@ export default function SubPlanCanvasNode({ data }: NodeProps<SubPlanCanvasNodeT
 
   return (
     <div className={`${styles.node} ${statusClass}`}>
+      <Handle type="target" position={Position.Left} className={styles.handle} />
+      <Handle type="source" position={Position.Right} className={styles.handle} />
       <button type="button" className={`${styles.head} nodrag`} onClick={() => setOpen((v) => !v)} aria-expanded={open}>
         {open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
         <span className={styles.title}>{subPlan.title}</span>

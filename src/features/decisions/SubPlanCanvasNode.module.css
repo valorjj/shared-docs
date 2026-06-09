@@ -110,3 +110,15 @@
   color: var(--c-text-subtle);
   margin: 0;
 }
+
+/* Connection handles — small, quiet; only obvious on node hover. */
+.handle {
+  width: 8px;
+  height: 8px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+.node:hover .handle { opacity: 1; }
+.handle:hover { border-color: var(--c-accent); }
