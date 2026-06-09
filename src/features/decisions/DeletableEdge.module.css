@@ -8,12 +8,12 @@
   height: 20px;
   padding: 0;
   border: 1px solid var(--c-border);
-  border-radius: var(--r-full, 999px);
+  border-radius: var(--r-pill);
   background: var(--c-surface);
   color: var(--c-text-secondary);
   cursor: pointer;
 }
 .delete:hover {
-  border-color: var(--c-danger, #e5484d);
-  color: var(--c-danger, #e5484d);
+  border-color: var(--c-danger);
+  color: var(--c-danger);
 }
