@@ -1,0 +1,61 @@
+.timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.item {
+  position: relative;
+  padding-left: 28px;
+}
+
+/* The vertical rail behind the icons. */
+.item::before {
+  content: '';
+  position: absolute;
+  left: 11px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--c-border);
+}
+.item:first-child::before { top: 12px; }
+.item:last-child::before { bottom: calc(100% - 12px); }
+
+.row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  width: 100%;
+  padding: var(--sp-2) 0;
+  background: none;
+  border: 0;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+}
+button.row { cursor: pointer; }
+button.row:hover .text { color: var(--c-accent); }
+
+/* Icon sits centered on the rail. */
+.icon {
+  position: absolute;
+  left: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--r-pill);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  color: var(--c-text-subtle);
+}
+
+.body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.text { font-size: var(--fs-sm); color: var(--c-text); line-height: 1.45; }
+.meta { display: flex; align-items: center; gap: var(--sp-2); font-size: var(--fs-xs); color: var(--c-text-subtle); }
+.plan { padding: 1px 6px; border: 1px solid var(--c-border); border-radius: var(--r-pill); }
+.time { white-space: nowrap; }
