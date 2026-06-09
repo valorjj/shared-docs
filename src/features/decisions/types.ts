@@ -68,8 +68,8 @@ export type PlanTree = {
 }
 
 // ── Payloads ──
-export type CreatePlanPayload = { title: string; description?: string }
-export type UpdatePlanPayload = { title?: string; description?: string; status?: PlanStatus }
+export type CreatePlanPayload = { title: string; description?: string; groupLabel?: string }
+export type UpdatePlanPayload = { title?: string; description?: string; status?: PlanStatus; groupLabel?: string }
 export type TitleDescPayload = { title: string; description?: string }
 export type RatePayload = { score: number; comment?: string }
 export type LockDecisionPayload = { chosenOptionId: number; reason: string }
