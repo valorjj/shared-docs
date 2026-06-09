@@ -3,10 +3,14 @@ import { useNavigate } from 'react-router-dom'
 import { Vote, Pencil, Trash2, Plus } from 'lucide-react'
 import {
   Page, PageHeader, PageTitle, Fab, Card, Badge, IconButton,
-  EmptyState, ErrorState, Skeleton,
+  EmptyState, ErrorState, Skeleton, Tabs,
 } from '../../components/ui'
-import { usePlans, useCreatePlan, useUpdatePlan, useDeletePlan } from './api'
+import { useAuth } from '../../auth/useAuth'
+import { useActiveWorkspace } from '../../auth/useActiveWorkspace'
+import { useMembers } from '../workspaces/membersApi'
+import { usePlans, useCreatePlan, useUpdatePlan, useDeletePlan, useFeed } from './api'
 import PlanModal from './PlanModal'
+import Timeline from './Timeline'
 import styles from './DecisionList.module.css'
 import type { PlanSummary } from './types'
 
@@ -43,6 +47,15 @@ export default function DecisionList() {
   const [adding, setAdding] = useState(false)
   const [editing, setEditing] = useState<PlanSummary | null>(null)
 
+  const [tab, setTab] = useState<'board' | 'feed'>('board')
+  const { user } = useAuth()
+  const myUserId = user?.userId ?? -1
+  const { activeId } = useActiveWorkspace()
+  const { data: members } = useMembers(activeId)
+  const nameOf = (uid: number) => uid === myUserId ? '나' : members?.find((m) => m.userId === uid)?.name ?? '알 수 없음'
+  const planNameOf = (id: number) => (plans ?? []).find((p) => p.id === id)?.title ?? '계획'
+  const { data: feed, isLoading: feedLoading } = useFeed(tab === 'feed')
+
   const { sections, hasNamedGroup, groupOptions } = useMemo(
     () => toSections(plans ?? []),
     [plans],
@@ -72,35 +85,51 @@ export default function DecisionList() {
     <Page>
       <PageHeader><PageTitle icon={<Vote size={22} strokeWidth={2} />}>결정</PageTitle></PageHeader>
 
-      {isLoading && (
-        <div className={styles.list}>
-          <Skeleton height={84} radius="var(--r-md)" />
-          <Skeleton height={84} radius="var(--r-md)" />
-        </div>
-      )}
-      {isError && <ErrorState error={error} onRetry={() => refetch()} />}
-      {plans && plans.length === 0 && (
-        <EmptyState icon={<Vote size={24} strokeWidth={1.5} />} title="아직 계획이 없어요"
-                    description="함께 정할 일을 계획으로 추가해 보세요." />
-      )}
+      <Tabs
+        className={styles.tabs}
+        items={[{ key: 'board', label: '보드' }, { key: 'feed', label: '활동' }]}
+        value={tab}
+        onChange={setTab}
+      />
 
-      {plans && plans.length > 0 && (
-        // No named groups → flat list (today's behavior). Otherwise → titled sections.
-        hasNamedGroup ? (
-          <div className={styles.board}>
-            {sections.map((sec) => (
-              <section key={sec.key} className={styles.section}>
-                <header className={styles.sectionHead}>
-                  <span className={styles.sectionLabel}>{sec.label}</span>
-                  <span className={styles.sectionCount}>계획 {sec.plans.length}</span>
-                </header>
-                <div className={styles.list}>{sec.plans.map(renderCard)}</div>
-              </section>
-            ))}
-          </div>
-        ) : (
-          <div className={styles.list}>{(plans ?? []).map(renderCard)}</div>
-        )
+      {tab === 'feed' ? (
+        feedLoading
+          ? <div className={styles.list}><Skeleton height={64} radius="var(--r-md)" /></div>
+          : <Timeline events={feed ?? []} nameOf={nameOf} planNameOf={planNameOf}
+                      onEventClick={(e) => navigate(`/decisions/${e.planId}`)} />
+      ) : (
+        <>
+          {isLoading && (
+            <div className={styles.list}>
+              <Skeleton height={84} radius="var(--r-md)" />
+              <Skeleton height={84} radius="var(--r-md)" />
+            </div>
+          )}
+          {isError && <ErrorState error={error} onRetry={() => refetch()} />}
+          {plans && plans.length === 0 && (
+            <EmptyState icon={<Vote size={24} strokeWidth={1.5} />} title="아직 계획이 없어요"
+                        description="함께 정할 일을 계획으로 추가해 보세요." />
+          )}
+
+          {plans && plans.length > 0 && (
+            // No named groups → flat list (today's behavior). Otherwise → titled sections.
+            hasNamedGroup ? (
+              <div className={styles.board}>
+                {sections.map((sec) => (
+                  <section key={sec.key} className={styles.section}>
+                    <header className={styles.sectionHead}>
+                      <span className={styles.sectionLabel}>{sec.label}</span>
+                      <span className={styles.sectionCount}>계획 {sec.plans.length}</span>
+                    </header>
+                    <div className={styles.list}>{sec.plans.map(renderCard)}</div>
+                  </section>
+                ))}
+              </div>
+            ) : (
+              <div className={styles.list}>{(plans ?? []).map(renderCard)}</div>
+            )
+          )}
+        </>
       )}
 
       <Fab label="계획 추가" icon={<Plus size={26} strokeWidth={2.5} />} onClick={() => setAdding(true)} />

@@ -4,6 +4,10 @@
   gap: var(--sp-3);
 }
 
+.tabs {
+  margin-bottom: var(--sp-4);
+}
+
 .card {
   display: flex;
   align-items: stretch;

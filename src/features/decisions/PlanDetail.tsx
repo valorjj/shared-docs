@@ -9,9 +9,11 @@ import {
   usePlanTree, useAddSubPlan, useUpdateSubPlan, useDeleteSubPlan,
   useAddOption, useUpdateOption, useDeleteOption,
   useRateOption, useDeleteRating, useLockDecision, useReopenDecision,
+  useTimeline,
 } from './api'
 import SubPlanSection from './SubPlanSection'
 import PlanCanvas from './PlanCanvas'
+import Timeline from './Timeline'
 import TitleDescModal from './TitleDescModal'
 import DecisionModal from './DecisionModal'
 import styles from './PlanDetail.module.css'
@@ -48,7 +50,9 @@ export default function PlanDetail() {
   const [addingOptionFor, setAddingOptionFor] = useState<number | null>(null)        // subPlanId
   const [editingOption, setEditingOption] = useState<OptionNode | null>(null)
   const [decidingFor, setDecidingFor] = useState<SubPlanNode | null>(null)
-  const [view, setView] = useState<'list' | 'canvas'>('list')
+  const [view, setView] = useState<'list' | 'canvas' | 'timeline'>('list')
+
+  const { data: timeline, isLoading: timelineLoading } = useTimeline(planId, view === 'timeline')
 
   return (
     <Page>
@@ -64,15 +68,21 @@ export default function PlanDetail() {
         <>
           <div className={styles.viewToggle}>
             <Tabs
-              items={[{ key: 'list', label: '목록' }, { key: 'canvas', label: '캔버스' }]}
+              items={[{ key: 'list', label: '목록' }, { key: 'canvas', label: '캔버스' }, { key: 'timeline', label: '기록' }]}
               value={view}
               onChange={setView}
             />
           </div>
 
-          {view === 'canvas' ? (
-            <PlanCanvas tree={tree} />
-          ) : (
+          {view === 'canvas' && <PlanCanvas tree={tree} />}
+
+          {view === 'timeline' && (
+            timelineLoading
+              ? <div className={styles.list}><Skeleton height={64} radius="var(--r-md)" /></div>
+              : <Timeline events={timeline ?? []} nameOf={nameOf} />
+          )}
+
+          {view === 'list' && (
             <>
               {tree.description && <p className={styles.planDesc}>{tree.description}</p>}
 
