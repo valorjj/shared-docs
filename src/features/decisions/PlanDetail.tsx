@@ -71,7 +71,7 @@ export default function PlanDetail() {
           </div>
 
           {view === 'canvas' ? (
-            <PlanCanvas subPlans={tree.subPlans} />
+            <PlanCanvas tree={tree} />
           ) : (
             <>
               {tree.description && <p className={styles.planDesc}>{tree.description}</p>}
