@@ -3,7 +3,7 @@ import { apiClient } from '../../api/client'
 import { useActiveWorkspace } from '../../auth/useActiveWorkspace'
 import type {
   CanvasPositionPayload, CreateEdgePayload, CreatePlanPayload, LockDecisionPayload,
-  OptionNode, PlanSummary, PlanTree, Rating, RatePayload, SubPlanEdge, SubPlanNode,
+  OptionNode, PlanEvent, PlanSummary, PlanTree, Rating, RatePayload, SubPlanEdge, SubPlanNode,
   TitleDescPayload, UpdatePlanPayload,
 } from './types'
 
@@ -11,6 +11,8 @@ export const decisionKeys = {
   scope: (wsId: number | null) => ['decisions', wsId] as const,
   list: (wsId: number | null) => ['decisions', wsId, 'list'] as const,
   tree: (wsId: number | null, planId: number) => ['decisions', wsId, 'tree', planId] as const,
+  timeline: (wsId: number | null, planId: number) => ['decisions', wsId, 'timeline', planId] as const,
+  feed: (wsId: number | null) => ['decisions', wsId, 'feed'] as const,
 }
 
 // ── Queries ──
@@ -29,6 +31,24 @@ export function usePlanTree(planId: number) {
     queryKey: decisionKeys.tree(activeId, planId),
     queryFn: async () => (await apiClient.get<PlanTree>(`/api/plans/${planId}`)).data,
     enabled: activeId != null && Number.isFinite(planId),
+  })
+}
+
+export function useTimeline(planId: number, enabled = true) {
+  const { activeId } = useActiveWorkspace()
+  return useQuery({
+    queryKey: decisionKeys.timeline(activeId, planId),
+    queryFn: async () => (await apiClient.get<PlanEvent[]>(`/api/plans/${planId}/timeline`)).data,
+    enabled: enabled && activeId != null && Number.isFinite(planId),
+  })
+}
+
+export function useFeed(enabled = true, limit = 50) {
+  const { activeId } = useActiveWorkspace()
+  return useQuery({
+    queryKey: decisionKeys.feed(activeId),
+    queryFn: async () => (await apiClient.get<PlanEvent[]>(`/api/decision-feed?limit=${limit}`)).data,
+    enabled: enabled && activeId != null,
   })
 }
 

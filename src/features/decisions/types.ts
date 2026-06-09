@@ -75,3 +75,17 @@ export type RatePayload = { score: number; comment?: string }
 export type LockDecisionPayload = { chosenOptionId: number; reason: string }
 export type CanvasPositionPayload = { canvasX: number; canvasY: number }
 export type CreateEdgePayload = { sourceSubPlanId: number; targetSubPlanId: number }
+
+export type PlanEventType =
+  | 'PLAN_CREATED' | 'SUBPLAN_ADDED' | 'OPTION_ADDED'
+  | 'DECISION_LOCKED' | 'DECISION_CHANGED' | 'DECISION_REOPENED'
+
+export type PlanEvent = {
+  id: number
+  planId: number
+  subPlanId: number | null
+  type: PlanEventType
+  actorUserId: number
+  payload: Record<string, string | null> | null
+  createdAt: string
+}
