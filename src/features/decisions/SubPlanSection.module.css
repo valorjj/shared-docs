@@ -29,6 +29,42 @@
   margin: 0;
 }
 
+/* 안건 connections surfaced from the canvas edges — quiet dashed connector. */
+.links {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding-left: var(--sp-3);
+  border-left: 1px dashed var(--c-border-strong);
+}
+
+.linkRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-1);
+  font-size: var(--fs-xs);
+}
+
+.linkLabel {
+  color: var(--c-text-subtle);
+  white-space: nowrap;
+}
+
+.linkChip {
+  background: none;
+  border: none;
+  margin: 0;
+  padding: 2px 4px;
+  font: inherit;
+  font-size: var(--fs-xs);
+  color: var(--c-accent);
+  cursor: pointer;
+  border-radius: var(--r-sm);
+}
+.linkChip:hover { background: var(--c-surface-tint); text-decoration: underline; }
+.linkChip:focus-visible { outline: none; box-shadow: var(--ring-focus); }
+
 .actions {
   display: flex;
   gap: var(--sp-1);

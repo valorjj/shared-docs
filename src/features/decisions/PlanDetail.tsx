@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { Plus } from 'lucide-react'
 import { Page, PageHeader, PageTitle, BackLink, Button, EmptyState, ErrorState, Skeleton, Tabs } from '../../components/ui'
@@ -54,6 +54,27 @@ export default function PlanDetail() {
 
   const { data: timeline, isLoading: timelineLoading } = useTimeline(planId, view === 'timeline')
 
+  // 안건 connections (the canvas edges) surfaced in the list view: resolve each
+  // edge to source/target titles and group per 안건 into outgoing/incoming.
+  const linksBySubPlan = useMemo(() => {
+    const map = new Map<number, { outgoing: { id: number; title: string }[]; incoming: { id: number; title: string }[] }>()
+    if (!tree) return map
+    const titleById = new Map(tree.subPlans.map((sp) => [sp.id, sp.title] as const))
+    tree.subPlans.forEach((sp) => map.set(sp.id, { outgoing: [], incoming: [] }))
+    tree.edges.forEach((e) => {
+      const src = titleById.get(e.sourceSubPlanId)
+      const tgt = titleById.get(e.targetSubPlanId)
+      if (src == null || tgt == null) return
+      map.get(e.sourceSubPlanId)?.outgoing.push({ id: e.targetSubPlanId, title: tgt })
+      map.get(e.targetSubPlanId)?.incoming.push({ id: e.sourceSubPlanId, title: src })
+    })
+    return map
+  }, [tree])
+
+  const jumpToSubPlan = (id: number) => {
+    document.getElementById(`subplan-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
   return (
     <Page>
       <PageHeader>
@@ -95,6 +116,8 @@ export default function PlanDetail() {
                     <SubPlanSection
                       key={sp.id}
                       subPlan={sp}
+                      links={linksBySubPlan.get(sp.id)}
+                      onJumpToSubPlan={jumpToSubPlan}
                       myUserId={myUserId}
                       nameOf={nameOf}
                       busy={rate.isPending || lock.isPending || reopen.isPending || deleteSubPlan.isPending || deleteOption.isPending}

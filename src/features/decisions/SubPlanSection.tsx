@@ -8,8 +8,12 @@ const STATUS_LABEL: Record<SubPlanNode['status'], string> = {
   EMPTY: '대기', IN_PROGRESS: '진행 중', DECIDED: '결정됨',
 }
 
+type SubPlanLink = { id: number; title: string }
+
 type Props = {
   subPlan: SubPlanNode
+  links?: { outgoing: SubPlanLink[]; incoming: SubPlanLink[] }
+  onJumpToSubPlan?: (id: number) => void
   myUserId: number
   nameOf: (userId: number) => string
   busy?: boolean
@@ -25,14 +29,15 @@ type Props = {
 }
 
 export default function SubPlanSection({
-  subPlan, myUserId, nameOf, busy, onEdit, onDelete, onAddOption,
+  subPlan, links, onJumpToSubPlan, myUserId, nameOf, busy, onEdit, onDelete, onAddOption,
   onEditOption, onDeleteOption, onRate, onClearRating, onDecide, onReopen,
 }: Props) {
   const { decision } = subPlan
   const chosen = decision ? subPlan.options.find((o) => o.id === decision.chosenOptionId) ?? null : null
+  const hasLinks = links != null && (links.outgoing.length > 0 || links.incoming.length > 0)
 
   return (
-    <section className={styles.section}>
+    <section id={`subplan-${subPlan.id}`} className={styles.section}>
       <header className={styles.head}>
         <div className={styles.titleWrap}>
           <h2 className={styles.title}>{subPlan.title}</h2>
@@ -43,6 +48,31 @@ export default function SubPlanSection({
           <IconButton variant="ghost" size="sm" label="안건 삭제" onClick={onDelete}><Trash2 size={14} /></IconButton>
         </div>
       </header>
+
+      {hasLinks && (
+        <div className={styles.links}>
+          {links!.outgoing.length > 0 && (
+            <div className={styles.linkRow}>
+              <span className={styles.linkLabel}>연결 →</span>
+              {links!.outgoing.map((l) => (
+                <button key={`o-${l.id}`} type="button" className={styles.linkChip} onClick={() => onJumpToSubPlan?.(l.id)}>
+                  {l.title}
+                </button>
+              ))}
+            </div>
+          )}
+          {links!.incoming.length > 0 && (
+            <div className={styles.linkRow}>
+              <span className={styles.linkLabel}>← 연결</span>
+              {links!.incoming.map((l) => (
+                <button key={`i-${l.id}`} type="button" className={styles.linkChip} onClick={() => onJumpToSubPlan?.(l.id)}>
+                  {l.title}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {subPlan.description && <p className={styles.desc}>{subPlan.description}</p>}
 
