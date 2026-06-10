@@ -17,12 +17,18 @@ export default function ShareDialog({ noteId, open, onClose }: Props) {
   const [permission, setPermission] = useState<SharePermission>('VIEW')
   const [error, setError] = useState<string | null>(null)
 
+  const handleClose = () => {
+    setError(null)
+    setEmail('')
+    onClose()
+  }
+
   const submit = () => {
     setError(null)
     const trimmed = email.trim()
     if (!trimmed) return
     grant.mutate({ email: trimmed, permission }, {
-      onSuccess: () => setEmail(''),
+      onSuccess: () => { setEmail(''); setError(null) },
       onError: (e) => {
         const body = e instanceof ApiError ? e.body : null
         setError(body?.detail ?? '공유할 수 없어요.')
@@ -31,7 +37,7 @@ export default function ShareDialog({ noteId, open, onClose }: Props) {
   }
 
   return (
-    <Modal open={open} onClose={onClose} title="메모 공유">
+    <Modal open={open} onClose={handleClose} title="메모 공유">
       <div className={styles.addRow}>
         <input
           type="email"
