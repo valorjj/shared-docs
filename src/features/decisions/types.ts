@@ -89,3 +89,5 @@ export type PlanEvent = {
   payload: Record<string, string | null> | null
   createdAt: string
 }
+
+export type ReorderSubPlansPayload = { orderedSubPlanIds: number[] }

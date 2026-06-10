@@ -1,5 +1,7 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { Plus } from 'lucide-react'
 import { Page, PageHeader, PageTitle, BackLink, Button, EmptyState, ErrorState, Skeleton, Tabs } from '../../components/ui'
 import { useAuth } from '../../auth/useAuth'
@@ -9,13 +11,14 @@ import {
   usePlanTree, useAddSubPlan, useUpdateSubPlan, useDeleteSubPlan,
   useAddOption, useUpdateOption, useDeleteOption,
   useRateOption, useDeleteRating, useLockDecision, useReopenDecision,
-  useTimeline,
+  useTimeline, useCreateEdge, useDeleteEdge, useReorderSubPlans,
 } from './api'
-import SubPlanSection from './SubPlanSection'
+import SortableSubPlanSection from './SortableSubPlanSection'
 import PlanCanvas from './PlanCanvas'
 import Timeline from './Timeline'
 import TitleDescModal from './TitleDescModal'
 import DecisionModal from './DecisionModal'
+import ConnectModal, { type ConnectCandidate } from './ConnectModal'
 import styles from './PlanDetail.module.css'
 import type { OptionNode, SubPlanNode } from './types'
 
@@ -43,6 +46,23 @@ export default function PlanDetail() {
   const clearRating = useDeleteRating()
   const lock = useLockDecision()
   const reopen = useReopenDecision()
+  const createEdge = useCreateEdge(planId)
+  const deleteEdge = useDeleteEdge()
+  const reorder = useReorderSubPlans(planId)
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
+
+  const onDragEnd = (e: DragEndEvent) => {
+    if (!tree) return
+    const { active, over } = e
+    if (!over || active.id === over.id) return
+    const ids = tree.subPlans.map((sp) => sp.id)
+    const from = ids.indexOf(Number(active.id))
+    const to = ids.indexOf(Number(over.id))
+    if (from < 0 || to < 0) return
+    const next = [...ids]
+    next.splice(to, 0, next.splice(from, 1)[0])
+    reorder.mutate({ orderedSubPlanIds: next })
+  }
 
   // modal state
   const [addingSubPlan, setAddingSubPlan] = useState(false)
@@ -51,8 +71,72 @@ export default function PlanDetail() {
   const [editingOption, setEditingOption] = useState<OptionNode | null>(null)
   const [decidingFor, setDecidingFor] = useState<SubPlanNode | null>(null)
   const [view, setView] = useState<'list' | 'canvas' | 'timeline'>('list')
+  const [connectingFor, setConnectingFor] = useState<SubPlanNode | null>(null)
 
   const { data: timeline, isLoading: timelineLoading } = useTimeline(planId, view === 'timeline')
+
+  // 안건 connections (the canvas edges) surfaced in the list view: resolve each
+  // edge to source/target titles and group per 안건 into outgoing/incoming.
+  const linksBySubPlan = useMemo(() => {
+    const map = new Map<number, { outgoing: { id: number; title: string }[]; incoming: { id: number; title: string }[] }>()
+    if (!tree) return map
+    const titleById = new Map(tree.subPlans.map((sp) => [sp.id, sp.title] as const))
+    tree.subPlans.forEach((sp) => map.set(sp.id, { outgoing: [], incoming: [] }))
+    tree.edges.forEach((e) => {
+      const src = titleById.get(e.sourceSubPlanId)
+      const tgt = titleById.get(e.targetSubPlanId)
+      if (src == null || tgt == null) return
+      map.get(e.sourceSubPlanId)?.outgoing.push({ id: e.targetSubPlanId, title: tgt })
+      map.get(e.targetSubPlanId)?.incoming.push({ id: e.sourceSubPlanId, title: src })
+    })
+    return map
+  }, [tree])
+
+  const jumpToSubPlan = (id: number) => {
+    document.getElementById(`subplan-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
+  const [hoveredSubPlanId, setHoveredSubPlanId] = useState<number | null>(null)
+
+  // Neighbor ids (both directions) of the hovered 안건 — drives the accent layer.
+  const hoveredNeighbors = useMemo(() => {
+    if (hoveredSubPlanId == null) return null
+    const links = linksBySubPlan.get(hoveredSubPlanId)
+    if (!links) return new Set<number>()
+    return new Set<number>([...links.outgoing.map((l) => l.id), ...links.incoming.map((l) => l.id)])
+  }, [hoveredSubPlanId, linksBySubPlan])
+
+  const highlightOf = (id: number): 'normal' | 'source' | 'linked' | 'dim' => {
+    if (hoveredSubPlanId == null) return 'normal'
+    if (id === hoveredSubPlanId) return 'source'
+    if (hoveredNeighbors?.has(id)) return 'linked'
+    return 'dim'
+  }
+
+  // The spine segment between card[i-1] and card[i] is accented when the hovered
+  // source links directly to its adjacent neighbour across that segment.
+  const spineActive = (prevId: number, nextId: number): boolean => {
+    if (hoveredSubPlanId == null || !hoveredNeighbors) return false
+    return (
+      (prevId === hoveredSubPlanId && hoveredNeighbors.has(nextId)) ||
+      (nextId === hoveredSubPlanId && hoveredNeighbors.has(prevId))
+    )
+  }
+
+  // Candidates for the 연결 modal: every other 안건, annotated with the existing
+  // edge (either direction) so the checkbox reflects current connections.
+  const connectCandidates = useMemo<ConnectCandidate[]>(() => {
+    if (!tree || !connectingFor) return []
+    const src = connectingFor.id
+    return tree.subPlans
+      .filter((sp) => sp.id !== src)
+      .map((sp) => {
+        const out = tree.edges.find((e) => e.sourceSubPlanId === src && e.targetSubPlanId === sp.id)
+        const inc = tree.edges.find((e) => e.sourceSubPlanId === sp.id && e.targetSubPlanId === src)
+        const edge = out ?? inc ?? null
+        return { id: sp.id, title: sp.title, edgeId: edge ? edge.id : null, outgoing: out != null }
+      })
+  }, [tree, connectingFor])
 
   return (
     <Page>
@@ -91,30 +175,43 @@ export default function PlanDetail() {
                   action={<Button variant="outline" size="sm" leading={<Plus size={14} />} onClick={() => setAddingSubPlan(true)}>안건 추가</Button>} />
               ) : (
                 <div className={styles.list}>
-                  {tree.subPlans.map((sp) => (
-                    <SubPlanSection
-                      key={sp.id}
-                      subPlan={sp}
-                      myUserId={myUserId}
-                      nameOf={nameOf}
-                      busy={rate.isPending || lock.isPending || reopen.isPending || deleteSubPlan.isPending || deleteOption.isPending}
-                      onEdit={() => setEditingSubPlan(sp)}
-                      onDelete={() => { if (window.confirm('삭제할까요? 되돌릴 수 없어요.')) deleteSubPlan.mutate(sp.id) }}
-                      onAddOption={() => setAddingOptionFor(sp.id)}
-                      onEditOption={(o) => setEditingOption(o)}
-                      onDeleteOption={(o) => {
-                        if (!window.confirm('삭제할까요? 되돌릴 수 없어요.')) return
-                        deleteOption.mutate(o.id, {
-                          onError: (e) => window.alert((e as { body?: { detail?: string } }).body?.detail ?? '삭제할 수 없어요.'),
-                        })
-                      }}
-                      onRate={(optionId, score, comment) => rate.mutate({ optionId, payload: { score, comment } })}
-                      onClearRating={(optionId) => clearRating.mutate(optionId)}
-                      onDecide={() => setDecidingFor(sp)}
-                      onReopen={() => { if (window.confirm('이 결정을 다시 열까요? 기록은 남아요.')) reopen.mutate(sp.id) }}
-                    />
-                  ))}
-                  <Button variant="outline" full leading={<Plus size={16} />} onClick={() => setAddingSubPlan(true)}>안건 추가</Button>
+                  <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+                    <SortableContext items={tree.subPlans.map((sp) => sp.id)} strategy={verticalListSortingStrategy}>
+                      {tree.subPlans.map((sp, i) => (
+                        <SortableSubPlanSection
+                          key={sp.id}
+                          showSpine={i > 0}
+                          spineActive={i > 0 && spineActive(tree.subPlans[i - 1].id, sp.id)}
+                          subPlan={sp}
+                          links={linksBySubPlan.get(sp.id)}
+                          onJumpToSubPlan={jumpToSubPlan}
+                          highlight={highlightOf(sp.id)}
+                          onHoverChange={(hovered) => setHoveredSubPlanId(hovered ? sp.id : null)}
+                          myUserId={myUserId}
+                          nameOf={nameOf}
+                          busy={rate.isPending || lock.isPending || reopen.isPending || deleteSubPlan.isPending || deleteOption.isPending}
+                          onEdit={() => setEditingSubPlan(sp)}
+                          onDelete={() => { if (window.confirm('삭제할까요? 되돌릴 수 없어요.')) deleteSubPlan.mutate(sp.id) }}
+                          onAddOption={() => setAddingOptionFor(sp.id)}
+                          onEditOption={(o) => setEditingOption(o)}
+                          onDeleteOption={(o) => {
+                            if (!window.confirm('삭제할까요? 되돌릴 수 없어요.')) return
+                            deleteOption.mutate(o.id, {
+                              onError: (e) => window.alert((e as { body?: { detail?: string } }).body?.detail ?? '삭제할 수 없어요.'),
+                            })
+                          }}
+                          onRate={(optionId, score, comment) => rate.mutate({ optionId, payload: { score, comment } })}
+                          onClearRating={(optionId) => clearRating.mutate(optionId)}
+                          onDecide={() => setDecidingFor(sp)}
+                          onReopen={() => { if (window.confirm('이 결정을 다시 열까요? 기록은 남아요.')) reopen.mutate(sp.id) }}
+                          onOpenConnect={() => setConnectingFor(sp)}
+                        />
+                      ))}
+                    </SortableContext>
+                  </DndContext>
+                  <div className={styles.addRow}>
+                    <Button variant="outline" full leading={<Plus size={16} />} onClick={() => setAddingSubPlan(true)}>안건 추가</Button>
+                  </div>
                 </div>
               )}
             </>
@@ -155,6 +252,22 @@ export default function PlanDetail() {
         currentChosenId={decidingFor?.decision?.chosenOptionId ?? null}
         busy={lock.isPending}
         onSubmit={(payload) => { if (decidingFor) lock.mutate({ subPlanId: decidingFor.id, payload }, { onSuccess: () => setDecidingFor(null) }) }}
+      />
+
+      <ConnectModal
+        open={connectingFor != null}
+        onClose={() => setConnectingFor(null)}
+        sourceTitle={connectingFor?.title ?? ''}
+        candidates={connectCandidates}
+        busy={createEdge.isPending || deleteEdge.isPending}
+        onConnect={(targetId) => {
+          if (!connectingFor) return
+          createEdge.mutate(
+            { sourceSubPlanId: connectingFor.id, targetSubPlanId: targetId },
+            { onError: (e) => window.alert((e as { body?: { detail?: string } }).body?.detail ?? '연결할 수 없어요.') },
+          )
+        }}
+        onDisconnect={(edgeId) => deleteEdge.mutate(edgeId)}
       />
     </Page>
   )
