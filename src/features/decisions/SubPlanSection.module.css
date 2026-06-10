@@ -114,3 +114,10 @@
   display: flex;
   gap: var(--sp-2);
 }
+
+/* Hover-highlight: source card hovered → accent ring; its linked 안건 → soft
+   accent border; everything else dims. Matches the no-lift/hairline discipline. */
+.section { transition: opacity .15s, border-color .15s, box-shadow .15s; }
+.section.source { border-color: var(--c-accent); box-shadow: 0 0 0 1px var(--c-accent); }
+.section.linked { border-color: var(--c-accent); }
+.section.dim { opacity: .4; }

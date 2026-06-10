@@ -8,12 +8,16 @@ const STATUS_LABEL: Record<SubPlanNode['status'], string> = {
   EMPTY: '대기', IN_PROGRESS: '진행 중', DECIDED: '결정됨',
 }
 
+export type SubPlanHighlight = 'normal' | 'source' | 'linked' | 'dim'
+
 type SubPlanLink = { id: number; title: string }
 
 type Props = {
   subPlan: SubPlanNode
   links?: { outgoing: SubPlanLink[]; incoming: SubPlanLink[] }
   onJumpToSubPlan?: (id: number) => void
+  highlight?: SubPlanHighlight
+  onHoverChange?: (hovered: boolean) => void
   myUserId: number
   nameOf: (userId: number) => string
   busy?: boolean
@@ -29,7 +33,7 @@ type Props = {
 }
 
 export default function SubPlanSection({
-  subPlan, links, onJumpToSubPlan, myUserId, nameOf, busy, onEdit, onDelete, onAddOption,
+  subPlan, links, onJumpToSubPlan, highlight = 'normal', onHoverChange, myUserId, nameOf, busy, onEdit, onDelete, onAddOption,
   onEditOption, onDeleteOption, onRate, onClearRating, onDecide, onReopen,
 }: Props) {
   const { decision } = subPlan
@@ -37,7 +41,12 @@ export default function SubPlanSection({
   const hasLinks = links != null && (links.outgoing.length > 0 || links.incoming.length > 0)
 
   return (
-    <section id={`subplan-${subPlan.id}`} className={styles.section}>
+    <section
+      id={`subplan-${subPlan.id}`}
+      className={[styles.section, highlight !== 'normal' && styles[highlight]].filter(Boolean).join(' ')}
+      onMouseEnter={() => onHoverChange?.(true)}
+      onMouseLeave={() => onHoverChange?.(false)}
+    >
       <header className={styles.head}>
         <div className={styles.titleWrap}>
           <h2 className={styles.title}>{subPlan.title}</h2>

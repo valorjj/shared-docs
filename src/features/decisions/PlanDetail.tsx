@@ -75,6 +75,33 @@ export default function PlanDetail() {
     document.getElementById(`subplan-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
+  const [hoveredSubPlanId, setHoveredSubPlanId] = useState<number | null>(null)
+
+  // Neighbor ids (both directions) of the hovered 안건 — drives the accent layer.
+  const hoveredNeighbors = useMemo(() => {
+    if (hoveredSubPlanId == null) return null
+    const links = linksBySubPlan.get(hoveredSubPlanId)
+    if (!links) return new Set<number>()
+    return new Set<number>([...links.outgoing.map((l) => l.id), ...links.incoming.map((l) => l.id)])
+  }, [hoveredSubPlanId, linksBySubPlan])
+
+  const highlightOf = (id: number): 'normal' | 'source' | 'linked' | 'dim' => {
+    if (hoveredSubPlanId == null) return 'normal'
+    if (id === hoveredSubPlanId) return 'source'
+    if (hoveredNeighbors?.has(id)) return 'linked'
+    return 'dim'
+  }
+
+  // The spine segment between card[i-1] and card[i] is accented when the hovered
+  // source links directly to its adjacent neighbour across that segment.
+  const spineActive = (prevId: number, nextId: number): boolean => {
+    if (hoveredSubPlanId == null || !hoveredNeighbors) return false
+    return (
+      (prevId === hoveredSubPlanId && hoveredNeighbors.has(nextId)) ||
+      (nextId === hoveredSubPlanId && hoveredNeighbors.has(prevId))
+    )
+  }
+
   return (
     <Page>
       <PageHeader>
@@ -114,11 +141,18 @@ export default function PlanDetail() {
                 <div className={styles.list}>
                   {tree.subPlans.map((sp, i) => (
                     <Fragment key={sp.id}>
-                      {i > 0 && <div className={styles.spine} aria-hidden="true" />}
+                      {i > 0 && (
+                        <div
+                          className={[styles.spine, spineActive(tree.subPlans[i - 1].id, sp.id) && styles.active].filter(Boolean).join(' ')}
+                          aria-hidden="true"
+                        />
+                      )}
                       <SubPlanSection
                         subPlan={sp}
                         links={linksBySubPlan.get(sp.id)}
                         onJumpToSubPlan={jumpToSubPlan}
+                        highlight={highlightOf(sp.id)}
+                        onHoverChange={(hovered) => setHoveredSubPlanId(hovered ? sp.id : null)}
                         myUserId={myUserId}
                         nameOf={nameOf}
                         busy={rate.isPending || lock.isPending || reopen.isPending || deleteSubPlan.isPending || deleteOption.isPending}
