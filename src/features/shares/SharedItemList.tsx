@@ -11,7 +11,7 @@ export default function SharedItemList() {
   const params = useParams()
   const selectedId = params.noteId ? Number(params.noteId) : null
 
-  if (selectedId != null) return <SharedNoteView noteId={selectedId} />
+  if (selectedId != null) return <SharedNoteView key={selectedId} noteId={selectedId} />
 
   if (isLoading) return <p className={styles.state}>불러오는 중…</p>
   if (!data || data.length === 0) {
@@ -27,7 +27,7 @@ export default function SharedItemList() {
 
   return (
     <div className={styles.page}>
-      <h1 className={styles.heading}><Share2 size={18} /> 공유받은 항목</h1>
+      <h1 className={styles.heading}><span aria-hidden="true"><Share2 size={18} /></span> 공유받은 항목</h1>
       {[...groups.entries()].map(([owner, items]) => (
         <section key={owner} className={styles.section}>
           <h2 className={styles.owner}>{owner}</h2>

@@ -41,6 +41,7 @@ export default function ShareDialog({ noteId, open, onClose }: Props) {
       <div className={styles.addRow}>
         <input
           type="email"
+          aria-label="이메일 주소"
           className={styles.email}
           placeholder="이메일 주소"
           value={email}
@@ -48,6 +49,7 @@ export default function ShareDialog({ noteId, open, onClose }: Props) {
           onKeyDown={(e) => { if (e.key === 'Enter') submit() }}
         />
         <select
+          aria-label="권한"
           className={styles.perm}
           value={permission}
           onChange={(e) => setPermission(e.target.value as SharePermission)}
@@ -69,6 +71,7 @@ export default function ShareDialog({ noteId, open, onClose }: Props) {
               <span className={styles.mail}>{s.recipientEmail}</span>
             </div>
             <select
+              aria-label="권한"
               className={styles.perm}
               value={s.permission}
               onChange={(e) =>

@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import NoteEditorBody from '../notes/editor/NoteEditorBody'
 import { useSharedNote, useUpdateSharedNote } from './api'
 import styles from './SharedNoteView.module.css'
@@ -10,6 +10,7 @@ export default function SharedNoteView({ noteId }: Props) {
   const shared = useSharedNote(noteId)
   const update = useUpdateSharedNote(noteId)
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const pendingPatch = useRef<{ title?: string; body?: string } | null>(null)
   const [title, setTitle] = useState<string | null>(null)
 
   const canEdit = shared.data?.effectivePermission === 'EDIT'
@@ -17,11 +18,25 @@ export default function SharedNoteView({ noteId }: Props) {
   const scheduleSave = useCallback(
     (patch: { title?: string; body?: string }) => {
       if (!canEdit) return
+      pendingPatch.current = { ...pendingPatch.current, ...patch }
       if (saveTimer.current) clearTimeout(saveTimer.current)
-      saveTimer.current = setTimeout(() => update.mutate(patch), SAVE_MS)
+      saveTimer.current = setTimeout(() => {
+        const p = pendingPatch.current
+        pendingPatch.current = null
+        if (p) update.mutate(p)
+      }, SAVE_MS)
     },
     [canEdit, update],
   )
+
+  useEffect(() => {
+    return () => {
+      if (saveTimer.current) clearTimeout(saveTimer.current)
+      const p = pendingPatch.current
+      pendingPatch.current = null
+      if (p && canEdit) update.mutate(p)
+    }
+  }, [noteId, canEdit, update])
 
   if (shared.isLoading) return <p className={styles.state}>불러오는 중…</p>
   if (shared.isError || !shared.data)
