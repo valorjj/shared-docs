@@ -8,6 +8,7 @@ import {
   Search,
   Settings,
   Settings2,
+  Share2,
   Table2,
   Vote,
   type LucideIcon,
@@ -35,6 +36,7 @@ const ITEMS: NavItem[] = [
   { to: '/calc',     Icon: Calculator, label: '계산' },
   { to: '/calendar', Icon: Calendar,   label: '캘린더' },
   { to: '/decisions', Icon: Vote,      label: '결정' },
+  { to: '/shared',   Icon: Share2,     label: '공유' },
   { to: '/admin',    Icon: Settings,   label: '관리', adminOnly: true },
 ]
 

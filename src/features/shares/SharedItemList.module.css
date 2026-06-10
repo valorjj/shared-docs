@@ -1,0 +1,10 @@
+.page { max-width: 720px; margin: 0 auto; padding: var(--sp-4); display: flex; flex-direction: column; gap: var(--sp-4); }
+.heading { display: flex; align-items: center; gap: var(--sp-2); font-size: var(--fs-lg); font-weight: var(--fw-semi); color: var(--c-text); margin: 0; }
+.section { display: flex; flex-direction: column; gap: var(--sp-1); }
+.owner { font-size: var(--fs-xs); color: var(--c-text-subtle); margin: 0 0 var(--sp-1); }
+.list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.row { display: flex; align-items: center; gap: var(--sp-2); width: 100%; text-align: left; background: none; border: none; border-top: 1px solid var(--c-border); padding: var(--sp-3) var(--sp-1); cursor: pointer; color: var(--c-text); }
+.row:hover { background: var(--c-surface-tint); }
+.title { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.perm { font-size: var(--fs-xs); color: var(--c-text-muted); }
+.state { padding: var(--sp-6); text-align: center; color: var(--c-text-subtle); }
