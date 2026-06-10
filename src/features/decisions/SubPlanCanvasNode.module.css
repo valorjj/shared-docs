@@ -111,14 +111,15 @@
   margin: 0;
 }
 
-/* Connection handles — small, quiet; only obvious on node hover. */
+/* Connection handles — quiet at rest but always visible (touch has no hover),
+ * so the drag-to-connect affordance is discoverable. Brighten on node hover. */
 .handle {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
   background: var(--c-surface);
-  border: 1px solid var(--c-border);
-  opacity: 0;
-  transition: opacity 0.12s ease;
+  border: 1px solid var(--c-border-strong);
+  opacity: 0.45;
+  transition: opacity 0.12s ease, border-color 0.12s ease;
 }
 .node:hover .handle { opacity: 1; }
-.handle:hover { border-color: var(--c-accent); }
+.handle:hover { opacity: 1; border-color: var(--c-accent); }
