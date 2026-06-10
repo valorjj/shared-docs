@@ -52,9 +52,12 @@ apiClient.interceptors.request.use((config) => {
   // stale/no active workspace when they hit the claim endpoint, and attaching a
   // bad X-Workspace-Id would get the request 403'd by WorkspaceContextFilter
   // before the token-based claim even runs.
+  // /api/shares is workspace-agnostic by design: cross-workspace shared access
+  // resolves by ShareGrant, not by the caller's active workspace — the note
+  // lives in someone else's workspace, so its id must not be attached here.
   const url = config.url ?? ''
   const workspaceAgnostic =
-    url.startsWith('/api/workspaces') || url.startsWith('/api/auth') || url.startsWith('/api/invitations')
+    url.startsWith('/api/workspaces') || url.startsWith('/api/auth') || url.startsWith('/api/invitations') || url.startsWith('/api/shares')
   const workspaceId = getActiveWorkspaceId()
   if (workspaceId != null && !workspaceAgnostic) {
     config.headers['X-Workspace-Id'] = String(workspaceId)

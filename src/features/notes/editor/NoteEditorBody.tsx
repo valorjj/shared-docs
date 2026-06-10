@@ -44,17 +44,23 @@ type Props = {
   /** When false, the editor is read-only (Tiptap editable=false). */
   canEdit?: boolean
   onBodyChange: (html: string) => void
-  onUploadImage: (file: File) => Promise<string>
-  onUploadFile: (file: File) => Promise<{ url: string; filename: string; sizeBytes: number }>
-  onPickFile: () => void
-  onPickSnapshot: () => void
-  onPickLinkCard: () => void
-  onPickCalcSnapshot: () => void
+  /** Workspace-coupled upload/picker handlers — all optional.
+   *  When `minimal` is true these are hidden; omit them for cross-workspace
+   *  shared-note views where the workspace context is unavailable. */
+  onUploadImage?: (file: File) => Promise<string>
+  onUploadFile?: (file: File) => Promise<{ url: string; filename: string; sizeBytes: number }>
+  onPickFile?: () => void
+  onPickSnapshot?: () => void
+  onPickLinkCard?: () => void
+  onPickCalcSnapshot?: () => void
   registerEditor: (editor: Editor | null) => void
   /** Single source of truth for the link dialog lives in NoteEditor —
    *  both this body's context menu and the toolbar's link button
    *  open it via this prop. */
   onRequestLinkDialog: () => void
+  /** When true, hides workspace-coupled picker slash-menu entries and skips
+   *  file upload on paste/drop.  Core text formatting stays fully available. */
+  minimal?: boolean
 }
 
 const IMAGE_MIME = /^image\//
@@ -72,16 +78,28 @@ export default function NoteEditorBody({
   onPickCalcSnapshot,
   registerEditor,
   onRequestLinkDialog,
+  minimal = false,
 }: Props) {
   const lastNoteId = useRef(noteId)
 
   // Slash menu state — driven from the Tiptap extension's callbacks.
   const [slashState, setSlashState] = useState<SlashState | null>(null)
   const slashKeyHandlerRef = useRef<SlashKeyHandler | null>(null)
-  const slashItems = useMemo(
-    () => buildSlashItems(onPickFile, onPickSnapshot, onPickLinkCard, onPickCalcSnapshot),
-    [onPickFile, onPickSnapshot, onPickLinkCard, onPickCalcSnapshot],
-  )
+  const slashItems = useMemo(() => {
+    const all = buildSlashItems(
+      onPickFile ?? (() => {}),
+      onPickSnapshot ?? (() => {}),
+      onPickLinkCard ?? (() => {}),
+      onPickCalcSnapshot ?? (() => {}),
+    )
+    // In minimal mode, strip the workspace-coupled picker entries so the
+    // slash menu only shows core formatting commands.
+    if (minimal) {
+      const PICKER_IDS = new Set(['file', 'link-card', 'data-snapshot', 'calc-snapshot'])
+      return all.filter((item) => !PICKER_IDS.has(item.id))
+    }
+    return all
+  }, [onPickFile, onPickSnapshot, onPickLinkCard, onPickCalcSnapshot, minimal])
 
   // @-mention state — popup owns search, this just plumbs trigger state.
   const [mentionState, setMentionState] = useState<MentionState | null>(null)
@@ -158,6 +176,9 @@ export default function NoteEditorBody({
     editorProps: {
       attributes: { class: styles.editor },
       handlePaste(_view, event) {
+        // In minimal mode there are no upload handlers — let Tiptap's
+        // default paste handling run (plain text / HTML).
+        if (minimal) return false
         const items = event.clipboardData?.items
         if (!items) return false
         for (const item of items) {
@@ -172,6 +193,8 @@ export default function NoteEditorBody({
         return false
       },
       handleDrop(_view, event) {
+        // Same: skip upload handling when upload handlers are absent.
+        if (minimal) return false
         const files = event.dataTransfer?.files
         if (!files || files.length === 0) return false
         event.preventDefault()
@@ -190,10 +213,12 @@ export default function NoteEditorBody({
     if (!editor) return
     try {
       if (IMAGE_MIME.test(file.type)) {
-        const url = await onUploadImage(file)
+        const url = await onUploadImage?.(file)
+        if (!url) return
         editor.chain().focus().setImage({ src: absoluteFileUrl(url) }).run()
       } else {
-        const att = await onUploadFile(file)
+        const att = await onUploadFile?.(file)
+        if (!att) return
         editor
           .chain()
           .focus()
