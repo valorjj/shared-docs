@@ -20,7 +20,7 @@ export default function SortableSubPlanSection({ showSpine, spineActive, ...sect
   const handle = (
     <button
       type="button"
-      className={`${sectionStyles.dragHandle}${isDragging ? ` ${sectionStyles.dragging}` : ''}`}
+      className={sectionStyles.dragHandle}
       aria-label="안건 순서 변경"
       {...attributes}
       {...listeners}
@@ -30,7 +30,7 @@ export default function SortableSubPlanSection({ showSpine, spineActive, ...sect
   )
 
   return (
-    <div ref={setNodeRef} style={style}>
+    <div ref={setNodeRef} style={style} className={isDragging ? sectionStyles.dragging : undefined}>
       {showSpine && <div className={[styles.spine, spineActive && styles.active].filter(Boolean).join(' ')} aria-hidden="true" />}
       <SubPlanSection {...sectionProps} dragHandle={handle} />
     </div>

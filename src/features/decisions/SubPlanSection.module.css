@@ -134,4 +134,5 @@
 }
 .dragHandle:hover { color: var(--c-text-muted); background: var(--c-surface-tint); }
 .dragHandle:focus-visible { outline: none; box-shadow: var(--ring-focus); }
+.dragHandle:active { cursor: grabbing; }
 .dragging { opacity: .6; }
