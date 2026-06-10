@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { Fragment, useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { Plus } from 'lucide-react'
 import { Page, PageHeader, PageTitle, BackLink, Button, EmptyState, ErrorState, Skeleton, Tabs } from '../../components/ui'
@@ -112,32 +112,36 @@ export default function PlanDetail() {
                   action={<Button variant="outline" size="sm" leading={<Plus size={14} />} onClick={() => setAddingSubPlan(true)}>안건 추가</Button>} />
               ) : (
                 <div className={styles.list}>
-                  {tree.subPlans.map((sp) => (
-                    <SubPlanSection
-                      key={sp.id}
-                      subPlan={sp}
-                      links={linksBySubPlan.get(sp.id)}
-                      onJumpToSubPlan={jumpToSubPlan}
-                      myUserId={myUserId}
-                      nameOf={nameOf}
-                      busy={rate.isPending || lock.isPending || reopen.isPending || deleteSubPlan.isPending || deleteOption.isPending}
-                      onEdit={() => setEditingSubPlan(sp)}
-                      onDelete={() => { if (window.confirm('삭제할까요? 되돌릴 수 없어요.')) deleteSubPlan.mutate(sp.id) }}
-                      onAddOption={() => setAddingOptionFor(sp.id)}
-                      onEditOption={(o) => setEditingOption(o)}
-                      onDeleteOption={(o) => {
-                        if (!window.confirm('삭제할까요? 되돌릴 수 없어요.')) return
-                        deleteOption.mutate(o.id, {
-                          onError: (e) => window.alert((e as { body?: { detail?: string } }).body?.detail ?? '삭제할 수 없어요.'),
-                        })
-                      }}
-                      onRate={(optionId, score, comment) => rate.mutate({ optionId, payload: { score, comment } })}
-                      onClearRating={(optionId) => clearRating.mutate(optionId)}
-                      onDecide={() => setDecidingFor(sp)}
-                      onReopen={() => { if (window.confirm('이 결정을 다시 열까요? 기록은 남아요.')) reopen.mutate(sp.id) }}
-                    />
+                  {tree.subPlans.map((sp, i) => (
+                    <Fragment key={sp.id}>
+                      {i > 0 && <div className={styles.spine} />}
+                      <SubPlanSection
+                        subPlan={sp}
+                        links={linksBySubPlan.get(sp.id)}
+                        onJumpToSubPlan={jumpToSubPlan}
+                        myUserId={myUserId}
+                        nameOf={nameOf}
+                        busy={rate.isPending || lock.isPending || reopen.isPending || deleteSubPlan.isPending || deleteOption.isPending}
+                        onEdit={() => setEditingSubPlan(sp)}
+                        onDelete={() => { if (window.confirm('삭제할까요? 되돌릴 수 없어요.')) deleteSubPlan.mutate(sp.id) }}
+                        onAddOption={() => setAddingOptionFor(sp.id)}
+                        onEditOption={(o) => setEditingOption(o)}
+                        onDeleteOption={(o) => {
+                          if (!window.confirm('삭제할까요? 되돌릴 수 없어요.')) return
+                          deleteOption.mutate(o.id, {
+                            onError: (e) => window.alert((e as { body?: { detail?: string } }).body?.detail ?? '삭제할 수 없어요.'),
+                          })
+                        }}
+                        onRate={(optionId, score, comment) => rate.mutate({ optionId, payload: { score, comment } })}
+                        onClearRating={(optionId) => clearRating.mutate(optionId)}
+                        onDecide={() => setDecidingFor(sp)}
+                        onReopen={() => { if (window.confirm('이 결정을 다시 열까요? 기록은 남아요.')) reopen.mutate(sp.id) }}
+                      />
+                    </Fragment>
                   ))}
-                  <Button variant="outline" full leading={<Plus size={16} />} onClick={() => setAddingSubPlan(true)}>안건 추가</Button>
+                  <div className={styles.addRow}>
+                    <Button variant="outline" full leading={<Plus size={16} />} onClick={() => setAddingSubPlan(true)}>안건 추가</Button>
+                  </div>
                 </div>
               )}
             </>

@@ -1,7 +1,21 @@
 .list {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-4);
+  gap: 0;                 /* spine + .addRow now provide vertical rhythm */
+}
+
+/* Order-spine: neutral dashed connector between consecutive 안건 (it represents
+   sortOrder, NOT connections — connections are the accent layer in Task 2/3). */
+.spine {
+  align-self: center;     /* centers when a direct flex child of .list (Task 1) */
+  margin-inline: auto;    /* centers when nested in the block-flow sortable wrapper (Task 5) */
+  width: 0;
+  height: var(--sp-5);
+  border-left: 2px dashed var(--c-border-strong);
+}
+
+.addRow {
+  margin-top: var(--sp-4);
 }
 
 .viewToggle {
