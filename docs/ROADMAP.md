@@ -1,21 +1,22 @@
 # Roadmap
 
-> Last revised: 2026-05-29 — multi-tenant v2 direction. The old Phase 3/4 framing (private 2-person app) is superseded.
+> Last revised: 2026-06-10 — **v2 build complete and deployed (Phases A–F).** This section is now history; the phase descriptions below are kept as a build log.
 
-The product is being rebuilt as a multi-tenant app with workspaces, invitations, and cross-workspace per-doc sharing. See [`plans/2026-05-29-multi-tenant-v2.md`](plans/2026-05-29-multi-tenant-v2.md) for the architecture spec. This roadmap is the build order.
+**STATUS (2026-06-10):** The multi-tenant v2 rebuild shipped. `main` is the live v2 codebase; the DB was wiped and re-seeded at cutover. All phases A–F plus the Decisions pillar are in production. The **only** remaining launch step is operational — flip `APP_AUTH_ALLOWLIST_ENABLED` off in prod to open public sign-up. Next direction after that: the multi-calendar overlay. Architecture spec: [`plans/2026-05-29-multi-tenant-v2.md`](plans/2026-05-29-multi-tenant-v2.md).
 
-## Where we are (2026-05-29)
+## Where we are (build log)
 
 | Surface | State |
 |---|---|
-| v1 codebase on `main` | **Frozen.** All four pillars work, but as a single-workspace app gated by a 2-email allowlist. |
-| v1 production data | **Will be wiped on v2 cutover.** No migration. `mysqldump` backup taken first for nostalgia. |
-| v2 spec | **Locked.** `plans/2026-05-29-multi-tenant-v2.md` is the source of truth. |
-| v2 implementation | **Not started.** Branch `v2-multi-tenant` to be created on both repos before Phase A begins. |
+| v2 codebase on `main` | **Live.** All four pillars + workspaces, invitations, cross-workspace note sharing. |
+| v1 production data | **Wiped at cutover** (mysqldump backup kept). |
+| v2 spec | `plans/2026-05-29-multi-tenant-v2.md` — the architecture source of truth. |
+| v2 implementation | **Phases A–F shipped + deployed (2026-06).** |
+| Public sign-up | **Pending** the `APP_AUTH_ALLOWLIST_ENABLED` flip (ops step). |
 
-## v2 phases
+## v2 phases (build log — all shipped)
 
-Each phase ships with tests green; nothing merges to `main` until v2 cutover. All work happens on the `v2-multi-tenant` branch.
+The phases below all shipped with tests green. (Historical note: during the build, work happened on per-phase branches and merged to `main` at/after cutover, not on a long-lived `v2-multi-tenant` branch as originally planned.)
 
 ### Phase A — workspaces + memberships + scoped reads (~7–10 days)
 

@@ -1,6 +1,6 @@
 # Vision
 
-> Last revised: 2026-05-29 — multi-tenant v2 direction (the "private 2-person app" framing from 2026-05-28 has been reversed; see `plans/2026-05-29-multi-tenant-v2.md`).
+> Last revised: 2026-06-10 — multi-tenant v2 direction, now **built and deployed** (Phases A–F shipped 2026-06; `main` is live). The "private 2-person app" framing from 2026-05-28 was reversed; see `plans/2026-05-29-multi-tenant-v2.md`. Only the public-sign-up allowlist flip remains before launch.
 
 ## 1. What this is
 
@@ -42,7 +42,7 @@ Each user has private notes (PRIVATE visibility flag). Even in a shared workspac
 ### Pillar 2 — Shared notebook
 Notes the workspace can read and edit. Bear-style Tiptap editor with slash menu, bubble menu, `@`-mention, attachments. Already implemented; survives the v2 rebuild.
 
-### Pillar 3 — Decisions (the wedge, deferred until v2 ships)
+### Pillar 3 — Decisions (the wedge — shipped 2026-06)
 A `Plan` (e.g., "우리 첫 집 구하기") is broken into `SubPlan`s ("동네 정하기", "예산 정하기"). Each subplan has `Option`s with each member's rating + comments. A `Decision` locks in the chosen option with the reasoning. The timeline view is what people will screenshot.
 
 This is the feature that doesn't exist anywhere else. It was Phase 3 in the old roadmap; now it's the first thing we build after v2 ships.
