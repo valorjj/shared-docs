@@ -26,6 +26,7 @@ const Admin            = lazy(() => import('./pages/Admin'))
 const SettingsCategories = lazy(() => import('./pages/SettingsCategories'))
 const SettingsMembers  = lazy(() => import('./pages/SettingsMembers'))
 const InviteClaim      = lazy(() => import('./pages/InviteClaim'))
+const LegalPage        = lazy(() => import('./pages/legal/LegalPage'))
 
 function RouteFallback() {
   return (
@@ -52,6 +53,8 @@ function App() {
         <Route path="/auth/callback" element={<AuthCallback />} />
         {/* Public: the page itself sends the visitor through Google sign-in if needed. */}
         <Route path="/invite/:token" element={<InviteClaim />} />
+        <Route path="/privacy" element={<LegalPage doc="privacy" />} />
+        <Route path="/terms" element={<LegalPage doc="terms" />} />
 
         <Route element={<RequireAuth />}>
           <Route element={<MobileShell />}>

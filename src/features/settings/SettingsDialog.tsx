@@ -129,6 +129,24 @@ export default function SettingsDialog() {
               </div>
             </section>
           )}
+
+          <footer className={styles.legal}>
+            <button
+              type="button"
+              className={styles.legalLink}
+              onClick={() => { s.setDialogOpen(false); navigate('/privacy') }}
+            >
+              개인정보 처리방침
+            </button>
+            <span aria-hidden="true">·</span>
+            <button
+              type="button"
+              className={styles.legalLink}
+              onClick={() => { s.setDialogOpen(false); navigate('/terms') }}
+            >
+              이용약관
+            </button>
+          </footer>
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>

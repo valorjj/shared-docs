@@ -1,13 +1,14 @@
-/* Bear-style minimal landing surface. No card lift, no shadows on the
-   page chrome itself — the whole login is one calm column on --c-bg.
-   All colors drive off tokens so Dracula / dark / light all behave. */
+/* Bear-style minimal landing. Two-column split on wide screens (value left,
+   sign-in right), single calm column on mobile. No shadows, hairline divider. */
 
 .login {
   min-height: 100dvh;
   min-height: 100svh;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: var(--sp-7);
   padding: var(--sp-7) var(--sp-5);
   background: var(--c-bg);
   color: var(--c-text);
@@ -16,12 +17,15 @@
 
 .login__inner {
   width: 100%;
-  max-width: 420px;
+  max-width: 760px;
   display: flex;
   flex-direction: column;
+  gap: var(--sp-6);
   align-items: center;
   text-align: center;
 }
+
+.login__intro { display: flex; flex-direction: column; align-items: center; }
 
 .login__title {
   margin: 0;
@@ -40,15 +44,32 @@
   color: var(--c-text-muted);
 }
 
-.login__rule {
-  width: 56px;
-  height: 1px;
-  background: var(--c-border-strong);
-  margin: var(--sp-7) 0;
+.login__pillars {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-sm);
+  color: var(--c-text-subtle);
+  letter-spacing: 0.01em;
+}
+
+.login__divider { display: none; }
+
+.login__panel {
+  width: 100%;
+  max-width: 340px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.login__panel-title {
+  margin: 0 0 var(--sp-4);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semi);
+  color: var(--c-text-subtle);
 }
 
 .login__error {
-  margin: var(--sp-5) 0 0;
+  margin: 0 0 var(--sp-4);
   padding: var(--sp-3) var(--sp-4);
   background: var(--c-danger-bg);
   border: 1px solid var(--c-danger-border);
@@ -60,9 +81,6 @@
   box-sizing: border-box;
 }
 
-/* The single primary button: hairline-bordered, Google identity colors
-   preserved in the icon, surface bg so it tones into the page. Hover
-   shifts to surface-tint per Bear convention. */
 .login__google {
   display: inline-flex;
   align-items: center;
@@ -82,28 +100,46 @@
   cursor: pointer;
   transition: background var(--t-fast), border-color var(--t-fast);
 }
-
-.login__google:hover {
-  background: var(--c-surface-tint);
-  border-color: var(--c-border-strong);
-}
-
-.login__google:focus-visible {
-  outline: none;
-  box-shadow: var(--ring-focus);
-}
-
-.login__google-icon {
-  width: 18px;
-  height: 18px;
-  flex-shrink: 0;
-}
+.login__google:hover { background: var(--c-surface-tint); border-color: var(--c-border-strong); }
+.login__google:focus-visible { outline: none; box-shadow: var(--ring-focus); }
+.login__google-icon { width: 18px; height: 18px; flex-shrink: 0; }
 
 .login__hint {
-  margin: var(--sp-6) 0 0;
+  margin: var(--sp-5) 0 0;
   font-size: var(--fs-sm);
   line-height: var(--lh-snug);
   color: var(--c-text-subtle);
   max-width: 28ch;
 }
 
+.login__footer {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-sm);
+}
+.login__footer-link { color: var(--c-text-subtle); text-decoration: none; }
+.login__footer-link:hover { color: var(--c-text); }
+.login__footer-link:focus-visible { outline: none; box-shadow: var(--ring-focus); }
+.login__footer-dot { color: var(--c-text-subtle); }
+
+/* Wide screens: value left, sign-in right, hairline divider between. */
+@media (min-width: 720px) {
+  .login__inner {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sp-7);
+    text-align: left;
+  }
+  .login__intro { align-items: flex-start; flex: 1; }
+  .login__divider {
+    display: block;
+    align-self: stretch;
+    width: 1px;
+    background: var(--c-border);
+  }
+  .login__panel { align-items: stretch; flex: 0 0 320px; }
+  .login__panel-title { text-align: left; }
+  .login__hint { text-align: left; }
+}
