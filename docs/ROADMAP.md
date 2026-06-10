@@ -2,7 +2,7 @@
 
 > Last revised: 2026-06-10 — **v2 build complete and deployed (Phases A–F).** This section is now history; the phase descriptions below are kept as a build log.
 
-**STATUS (2026-06-10):** The multi-tenant v2 rebuild shipped. `main` is the live v2 codebase; the DB was wiped and re-seeded at cutover. All phases A–F plus the Decisions pillar are in production. The **only** remaining launch step is operational — flip `APP_AUTH_ALLOWLIST_ENABLED` off in prod to open public sign-up. Next direction after that: the multi-calendar overlay. Architecture spec: [`plans/2026-05-29-multi-tenant-v2.md`](plans/2026-05-29-multi-tenant-v2.md).
+**STATUS (2026-06-10):** The multi-tenant v2 rebuild shipped. `main` is the live v2 codebase; the DB was wiped and re-seeded at cutover. All phases A–F plus the Decisions pillar are in production. **Open Google sign-up is already live** — the rebuild removed the email allowlist (there is no `APP_AUTH_ALLOWLIST_ENABLED` gate in the code), so going public just means sharing the URL. Next direction: the multi-calendar overlay. Architecture spec: [`plans/2026-05-29-multi-tenant-v2.md`](plans/2026-05-29-multi-tenant-v2.md).
 
 ## Where we are (build log)
 
@@ -12,7 +12,7 @@
 | v1 production data | **Wiped at cutover** (mysqldump backup kept). |
 | v2 spec | `plans/2026-05-29-multi-tenant-v2.md` — the architecture source of truth. |
 | v2 implementation | **Phases A–F shipped + deployed (2026-06).** |
-| Public sign-up | **Pending** the `APP_AUTH_ALLOWLIST_ENABLED` flip (ops step). |
+| Public sign-up | **Already open** — no allowlist gate in code (removed in the rebuild). |
 
 ## v2 phases (build log — all shipped)
 

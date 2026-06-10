@@ -1,6 +1,6 @@
 # Multi-tenant v2 — architecture spec
 
-> **Status:** ✅ IMPLEMENTED & DEPLOYED (Phases A–F shipped 2026-06-10). This was the architecture spec for the multi-tenant rebuild; it now reads as the as-built reference. Per-phase design+plan docs live alongside it in this folder. Only the public-sign-up allowlist flip remains.
+> **Status:** ✅ IMPLEMENTED & DEPLOYED (Phases A–F shipped 2026-06-10). This was the architecture spec for the multi-tenant rebuild; it now reads as the as-built reference. Per-phase design+plan docs live alongside it in this folder. Note: §5.4's "allowlist kill-switch in Phase F" never materialized — the rebuild removed the email allowlist outright in Phase A, so open sign-up has been live since cutover (no `APP_AUTH_ALLOWLIST_ENABLED` gate exists).
 >
 > **Replaces:** the 2026-05-28 "private 2-person app" framing in `VISION.md`, `ROADMAP.md`, `README.md`, `CLAUDE.md` and the `project_public_launch.md` / `project_vision_reset.md` memories. Those docs all need rewriting once this spec lands. **Do not implement code until the user signs off on this spec.**
 

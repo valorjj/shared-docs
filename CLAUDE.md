@@ -1,12 +1,12 @@
 # CLAUDE.md
 
-> Project bible. Last revised: 2026-06-10 — multi-tenant v2 (Phases A–F) **shipped to production**. The only remaining launch step is flipping the auth allowlist off to open public sign-up.
+> Project bible. Last revised: 2026-06-10 — multi-tenant v2 (Phases A–F) **shipped to production**. **Open Google sign-up is already live** — the rebuild removed the email allowlist; there is no gate to flip. Going public = sharing the URL.
 
 ## What this is
 
 A multi-tenant shared workspace app for small groups (couples, families, friend circles, hobby clubs). One user belongs to many workspaces. Within a workspace, data is shared by default; PRIVATE notes are author-only. Cross-workspace per-doc shares let you grant individual documents to specific outsiders.
 
-The multi-tenant v2 rebuild (Phases A–F) is **complete and deployed** as of 2026-06-10 — `main` is the live v2 codebase. The architecture spec is [`docs/plans/2026-05-29-multi-tenant-v2.md`](docs/plans/2026-05-29-multi-tenant-v2.md); each phase has its own dated design+plan in `docs/plans/`. The only remaining launch step is operational: flip `APP_AUTH_ALLOWLIST_ENABLED` off in prod to open public sign-up.
+The multi-tenant v2 rebuild (Phases A–F) is **complete and deployed** as of 2026-06-10 — `main` is the live v2 codebase. The architecture spec is [`docs/plans/2026-05-29-multi-tenant-v2.md`](docs/plans/2026-05-29-multi-tenant-v2.md); each phase has its own dated design+plan in `docs/plans/`. Open Google sign-up is **already live** — the v2 rebuild removed the old email allowlist (no `APP_AUTH_ALLOWLIST_ENABLED` gate exists in the code). Any Google account is accepted; only `active=false` accounts are rejected. Making it public is just sharing the URL.
 
 The product, inside any workspace, has four pillars:
 
@@ -44,7 +44,7 @@ shared-docs-root/
 
 - **Frontend:** Vite + React 19 + TypeScript + CSS Modules. Tiptap v3 for the editor. React Query for data. React Router v6.
 - **Backend:** Spring Boot 3.5 + Kotlin. JPA + MariaDB (port 3307 host). **Flyway owns the schema** (latest V17); Hibernate `ddl-auto: validate` (asserts entities match the migrated schema, never mutates it).
-- **Auth:** Google OAuth2 → JWT (24h). The `app.auth.allowed-emails` kill-switch (env flag `APP_AUTH_ALLOWLIST_ENABLED`) **still gates prod** — flipping it off is the final, deliberate launch step (not yet done). Off in dev.
+- **Auth:** Google OAuth2 → JWT (24h). **Open sign-up — any Google account is accepted.** The v2 rebuild removed the old `allowed_emails` allowlist; there is **no** `APP_AUTH_ALLOWLIST_ENABLED` gate in the code. Only deactivated accounts (`User.active=false`) are rejected at login. `app.auth.bootstrap-admins` promotes listed emails to admin on sign-in.
 - **Deploy:** Vercel (frontend) + Cloudflare Tunnel → Mac Mini Docker (backend + DB + uploads volume).
 
 Full details in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) (note: v1 baseline; v2 changes will land as Phase A merges).
@@ -81,7 +81,7 @@ These survive the v2 rebuild because they're orthogonal to scope:
 4. **One primary button per screen.** Browse / navigate / add are `outline`. The single primary is for the screen's one commit action.
 5. **Card never lifts.** Hairline border + `--c-surface-tint` hover. Shadow is for floating surfaces only.
 6. **No setState in effect.** Derive from `useSearchParams`, or use the wrapper+keyed-inner pattern for forms with `initial` props. Canonical examples: `NoteEditorTitle` re-keyed by `note.id`; calc mode components re-keyed by `seedEntry?.id ?? 'fresh'` in `CalcWorkspace`.
-7. **No backwards-compat shims, no feature flags.** (The allowlist kill-switch is the single standing exception, pending the launch flip.)
+7. **No backwards-compat shims, no feature flags.**
 8. **Comments default to none.** Only write a comment when the *why* is non-obvious.
 
 Once v2 lands, every API endpoint also requires:
@@ -108,7 +108,7 @@ ESLint enforces 1–6 mechanically. The rest is review discipline.
 | Per-doc sharing / "공유받은 항목" (Phase E) | **Shipped 2026-06-10.** Notes-only slice on a generic `resource_shares` core; VIEW/EDIT; separate `/api/shares/*` path. |
 | Decisions (Pillar 3) | **Shipped 2026-06.** Plan→SubPlan→Option→Decision; canvas, roadmap board, timeline/feed. |
 | Launch polish (Phase F) | **Shipped 2026-06-10.** Privacy/Terms pages, split landing, fresh-workspace welcome. |
-| Open public sign-up | **Pending** — flip `APP_AUTH_ALLOWLIST_ENABLED` off in prod (ops step, not code). |
+| Open public sign-up | **Already live** — no allowlist gate in code (removed in the rebuild). Going public = share the URL. |
 | Multi-calendar overlay | **Post-v2** (next direction). |
 | Presence on shared notes | **Post-v2.** |
 

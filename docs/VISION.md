@@ -1,6 +1,6 @@
 # Vision
 
-> Last revised: 2026-06-10 — multi-tenant v2 direction, now **built and deployed** (Phases A–F shipped 2026-06; `main` is live). The "private 2-person app" framing from 2026-05-28 was reversed; see `plans/2026-05-29-multi-tenant-v2.md`. Only the public-sign-up allowlist flip remains before launch.
+> Last revised: 2026-06-10 — multi-tenant v2 direction, now **built and deployed** (Phases A–F shipped 2026-06; `main` is live). The "private 2-person app" framing from 2026-05-28 was reversed; see `plans/2026-05-29-multi-tenant-v2.md`. Open Google sign-up is already live (the rebuild removed the email allowlist — no gate to flip); going public is just sharing the URL.
 
 ## 1. What this is
 
