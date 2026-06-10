@@ -1,4 +1,5 @@
 import { Plus, Pencil, Trash2, Link2 } from 'lucide-react'
+import type { ReactNode } from 'react'
 import { Button, IconButton, Badge } from '../../components/ui'
 import OptionRow from './OptionRow'
 import styles from './SubPlanSection.module.css'
@@ -31,11 +32,12 @@ type Props = {
   onDecide: () => void
   onReopen: () => void
   onOpenConnect?: () => void
+  dragHandle?: ReactNode
 }
 
 export default function SubPlanSection({
   subPlan, links, onJumpToSubPlan, highlight = 'normal', onHoverChange, myUserId, nameOf, busy, onEdit, onDelete, onAddOption,
-  onEditOption, onDeleteOption, onRate, onClearRating, onDecide, onReopen, onOpenConnect,
+  onEditOption, onDeleteOption, onRate, onClearRating, onDecide, onReopen, onOpenConnect, dragHandle,
 }: Props) {
   const { decision } = subPlan
   const chosen = decision ? subPlan.options.find((o) => o.id === decision.chosenOptionId) ?? null : null
@@ -54,6 +56,7 @@ export default function SubPlanSection({
           <Badge>{STATUS_LABEL[subPlan.status]}</Badge>
         </div>
         <div className={styles.actions}>
+          {dragHandle}
           {onOpenConnect && (
             <IconButton variant="ghost" size="sm" label="안건 연결" onClick={onOpenConnect}><Link2 size={14} /></IconButton>
           )}

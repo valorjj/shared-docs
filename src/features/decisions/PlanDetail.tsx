@@ -1,5 +1,7 @@
-import { Fragment, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { Plus } from 'lucide-react'
 import { Page, PageHeader, PageTitle, BackLink, Button, EmptyState, ErrorState, Skeleton, Tabs } from '../../components/ui'
 import { useAuth } from '../../auth/useAuth'
@@ -9,9 +11,9 @@ import {
   usePlanTree, useAddSubPlan, useUpdateSubPlan, useDeleteSubPlan,
   useAddOption, useUpdateOption, useDeleteOption,
   useRateOption, useDeleteRating, useLockDecision, useReopenDecision,
-  useTimeline, useCreateEdge, useDeleteEdge,
+  useTimeline, useCreateEdge, useDeleteEdge, useReorderSubPlans,
 } from './api'
-import SubPlanSection from './SubPlanSection'
+import SortableSubPlanSection from './SortableSubPlanSection'
 import PlanCanvas from './PlanCanvas'
 import Timeline from './Timeline'
 import TitleDescModal from './TitleDescModal'
@@ -46,6 +48,21 @@ export default function PlanDetail() {
   const reopen = useReopenDecision()
   const createEdge = useCreateEdge(planId)
   const deleteEdge = useDeleteEdge()
+  const reorder = useReorderSubPlans(planId)
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
+
+  const onDragEnd = (e: DragEndEvent) => {
+    if (!tree) return
+    const { active, over } = e
+    if (!over || active.id === over.id) return
+    const ids = tree.subPlans.map((sp) => sp.id)
+    const from = ids.indexOf(Number(active.id))
+    const to = ids.indexOf(Number(over.id))
+    if (from < 0 || to < 0) return
+    const next = [...ids]
+    next.splice(to, 0, next.splice(from, 1)[0])
+    reorder.mutate({ orderedSubPlanIds: next })
+  }
 
   // modal state
   const [addingSubPlan, setAddingSubPlan] = useState(false)
@@ -158,41 +175,40 @@ export default function PlanDetail() {
                   action={<Button variant="outline" size="sm" leading={<Plus size={14} />} onClick={() => setAddingSubPlan(true)}>안건 추가</Button>} />
               ) : (
                 <div className={styles.list}>
-                  {tree.subPlans.map((sp, i) => (
-                    <Fragment key={sp.id}>
-                      {i > 0 && (
-                        <div
-                          className={[styles.spine, spineActive(tree.subPlans[i - 1].id, sp.id) && styles.active].filter(Boolean).join(' ')}
-                          aria-hidden="true"
+                  <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+                    <SortableContext items={tree.subPlans.map((sp) => sp.id)} strategy={verticalListSortingStrategy}>
+                      {tree.subPlans.map((sp, i) => (
+                        <SortableSubPlanSection
+                          key={sp.id}
+                          showSpine={i > 0}
+                          spineActive={i > 0 && spineActive(tree.subPlans[i - 1].id, sp.id)}
+                          subPlan={sp}
+                          links={linksBySubPlan.get(sp.id)}
+                          onJumpToSubPlan={jumpToSubPlan}
+                          highlight={highlightOf(sp.id)}
+                          onHoverChange={(hovered) => setHoveredSubPlanId(hovered ? sp.id : null)}
+                          myUserId={myUserId}
+                          nameOf={nameOf}
+                          busy={rate.isPending || lock.isPending || reopen.isPending || deleteSubPlan.isPending || deleteOption.isPending}
+                          onEdit={() => setEditingSubPlan(sp)}
+                          onDelete={() => { if (window.confirm('삭제할까요? 되돌릴 수 없어요.')) deleteSubPlan.mutate(sp.id) }}
+                          onAddOption={() => setAddingOptionFor(sp.id)}
+                          onEditOption={(o) => setEditingOption(o)}
+                          onDeleteOption={(o) => {
+                            if (!window.confirm('삭제할까요? 되돌릴 수 없어요.')) return
+                            deleteOption.mutate(o.id, {
+                              onError: (e) => window.alert((e as { body?: { detail?: string } }).body?.detail ?? '삭제할 수 없어요.'),
+                            })
+                          }}
+                          onRate={(optionId, score, comment) => rate.mutate({ optionId, payload: { score, comment } })}
+                          onClearRating={(optionId) => clearRating.mutate(optionId)}
+                          onDecide={() => setDecidingFor(sp)}
+                          onReopen={() => { if (window.confirm('이 결정을 다시 열까요? 기록은 남아요.')) reopen.mutate(sp.id) }}
+                          onOpenConnect={() => setConnectingFor(sp)}
                         />
-                      )}
-                      <SubPlanSection
-                        subPlan={sp}
-                        links={linksBySubPlan.get(sp.id)}
-                        onJumpToSubPlan={jumpToSubPlan}
-                        highlight={highlightOf(sp.id)}
-                        onHoverChange={(hovered) => setHoveredSubPlanId(hovered ? sp.id : null)}
-                        myUserId={myUserId}
-                        nameOf={nameOf}
-                        busy={rate.isPending || lock.isPending || reopen.isPending || deleteSubPlan.isPending || deleteOption.isPending}
-                        onEdit={() => setEditingSubPlan(sp)}
-                        onDelete={() => { if (window.confirm('삭제할까요? 되돌릴 수 없어요.')) deleteSubPlan.mutate(sp.id) }}
-                        onAddOption={() => setAddingOptionFor(sp.id)}
-                        onEditOption={(o) => setEditingOption(o)}
-                        onDeleteOption={(o) => {
-                          if (!window.confirm('삭제할까요? 되돌릴 수 없어요.')) return
-                          deleteOption.mutate(o.id, {
-                            onError: (e) => window.alert((e as { body?: { detail?: string } }).body?.detail ?? '삭제할 수 없어요.'),
-                          })
-                        }}
-                        onRate={(optionId, score, comment) => rate.mutate({ optionId, payload: { score, comment } })}
-                        onClearRating={(optionId) => clearRating.mutate(optionId)}
-                        onDecide={() => setDecidingFor(sp)}
-                        onReopen={() => { if (window.confirm('이 결정을 다시 열까요? 기록은 남아요.')) reopen.mutate(sp.id) }}
-                        onOpenConnect={() => setConnectingFor(sp)}
-                      />
-                    </Fragment>
-                  ))}
+                      ))}
+                    </SortableContext>
+                  </DndContext>
                   <div className={styles.addRow}>
                     <Button variant="outline" full leading={<Plus size={16} />} onClick={() => setAddingSubPlan(true)}>안건 추가</Button>
                   </div>

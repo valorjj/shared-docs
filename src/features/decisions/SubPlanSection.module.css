@@ -121,3 +121,17 @@
 .section.source { border-color: var(--c-accent); box-shadow: 0 0 0 1px var(--c-accent); }
 .section.linked { border-color: var(--c-accent); }
 .section.dim { opacity: .4; }
+
+.dragHandle {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px;
+  color: var(--c-text-subtle);
+  background: none;
+  border: none;
+  cursor: grab;
+  border-radius: var(--r-sm);
+}
+.dragHandle:hover { color: var(--c-text-muted); background: var(--c-surface-tint); }
+.dragHandle:focus-visible { outline: none; box-shadow: var(--ring-focus); }
+.dragging { opacity: .6; }
