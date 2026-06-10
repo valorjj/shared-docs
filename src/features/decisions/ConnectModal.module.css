@@ -1,0 +1,30 @@
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.empty {
+  font-size: var(--fs-sm);
+  color: var(--c-text-subtle);
+  margin: var(--sp-2) 0;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-sm);
+}
+
+.row[data-connected='true'] {
+  border-color: var(--c-accent);
+}
+
+.dir {
+  margin-left: auto;
+  font-size: var(--fs-xs);
+  color: var(--c-text-subtle);
+}

@@ -9,13 +9,14 @@ import {
   usePlanTree, useAddSubPlan, useUpdateSubPlan, useDeleteSubPlan,
   useAddOption, useUpdateOption, useDeleteOption,
   useRateOption, useDeleteRating, useLockDecision, useReopenDecision,
-  useTimeline,
+  useTimeline, useCreateEdge, useDeleteEdge,
 } from './api'
 import SubPlanSection from './SubPlanSection'
 import PlanCanvas from './PlanCanvas'
 import Timeline from './Timeline'
 import TitleDescModal from './TitleDescModal'
 import DecisionModal from './DecisionModal'
+import ConnectModal, { type ConnectCandidate } from './ConnectModal'
 import styles from './PlanDetail.module.css'
 import type { OptionNode, SubPlanNode } from './types'
 
@@ -43,6 +44,8 @@ export default function PlanDetail() {
   const clearRating = useDeleteRating()
   const lock = useLockDecision()
   const reopen = useReopenDecision()
+  const createEdge = useCreateEdge(planId)
+  const deleteEdge = useDeleteEdge()
 
   // modal state
   const [addingSubPlan, setAddingSubPlan] = useState(false)
@@ -51,6 +54,7 @@ export default function PlanDetail() {
   const [editingOption, setEditingOption] = useState<OptionNode | null>(null)
   const [decidingFor, setDecidingFor] = useState<SubPlanNode | null>(null)
   const [view, setView] = useState<'list' | 'canvas' | 'timeline'>('list')
+  const [connectingFor, setConnectingFor] = useState<SubPlanNode | null>(null)
 
   const { data: timeline, isLoading: timelineLoading } = useTimeline(planId, view === 'timeline')
 
@@ -101,6 +105,21 @@ export default function PlanDetail() {
       (nextId === hoveredSubPlanId && hoveredNeighbors.has(prevId))
     )
   }
+
+  // Candidates for the 연결 modal: every other 안건, annotated with the existing
+  // edge (either direction) so the checkbox reflects current connections.
+  const connectCandidates = useMemo<ConnectCandidate[]>(() => {
+    if (!tree || !connectingFor) return []
+    const src = connectingFor.id
+    return tree.subPlans
+      .filter((sp) => sp.id !== src)
+      .map((sp) => {
+        const out = tree.edges.find((e) => e.sourceSubPlanId === src && e.targetSubPlanId === sp.id)
+        const inc = tree.edges.find((e) => e.sourceSubPlanId === sp.id && e.targetSubPlanId === src)
+        const edge = out ?? inc ?? null
+        return { id: sp.id, title: sp.title, edgeId: edge ? edge.id : null, outgoing: out != null }
+      })
+  }, [tree, connectingFor])
 
   return (
     <Page>
@@ -170,6 +189,7 @@ export default function PlanDetail() {
                         onClearRating={(optionId) => clearRating.mutate(optionId)}
                         onDecide={() => setDecidingFor(sp)}
                         onReopen={() => { if (window.confirm('이 결정을 다시 열까요? 기록은 남아요.')) reopen.mutate(sp.id) }}
+                        onOpenConnect={() => setConnectingFor(sp)}
                       />
                     </Fragment>
                   ))}
@@ -216,6 +236,22 @@ export default function PlanDetail() {
         currentChosenId={decidingFor?.decision?.chosenOptionId ?? null}
         busy={lock.isPending}
         onSubmit={(payload) => { if (decidingFor) lock.mutate({ subPlanId: decidingFor.id, payload }, { onSuccess: () => setDecidingFor(null) }) }}
+      />
+
+      <ConnectModal
+        open={connectingFor != null}
+        onClose={() => setConnectingFor(null)}
+        sourceTitle={connectingFor?.title ?? ''}
+        candidates={connectCandidates}
+        busy={createEdge.isPending || deleteEdge.isPending}
+        onConnect={(targetId) => {
+          if (!connectingFor) return
+          createEdge.mutate(
+            { sourceSubPlanId: connectingFor.id, targetSubPlanId: targetId },
+            { onError: (e) => window.alert((e as { body?: { detail?: string } }).body?.detail ?? '연결할 수 없어요.') },
+          )
+        }}
+        onDisconnect={(edgeId) => deleteEdge.mutate(edgeId)}
       />
     </Page>
   )

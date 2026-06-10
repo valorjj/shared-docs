@@ -175,18 +175,23 @@ export function useMoveSubPlan() {
   })
 }
 
-/** Create an edge. Edges aren't shown in 목록/roll-ups, so no invalidation — the
- *  canvas appends the returned edge (with its real id) to local state. */
+/** Create an edge. Invalidates the decisions scope so the 목록 view (chips, spine
+ *  accents, 연결 modal) reflects it; the mounted canvas seeds once and appends the
+ *  returned edge to its own local state, so it is unaffected by the refetch. */
 export function useCreateEdge(planId: number) {
+  const qc = useQueryClient(); const { activeId } = useActiveWorkspace()
   return useMutation({
     mutationFn: async (payload: CreateEdgePayload) =>
       (await apiClient.post<SubPlanEdge>(`/api/plans/${planId}/edges`, payload)).data,
+    onSuccess: () => qc.invalidateQueries({ queryKey: decisionKeys.scope(activeId) }),
   })
 }
 
 export function useDeleteEdge() {
+  const qc = useQueryClient(); const { activeId } = useActiveWorkspace()
   return useMutation({
     mutationFn: async (id: number) => { await apiClient.delete(`/api/edges/${id}`) },
+    onSuccess: () => qc.invalidateQueries({ queryKey: decisionKeys.scope(activeId) }),
   })
 }
 
