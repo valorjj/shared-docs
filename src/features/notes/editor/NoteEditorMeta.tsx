@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Lock, MoreHorizontal, Pin, PinOff, Trash2, Users } from 'lucide-react'
+import { Lock, MoreHorizontal, Pin, PinOff, Share2, Trash2, Users } from 'lucide-react'
 import ConfirmDialog from '../../../components/ui/ConfirmDialog'
 import { Menu, MenuItem, MenuSeparator } from '../../../components/ui/Menu'
 import { useUpdateNote } from '../api'
@@ -15,9 +15,10 @@ type Props = {
   canEdit?: boolean
   onTogglePin: () => void
   onDelete: () => void
+  onShare?: () => void
 }
 
-export default function NoteEditorMeta({ note, saving, canEdit = true, onTogglePin, onDelete }: Props) {
+export default function NoteEditorMeta({ note, saving, canEdit = true, onTogglePin, onDelete, onShare }: Props) {
   const [confirming, setConfirming] = useState(false)
   const updateNote = useUpdateNote()
 
@@ -78,6 +79,15 @@ export default function NoteEditorMeta({ note, saving, canEdit = true, onToggleP
             >
               {note.pinned ? '고정 해제' : '메모 고정'}
             </MenuItem>
+            <MenuSeparator />
+            {onShare && (
+              <MenuItem
+                onSelect={onShare}
+                icon={<Share2 size={14} strokeWidth={1.75} />}
+              >
+                공유
+              </MenuItem>
+            )}
             <MenuSeparator />
             <MenuItem
               destructive

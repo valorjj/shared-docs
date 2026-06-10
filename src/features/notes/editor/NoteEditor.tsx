@@ -12,6 +12,7 @@ import type { SnapshotAttrs } from '../../snapshots/types'
 import CalcSnapshotPicker, { type CalcSnapshotAttrs } from '../../calc/embed/CalcSnapshotPicker'
 import LinkCardPicker from './LinkCardPicker'
 import type { LinkCardAttrs } from './extensions/LinkCard'
+import ShareDialog from '../../shares/ShareDialog'
 import LinkDialog from './LinkDialog'
 import NoteAttachments from './NoteAttachments'
 import NoteEditorBody from './NoteEditorBody'
@@ -41,6 +42,7 @@ export default function NoteEditor({ note, onDeleted, onBack }: Props) {
 
   const [editor, setEditor] = useState<Editor | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const [shareOpen, setShareOpen] = useState(false)
   const [snapshotOpen, setSnapshotOpen] = useState(false)
   const [calcSnapshotOpen, setCalcSnapshotOpen] = useState(false)
   const [linkCardOpen, setLinkCardOpen] = useState(false)
@@ -196,6 +198,7 @@ export default function NoteEditor({ note, onDeleted, onBack }: Props) {
             canEdit={canEdit}
             onTogglePin={handleTogglePin}
             onDelete={handleDelete}
+            onShare={() => setShareOpen(true)}
           />
           <NoteReferrers noteId={note.id} />
           <NoteEditorBody
@@ -234,6 +237,11 @@ export default function NoteEditor({ note, onDeleted, onBack }: Props) {
         open={linkDialogOpen}
         editor={editor}
         onClose={() => setLinkDialogOpen(false)}
+      />
+      <ShareDialog
+        noteId={note.id}
+        open={shareOpen}
+        onClose={() => setShareOpen(false)}
       />
     </div>
   )
