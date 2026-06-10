@@ -114,7 +114,7 @@ export default function PlanDetail() {
                 <div className={styles.list}>
                   {tree.subPlans.map((sp, i) => (
                     <Fragment key={sp.id}>
-                      {i > 0 && <div className={styles.spine} />}
+                      {i > 0 && <div className={styles.spine} aria-hidden="true" />}
                       <SubPlanSection
                         subPlan={sp}
                         links={linksBySubPlan.get(sp.id)}
