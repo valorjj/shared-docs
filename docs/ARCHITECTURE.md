@@ -1,6 +1,8 @@
 # Architecture
 
 > Last revised: 2026-05-29 (Phase 2 ship — added `calc/` feature). Visual rules live in [`DESIGN.md`](DESIGN.md); product scope lives in [`VISION.md`](VISION.md).
+>
+> ⚠️ **STALE for v2 (2026-06-10):** this doc describes the v1 single-workspace baseline. It does **not** reflect the shipped multi-tenant v2 — workspace scoping via `X-Workspace-Id`, invitations, cross-workspace note sharing, or the Decisions pillar. For current architecture use [`plans/2026-05-29-multi-tenant-v2.md`](plans/2026-05-29-multi-tenant-v2.md) (as-built spec) + the per-phase plans in `plans/`, and the feature table in [`../CLAUDE.md`](../CLAUDE.md). A full rewrite of this file is a pending follow-up.
 
 ## 1. Stack
 
