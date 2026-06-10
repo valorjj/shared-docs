@@ -72,6 +72,10 @@
   border-bottom: 0;
 }
 
+.section:has(+ .legal) {
+  border-bottom: 0;
+}
+
 .sectionLabel {
   font-size: var(--fs-xs);
   text-transform: uppercase;
@@ -281,6 +285,7 @@
   color: var(--c-text-subtle);
 }
 .legalLink:hover { color: var(--c-text); }
+.legalLink:focus-visible { outline: none; box-shadow: var(--ring-focus); }
 
 @media (max-width: 767px) {
   .content {

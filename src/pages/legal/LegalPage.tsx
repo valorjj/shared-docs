@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { LEGAL_CONTENT, type LegalDoc } from './legalContent'
 import styles from './LegalPage.module.css'
@@ -6,14 +6,15 @@ import styles from './LegalPage.module.css'
 type Props = { doc: LegalDoc }
 
 export default function LegalPage({ doc }: Props) {
+  const navigate = useNavigate()
   const content = LEGAL_CONTENT[doc]
   return (
     <div className={styles.page}>
       <article className={styles.inner}>
-        <Link to="/login" className={styles.back}>
+        <button type="button" className={styles.back} onClick={() => navigate(-1)}>
           <ArrowLeft size={16} strokeWidth={1.75} aria-hidden="true" />
           돌아가기
-        </Link>
+        </button>
         <h1 className={styles.title}>{content.title}</h1>
         <p className={styles.updated}>{content.updated}</p>
         {content.sections.map((section) => (

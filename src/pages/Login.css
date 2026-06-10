@@ -120,6 +120,7 @@
 }
 .login__footer-link { color: var(--c-text-subtle); text-decoration: none; }
 .login__footer-link:hover { color: var(--c-text); }
+.login__footer-link:focus-visible { outline: none; box-shadow: var(--ring-focus); }
 .login__footer-dot { color: var(--c-text-subtle); }
 
 /* Wide screens: value left, sign-in right, hairline divider between. */
