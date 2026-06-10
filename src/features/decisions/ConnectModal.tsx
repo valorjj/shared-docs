@@ -26,7 +26,7 @@ export default function ConnectModal({ open, onClose, sourceTitle, candidates, b
       title={`${sourceTitle} — 연결`}
       footer={<Button variant="ghost" onClick={onClose}>닫기</Button>}
     >
-      <p className={styles.empty} hidden={candidates.length > 0}>연결할 다른 안건이 없어요.</p>
+      {candidates.length === 0 && <p className={styles.empty}>연결할 다른 안건이 없어요.</p>}
       <div className={styles.list}>
         {candidates.map((c) => {
           const connected = c.edgeId != null
