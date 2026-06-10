@@ -54,7 +54,7 @@ apiClient.interceptors.request.use((config) => {
   // before the token-based claim even runs.
   const url = config.url ?? ''
   const workspaceAgnostic =
-    url.startsWith('/api/workspaces') || url.startsWith('/api/auth') || url.startsWith('/api/invitations')
+    url.startsWith('/api/workspaces') || url.startsWith('/api/auth') || url.startsWith('/api/invitations') || url.startsWith('/api/shares')
   const workspaceId = getActiveWorkspaceId()
   if (workspaceId != null && !workspaceAgnostic) {
     config.headers['X-Workspace-Id'] = String(workspaceId)
