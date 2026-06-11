@@ -12,7 +12,7 @@ Give a 계획 a **group discussion surface**: a split-view where the plan (list/
 
 - **Plan module:** `Plan → SubPlan → Option → Decision`, all workspace-scoped, all `BaseEntity` (`id/createdAt/updatedAt/version`). `Plan` carries `lockedAt/lockedByUserId`; **`PlanLockGuard`** (`assertUnlocked` / `assertUnlockedByPlanId` / `assertUnlockedBySubPlanId`) freezes all content writes on a locked plan. `OptionRating` + `RatingService.upsert/delete` already model a per-user per-option signal — votes mirror this shape.
 - **Notes:** `Note(workspaceId, title, body LONGTEXT, visibility ∈ {PRIVATE, WORKSPACE}, createdBy, deletedAt)`. Per-note sharing via `ResourceShare` (Phase E). No `kind` field — notes are homogeneous.
-- **Comments:** `Comment(workspaceId, pageId: String, author, content, user?)` — `pageId` is a **generic client-defined thread key**; `GET/POST /api/comments?pageId=…`. Currently used only on note pages, but entity-agnostic by design.
+- **Comments:** `Comment(workspaceId, pageId: String, author, content, user?)` — `pageId` is a **generic client-defined thread key**; `GET/POST /api/comments?pageId=…`. A reusable `Comments` component + `useComments(pageId)` hook exist on the frontend but are **not yet mounted anywhere** — the discussion pane is their first consumer.
 - **Entity-link chips:** `EntityRef(fromNoteId, toKind, toId)` composite PK; `EntityKind` = `note | sheet | purchase | todo | anniversary | recipe | link`. `EntityRefIndexer` scans note bodies (`<span data-type="entity-link" data-kind="…" data-id="…">`), validates targets in-workspace, maintains rows; deleted targets render as tombstones client-side. **No decision-entity kinds; no plan↔note association anywhere.**
 - **Frontend:** `PlanDetail.tsx` is a tabbed page (목록/캔버스/기록) with **no side panel**. `NoteEditor` is the reusable Tiptap editor; the notes page already renders a comment thread per note.
 
@@ -28,7 +28,7 @@ Give a 계획 a **group discussion surface**: a split-view where the plan (list/
 | 결과 확정하기 | A button on an 안건 with votes that **pre-fills the existing decide flow** (leading 선택지 pre-selected, overridable, reason required) → produces a **normal Decision**. All lock/supersession/audit machinery reused; nothing duplicated. On a tie, nothing is pre-selected. |
 | Discussion surface | **Split-view: note + comments.** Left = existing PlanDetail tabs; right = collapsible pane with the discussion note's editor + its comment thread. |
 | Note origin | **Auto-created 1:1 note** — nullable `discussionNoteId` FK on `Plan`; lazily created (race-safe) on first open. A completely **normal** WORKSPACE-visibility note: searchable, shareable, editable from the notes list too. |
-| Comments | **Reuse the note's existing comment thread** (same `pageId` key the note page already uses). Same thread from either surface. Zero new comment backend. |
+| Comments | **Reuse the existing generic comment infrastructure** with `pageId = "note-{noteId}"` — the pane is the `Comments` component's first mount; if the note page ever grows a thread, it's the same thread. Zero new comment backend. |
 | Deleted discussion note | Next discussion-pane open **lazy-creates a fresh note** (same code path as null). No tombstone UI in the pane. |
 | Chips | `EntityKind` gains **`plan`, `subplan`, `option`** so notes can inline-reference decision entities. `Decision` records skipped (outcomes, reachable via their 안건). |
 | Lock semantics | Locking a plan freezes structure + votes + 확정. The discussion note and its comments **stay live** — lock means "the record is settled," not "stop talking." |
@@ -53,7 +53,7 @@ Give a 계획 a **group discussion surface**: a split-view where the plan (list/
 - `DELETE /api/options/{optionId}/vote` — retract: same guards; deleting a nonexistent vote is a no-op (204 either way).
 - **Decided-안건 guard:** if the 안건 has an active (non-superseded) Decision, both writes throw a new `SubPlanDecidedException : ApiException(409, "subplan-decided", …, "이미 결정이 확정된 안건이에요. 다시 열면 투표할 수 있어요.")`. `DecisionService.reopen` unfreezes by superseding the Decision, as today.
 - **Snapshot at 확정:** `DecisionService.lock` serializes the 안건's current tally into `Decision.voteSnapshot` (null when no votes) in the same transaction.
-- **Read:** the plan tree response gains, per 선택지: `voteCount: Int`, `voters: [{userId, name}]`, and per-tree `myVote` derivable client-side from `voters` + current user. No separate vote-read endpoint.
+- **Read:** the plan tree response gains, per 선택지: `voterUserIds: List<Long>` (count and "my vote" derive client-side; names resolve via the existing `useMembers` pattern, exactly like ratings). No separate vote-read endpoint.
 
 ### 4.3 Discussion note (lazy 1:1)
 
@@ -62,6 +62,7 @@ Give a 계획 a **group discussion surface**: a split-view where the plan (list/
   - If null **or the linked note is soft-deleted** → create `Note(title = "{plan.title} 논의", visibility = WORKSPACE, createdBy = actor, workspaceId = ws.id)`, set the FK, save.
   - **Race safety via the plan's existing optimistic `version`:** a concurrent creator's save throws `OptimisticLockException` → reload and return the winner's note (the loser's orphan note is deleted in the same handler).
 - **Not guarded by `PlanLockGuard`** — opening the discussion (and the lazy create) works on a locked plan, by design.
+- **Privacy edge:** if someone flips the linked note to PRIVATE, non-author members get a 409 (`discussion-note-private`, Korean detail) rather than a silent re-create — the note still exists; forking a second discussion note would split the conversation.
 - Plan soft-delete leaves the note untouched (it's a normal note). The pane is unreachable anyway once the plan is gone from the list.
 
 ### 4.4 Chips → decision entities
@@ -74,7 +75,7 @@ Give a 계획 a **group discussion surface**: a split-view where the plan (list/
 ### 4.5 Frontend split-view
 
 - **`PlanDetail.tsx`:** a 논의 toggle (Lucide `MessagesSquare`, outline — the screen's primary stays 결정하기) opens a right pane beside the existing tabs. Hairline divider, no shadow, pane width ~`minmax(320px, 38%)`. On narrow screens the pane renders as a full-width drawer instead of squeezing the canvas. Pane open/closed state persists per plan in `localStorage`.
-- **Pane content:** on first open, call the lazy-create endpoint, then render the reused `NoteEditor` (full editing: chips, urls, formatting) with the existing comment-thread component below it, keyed by the note's `pageId`. Editing here is identical to editing the note from the notes list.
+- **Pane content:** on first open, call the lazy-create endpoint, then render the reused note editor body (full editing: chips, urls, formatting — the `NoteEditorBody` reuse pattern `SharedNoteView` already uses) with the `Comments` component below it, `pageId = "note-{noteId}"`. Editing here is identical to editing the note from the notes list.
 - **Vote UI:** on each 선택지 — `OptionRow` (목록 tab) and the canvas node's option display — a vote affordance showing the tally; click casts/moves, click-again retracts; voter names on hover/expand. `useCastVote`/`useRetractVote` hooks in `api.ts`, both invalidating `decisionKeys.scope`. Vote affordances go read-only when the plan is locked (existing `locked` threading) **or the 안건's decision is locked** — frozen tally still shown.
 - **Tally in history:** the decision display and the timeline's `DECISION_LOCKED` entry render the snapshot when present ("선택지 B · 3표 중 2표"); superseded decisions show theirs unchanged.
 - **결과 확정하기:** on an 안건 with ≥1 vote, the existing decide modal opens with the leading 선택지 pre-selected (none on tie) and a hint line showing the tally; everything downstream is the existing decide flow.
