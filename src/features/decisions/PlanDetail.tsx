@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
-import { Plus } from 'lucide-react'
+import { Plus, Lock, LockOpen } from 'lucide-react'
 import { Page, PageHeader, PageTitle, BackLink, Button, EmptyState, ErrorState, Skeleton, Tabs } from '../../components/ui'
 import { useAuth } from '../../auth/useAuth'
 import { useActiveWorkspace } from '../../auth/useActiveWorkspace'
@@ -12,6 +12,7 @@ import {
   useAddOption, useUpdateOption, useDeleteOption,
   useRateOption, useDeleteRating, useLockDecision, useReopenDecision,
   useTimeline, useCreateEdge, useDeleteEdge, useReorderSubPlans,
+  useLockPlan, useUnlockPlan,
 } from './api'
 import SortableSubPlanSection from './SortableSubPlanSection'
 import PlanCanvas from './PlanCanvas'
@@ -49,6 +50,8 @@ export default function PlanDetail() {
   const createEdge = useCreateEdge(planId)
   const deleteEdge = useDeleteEdge()
   const reorder = useReorderSubPlans(planId)
+  const lockPlan = useLockPlan()
+  const unlockPlan = useUnlockPlan()
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
 
   const onDragEnd = (e: DragEndEvent) => {
@@ -74,6 +77,7 @@ export default function PlanDetail() {
   const [connectingFor, setConnectingFor] = useState<SubPlanNode | null>(null)
 
   const { data: timeline, isLoading: timelineLoading } = useTimeline(planId, view === 'timeline')
+  const locked = tree?.lockedAt != null
 
   // 안건 connections (the canvas edges) surfaced in the list view: resolve each
   // edge to source/target titles and group per 안건 into outgoing/incoming.
@@ -138,6 +142,38 @@ export default function PlanDetail() {
       })
   }, [tree, connectingFor])
 
+  const renderSubPlan = (sp: SubPlanNode, i: number) => (
+    <SortableSubPlanSection
+      key={sp.id}
+      showSpine={i > 0}
+      spineActive={i > 0 && spineActive(tree!.subPlans[i - 1].id, sp.id)}
+      subPlan={sp}
+      links={linksBySubPlan.get(sp.id)}
+      onJumpToSubPlan={jumpToSubPlan}
+      highlight={highlightOf(sp.id)}
+      onHoverChange={(hovered) => setHoveredSubPlanId(hovered ? sp.id : null)}
+      myUserId={myUserId}
+      nameOf={nameOf}
+      busy={rate.isPending || lock.isPending || reopen.isPending || deleteSubPlan.isPending || deleteOption.isPending}
+      onEdit={() => setEditingSubPlan(sp)}
+      onDelete={() => { if (window.confirm('삭제할까요? 되돌릴 수 없어요.')) deleteSubPlan.mutate(sp.id) }}
+      onAddOption={() => setAddingOptionFor(sp.id)}
+      onEditOption={(o) => setEditingOption(o)}
+      onDeleteOption={(o) => {
+        if (!window.confirm('삭제할까요? 되돌릴 수 없어요.')) return
+        deleteOption.mutate(o.id, {
+          onError: (e) => window.alert((e as { body?: { detail?: string } }).body?.detail ?? '삭제할 수 없어요.'),
+        })
+      }}
+      onRate={(optionId, score, comment) => rate.mutate({ optionId, payload: { score, comment } })}
+      onClearRating={(optionId) => clearRating.mutate(optionId)}
+      onDecide={() => setDecidingFor(sp)}
+      onReopen={() => { if (window.confirm('이 결정을 다시 열까요? 기록은 남아요.')) reopen.mutate(sp.id) }}
+      onOpenConnect={() => setConnectingFor(sp)}
+      locked={locked}
+    />
+  )
+
   return (
     <Page>
       <PageHeader>
@@ -150,15 +186,29 @@ export default function PlanDetail() {
 
       {tree && (
         <>
-          <div className={styles.viewToggle}>
+          <div className={styles.planBar}>
             <Tabs
               items={[{ key: 'list', label: '목록' }, { key: 'canvas', label: '캔버스' }, { key: 'timeline', label: '기록' }]}
               value={view}
               onChange={setView}
             />
+            {locked ? (
+              <Button variant="ghost" size="sm" leading={<LockOpen size={14} />} disabled={unlockPlan.isPending}
+                onClick={() => unlockPlan.mutate(tree.id)}>잠금 해제</Button>
+            ) : (
+              <Button variant="ghost" size="sm" leading={<Lock size={14} />} disabled={lockPlan.isPending}
+                onClick={() => lockPlan.mutate(tree.id)}>잠금</Button>
+            )}
           </div>
 
-          {view === 'canvas' && <PlanCanvas tree={tree} />}
+          {locked && (
+            <div className={styles.lockBanner}>
+              <Lock size={14} className={styles.lockBannerIcon} aria-hidden="true" />
+              <span>이 계획은 잠겨 있어요. 잠금을 해제하면 다시 편집할 수 있어요.</span>
+            </div>
+          )}
+
+          {view === 'canvas' && <PlanCanvas tree={tree} locked={locked} />}
 
           {view === 'timeline' && (
             timelineLoading
@@ -171,47 +221,24 @@ export default function PlanDetail() {
               {tree.description && <p className={styles.planDesc}>{tree.description}</p>}
 
               {tree.subPlans.length === 0 ? (
-                <EmptyState title="안건이 없어요" description="결정할 안건을 추가해 보세요."
-                  action={<Button variant="outline" size="sm" leading={<Plus size={14} />} onClick={() => setAddingSubPlan(true)}>안건 추가</Button>} />
+                <EmptyState title="안건이 없어요" description={locked ? '잠긴 계획이에요.' : '결정할 안건을 추가해 보세요.'}
+                  action={locked ? undefined : <Button variant="outline" size="sm" leading={<Plus size={14} />} onClick={() => setAddingSubPlan(true)}>안건 추가</Button>} />
               ) : (
                 <div className={styles.list}>
-                  <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
-                    <SortableContext items={tree.subPlans.map((sp) => sp.id)} strategy={verticalListSortingStrategy}>
-                      {tree.subPlans.map((sp, i) => (
-                        <SortableSubPlanSection
-                          key={sp.id}
-                          showSpine={i > 0}
-                          spineActive={i > 0 && spineActive(tree.subPlans[i - 1].id, sp.id)}
-                          subPlan={sp}
-                          links={linksBySubPlan.get(sp.id)}
-                          onJumpToSubPlan={jumpToSubPlan}
-                          highlight={highlightOf(sp.id)}
-                          onHoverChange={(hovered) => setHoveredSubPlanId(hovered ? sp.id : null)}
-                          myUserId={myUserId}
-                          nameOf={nameOf}
-                          busy={rate.isPending || lock.isPending || reopen.isPending || deleteSubPlan.isPending || deleteOption.isPending}
-                          onEdit={() => setEditingSubPlan(sp)}
-                          onDelete={() => { if (window.confirm('삭제할까요? 되돌릴 수 없어요.')) deleteSubPlan.mutate(sp.id) }}
-                          onAddOption={() => setAddingOptionFor(sp.id)}
-                          onEditOption={(o) => setEditingOption(o)}
-                          onDeleteOption={(o) => {
-                            if (!window.confirm('삭제할까요? 되돌릴 수 없어요.')) return
-                            deleteOption.mutate(o.id, {
-                              onError: (e) => window.alert((e as { body?: { detail?: string } }).body?.detail ?? '삭제할 수 없어요.'),
-                            })
-                          }}
-                          onRate={(optionId, score, comment) => rate.mutate({ optionId, payload: { score, comment } })}
-                          onClearRating={(optionId) => clearRating.mutate(optionId)}
-                          onDecide={() => setDecidingFor(sp)}
-                          onReopen={() => { if (window.confirm('이 결정을 다시 열까요? 기록은 남아요.')) reopen.mutate(sp.id) }}
-                          onOpenConnect={() => setConnectingFor(sp)}
-                        />
-                      ))}
-                    </SortableContext>
-                  </DndContext>
-                  <div className={styles.addRow}>
-                    <Button variant="outline" full leading={<Plus size={16} />} onClick={() => setAddingSubPlan(true)}>안건 추가</Button>
-                  </div>
+                  {locked ? (
+                    tree.subPlans.map(renderSubPlan)
+                  ) : (
+                    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+                      <SortableContext items={tree.subPlans.map((sp) => sp.id)} strategy={verticalListSortingStrategy}>
+                        {tree.subPlans.map(renderSubPlan)}
+                      </SortableContext>
+                    </DndContext>
+                  )}
+                  {!locked && (
+                    <div className={styles.addRow}>
+                      <Button variant="outline" full leading={<Plus size={16} />} onClick={() => setAddingSubPlan(true)}>안건 추가</Button>
+                    </div>
+                  )}
                 </div>
               )}
             </>

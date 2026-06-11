@@ -30,3 +30,29 @@
 }
 
 .spine.active { border-left-color: var(--c-accent); }
+
+.planBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-4);
+}
+
+.lockBanner {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  margin-bottom: var(--sp-4);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  background: var(--c-surface-sunken);
+  color: var(--c-text-muted);
+  font-size: var(--fs-sm);
+}
+
+.lockBannerIcon {
+  flex: none;
+  color: var(--c-text-muted);
+}

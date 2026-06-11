@@ -40,44 +40,46 @@ function toEdge(e: PlanTree['edges'][number]): DeletableEdgeType {
   }
 }
 
-type Props = { tree: PlanTree }
+type Props = { tree: PlanTree; locked?: boolean }
 
-export default function PlanCanvas({ tree }: Props) {
+export default function PlanCanvas({ tree, locked }: Props) {
   if (tree.subPlans.length === 0) {
     return (
       <div className={`${styles.canvas} ${styles.canvasEmpty}`}>
-        <CanvasEmpty tree={tree} />
+        <CanvasEmpty tree={tree} locked={locked} />
       </div>
     )
   }
   return (
     <ReactFlowProvider>
-      <Flow tree={tree} />
+      <Flow tree={tree} locked={locked} />
     </ReactFlowProvider>
   )
 }
 
 /** Empty canvas: no React Flow context, so the first 안건 is created with a null
  *  position (auto-layout will place the single node on the next mount). */
-function CanvasEmpty({ tree }: Props) {
+function CanvasEmpty({ tree, locked }: Props) {
   const [adding, setAdding] = useState(false)
   const addSubPlanM = useAddSubPlanOnCanvas(tree.id)
   return (
     <>
       <EmptyState
         title="안건이 없어요"
-        description="안건을 추가하면 여기에 나타나요."
-        action={<Button variant="outline" size="sm" leading={<Plus size={14} />} onClick={() => setAdding(true)}>안건 추가</Button>}
+        description={locked ? '잠긴 계획이에요.' : '안건을 추가하면 여기에 나타나요.'}
+        action={locked ? undefined : <Button variant="outline" size="sm" leading={<Plus size={14} />} onClick={() => setAdding(true)}>안건 추가</Button>}
       />
-      <TitleDescModal
-        open={adding} onClose={() => setAdding(false)} entityLabel="안건" busy={addSubPlanM.isPending}
-        onSubmit={(p) => addSubPlanM.mutate(p, { onSuccess: () => setAdding(false) })}
-      />
+      {!locked && (
+        <TitleDescModal
+          open={adding} onClose={() => setAdding(false)} entityLabel="안건" busy={addSubPlanM.isPending}
+          onSubmit={(p) => addSubPlanM.mutate(p, { onSuccess: () => setAdding(false) })}
+        />
+      )}
     </>
   )
 }
 
-function Flow({ tree }: Props) {
+function Flow({ tree, locked }: Props) {
   // Seed controlled state ONCE from the initial tree (React reads an initializer
   // only on first render). Later tree refetches are intentionally ignored — the
   // canvas owns its state while mounted; the next mount re-reads fresh data.
@@ -142,9 +144,11 @@ function Flow({ tree }: Props) {
 
   return (
     <div className={styles.canvas} ref={wrapRef}>
-      <div className={styles.toolbar}>
-        <Button variant="outline" size="sm" leading={<Plus size={14} />} onClick={() => setAdding(true)}>안건 추가</Button>
-      </div>
+      {!locked && (
+        <div className={styles.toolbar}>
+          <Button variant="outline" size="sm" leading={<Plus size={14} />} onClick={() => setAdding(true)}>안건 추가</Button>
+        </div>
+      )}
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -160,6 +164,11 @@ function Flow({ tree }: Props) {
         fitViewOptions={{ padding: 0.2 }}
         minZoom={0.3}
         maxZoom={1.5}
+        nodesDraggable={!locked}
+        nodesConnectable={!locked}
+        elementsSelectable={!locked}
+        edgesFocusable={!locked}
+        deleteKeyCode={locked ? null : undefined}
       >
         <Background />
         <Controls showInteractive={false} />

@@ -13,6 +13,8 @@ export type PlanSummary = {
   decidedCount: number
   createdByUserId: number
   createdAt: string
+  lockedAt: string | null
+  lockedByUserId: number | null
 }
 
 export type Rating = { userId: number; score: number; comment: string | null }
@@ -63,6 +65,8 @@ export type PlanTree = {
   groupLabel: string | null
   createdByUserId: number
   createdAt: string
+  lockedAt: string | null
+  lockedByUserId: number | null
   subPlans: SubPlanNode[]
   edges: SubPlanEdge[]
 }
@@ -79,6 +83,7 @@ export type CreateEdgePayload = { sourceSubPlanId: number; targetSubPlanId: numb
 export type PlanEventType =
   | 'PLAN_CREATED' | 'SUBPLAN_ADDED' | 'OPTION_ADDED'
   | 'DECISION_LOCKED' | 'DECISION_CHANGED' | 'DECISION_REOPENED'
+  | 'PLAN_LOCKED' | 'PLAN_UNLOCKED'
 
 export type PlanEvent = {
   id: number

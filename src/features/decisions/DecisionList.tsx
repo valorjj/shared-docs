@@ -61,25 +61,30 @@ export default function DecisionList() {
     [plans],
   )
 
-  const renderCard = (p: PlanSummary) => (
+  const renderCard = (p: PlanSummary) => {
+    const planLocked = p.lockedAt != null
+    return (
     <Card key={p.id} padding="none" className={styles.card}>
       <button type="button" className={styles.cardMain} onClick={() => navigate(`/decisions/${p.id}`)}>
         <div className={styles.cardTop}>
           <span className={styles.cardTitle}>{p.title}</span>
-          <Badge>{p.status === 'ARCHIVED' ? '보관됨' : '진행 중'}</Badge>
+          {planLocked ? <Badge>잠김</Badge> : <Badge>{p.status === 'ARCHIVED' ? '보관됨' : '진행 중'}</Badge>}
         </div>
         {p.description && <span className={styles.cardDesc}>{p.description}</span>}
         <span className={styles.cardMeta}>안건 {p.subPlanCount} · 결정 {p.decidedCount}</span>
       </button>
-      <div className={styles.cardActions}>
-        <IconButton variant="ghost" size="sm" label="계획 수정" onClick={() => setEditing(p)}><Pencil size={14} /></IconButton>
-        <IconButton variant="ghost" size="sm" label="계획 삭제"
-          onClick={() => { if (window.confirm('삭제할까요? 되돌릴 수 없어요.')) remove.mutate(p.id) }}>
-          <Trash2 size={14} />
-        </IconButton>
-      </div>
+      {!planLocked && (
+        <div className={styles.cardActions}>
+          <IconButton variant="ghost" size="sm" label="계획 수정" onClick={() => setEditing(p)}><Pencil size={14} /></IconButton>
+          <IconButton variant="ghost" size="sm" label="계획 삭제"
+            onClick={() => { if (window.confirm('삭제할까요? 되돌릴 수 없어요.')) remove.mutate(p.id) }}>
+            <Trash2 size={14} />
+          </IconButton>
+        </div>
+      )}
     </Card>
-  )
+    )
+  }
 
   return (
     <Page>

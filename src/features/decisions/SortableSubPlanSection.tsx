@@ -13,11 +13,11 @@ type Props = ComponentProps<typeof SubPlanSection> & {
 
 export default function SortableSubPlanSection({ showSpine, spineActive, ...sectionProps }: Props) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
-    useSortable({ id: sectionProps.subPlan.id })
+    useSortable({ id: sectionProps.subPlan.id, disabled: sectionProps.locked })
 
   const style = { transform: CSS.Transform.toString(transform), transition }
 
-  const handle = (
+  const handle = sectionProps.locked ? undefined : (
     <button
       type="button"
       className={sectionStyles.dragHandle}

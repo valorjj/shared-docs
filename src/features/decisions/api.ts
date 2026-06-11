@@ -75,6 +75,20 @@ export function useDeletePlan() {
     onSuccess: () => qc.invalidateQueries({ queryKey: decisionKeys.scope(activeId) }),
   })
 }
+export function useLockPlan() {
+  const qc = useQueryClient(); const { activeId } = useActiveWorkspace()
+  return useMutation({
+    mutationFn: async (id: number) => (await apiClient.post<PlanSummary>(`/api/plans/${id}/lock`)).data,
+    onSuccess: () => qc.invalidateQueries({ queryKey: decisionKeys.scope(activeId) }),
+  })
+}
+export function useUnlockPlan() {
+  const qc = useQueryClient(); const { activeId } = useActiveWorkspace()
+  return useMutation({
+    mutationFn: async (id: number) => (await apiClient.post<PlanSummary>(`/api/plans/${id}/unlock`)).data,
+    onSuccess: () => qc.invalidateQueries({ queryKey: decisionKeys.scope(activeId) }),
+  })
+}
 
 // ── SubPlan (안건) mutations ──
 export function useAddSubPlan(planId: number) {

@@ -11,6 +11,7 @@ type Props = {
   isChosen: boolean
   nameOf: (userId: number) => string
   busy?: boolean
+  locked?: boolean
   onRate: (score: number, comment: string | undefined) => void
   onClearRating: () => void
   onEdit: () => void
@@ -18,7 +19,7 @@ type Props = {
 }
 
 export default function OptionRow({
-  option, myUserId, isChosen, nameOf, busy, onRate, onClearRating, onEdit, onDelete,
+  option, myUserId, isChosen, nameOf, busy, locked, onRate, onClearRating, onEdit, onDelete,
 }: Props) {
   const [open, setOpen] = useState(false)
   const myRating = option.ratings.find((r) => r.userId === myUserId) ?? null
@@ -35,16 +36,18 @@ export default function OptionRow({
         <span className={styles.avg}>
           {option.avgScore != null ? `평균 ${option.avgScore.toFixed(1)} (${option.ratingCount})` : '평가 없음'}
         </span>
-        <div className={styles.actions}>
-          <IconButton variant="ghost" size="sm" label="선택지 수정" onClick={onEdit}><Pencil size={14} /></IconButton>
-          <IconButton variant="ghost" size="sm" label="선택지 삭제" onClick={onDelete}><Trash2 size={14} /></IconButton>
-        </div>
+        {!locked && (
+          <div className={styles.actions}>
+            <IconButton variant="ghost" size="sm" label="선택지 수정" onClick={onEdit}><Pencil size={14} /></IconButton>
+            <IconButton variant="ghost" size="sm" label="선택지 삭제" onClick={onDelete}><Trash2 size={14} /></IconButton>
+          </div>
+        )}
       </div>
 
       {open && (
         <div className={styles.body}>
           {option.description && <p className={styles.desc}>{option.description}</p>}
-          <RatingControl key={myRating ? 'rated' : 'unrated'} myRating={myRating} busy={busy} onRate={onRate} onClear={onClearRating} />
+          <RatingControl key={myRating ? 'rated' : 'unrated'} myRating={myRating} busy={busy || locked} onRate={onRate} onClear={onClearRating} />
           {others.length > 0 && (
             <ul className={styles.others}>
               {others.map((r) => (

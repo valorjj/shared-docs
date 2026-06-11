@@ -33,11 +33,12 @@ type Props = {
   onReopen: () => void
   onOpenConnect?: () => void
   dragHandle?: ReactNode
+  locked?: boolean
 }
 
 export default function SubPlanSection({
   subPlan, links, onJumpToSubPlan, highlight = 'normal', onHoverChange, myUserId, nameOf, busy, onEdit, onDelete, onAddOption,
-  onEditOption, onDeleteOption, onRate, onClearRating, onDecide, onReopen, onOpenConnect, dragHandle,
+  onEditOption, onDeleteOption, onRate, onClearRating, onDecide, onReopen, onOpenConnect, dragHandle, locked,
 }: Props) {
   const { decision } = subPlan
   const chosen = decision ? subPlan.options.find((o) => o.id === decision.chosenOptionId) ?? null : null
@@ -55,14 +56,16 @@ export default function SubPlanSection({
           <h2 className={styles.title}>{subPlan.title}</h2>
           <Badge>{STATUS_LABEL[subPlan.status]}</Badge>
         </div>
-        <div className={styles.actions}>
-          {dragHandle}
-          {onOpenConnect && (
-            <IconButton variant="ghost" size="sm" label="안건 연결" onClick={onOpenConnect}><Link2 size={14} /></IconButton>
-          )}
-          <IconButton variant="ghost" size="sm" label="안건 수정" onClick={onEdit}><Pencil size={14} /></IconButton>
-          <IconButton variant="ghost" size="sm" label="안건 삭제" onClick={onDelete}><Trash2 size={14} /></IconButton>
-        </div>
+        {!locked && (
+          <div className={styles.actions}>
+            {dragHandle}
+            {onOpenConnect && (
+              <IconButton variant="ghost" size="sm" label="안건 연결" onClick={onOpenConnect}><Link2 size={14} /></IconButton>
+            )}
+            <IconButton variant="ghost" size="sm" label="안건 수정" onClick={onEdit}><Pencil size={14} /></IconButton>
+            <IconButton variant="ghost" size="sm" label="안건 삭제" onClick={onDelete}><Trash2 size={14} /></IconButton>
+          </div>
+        )}
       </header>
 
       {hasLinks && (
@@ -96,7 +99,7 @@ export default function SubPlanSection({
         <div className={styles.banner}>
           <span className={styles.bannerTag}>결정됨</span>
           <span className={styles.bannerBody}><strong>{chosen.title}</strong> · {decision.reason}</span>
-          <Button variant="ghost" size="sm" onClick={onReopen} disabled={busy}>다시 열기</Button>
+          {!locked && <Button variant="ghost" size="sm" onClick={onReopen} disabled={busy}>다시 열기</Button>}
         </div>
       )}
 
@@ -116,17 +119,20 @@ export default function SubPlanSection({
               onClearRating={() => onClearRating(o.id)}
               onEdit={() => onEditOption(o)}
               onDelete={() => onDeleteOption(o)}
+              locked={locked}
             />
           ))}
         </div>
       )}
 
-      <div className={styles.footer}>
-        <Button variant="outline" size="sm" leading={<Plus size={14} />} onClick={onAddOption}>선택지 추가</Button>
-        {!decision && subPlan.options.length > 0 && (
-          <Button variant="soft" size="sm" onClick={onDecide} disabled={busy}>결정하기</Button>
-        )}
-      </div>
+      {!locked && (
+        <div className={styles.footer}>
+          <Button variant="outline" size="sm" leading={<Plus size={14} />} onClick={onAddOption}>선택지 추가</Button>
+          {!decision && subPlan.options.length > 0 && (
+            <Button variant="soft" size="sm" onClick={onDecide} disabled={busy}>결정하기</Button>
+          )}
+        </div>
+      )}
     </section>
   )
 }
