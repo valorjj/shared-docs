@@ -4,7 +4,7 @@
 
 ## A. Plan lifecycle / status
 
-1. **Lock the plan** — freeze a 계획 to read-only once it's settled (no further edits to 안건 / 선택지 / decisions).
+1. ~~**Lock the plan** — freeze a 계획 to read-only once it's settled (no further edits to 안건 / 선택지 / decisions).~~ ✅ **Shipped 2026-06-11** — orthogonal `lockedAt`/`lockedByUserId` flag, `PlanLockGuard` (409 across all 14 content writes), `PLAN_LOCKED`/`PLAN_UNLOCKED` timeline events, frontend toggle + banner + read-only gating. Design/plan: `2026-06-11-plan-lock-{design,plan}.md`.
 2. **Mark complete** — a "completed" status for a plan, distinct from lock. Likely extends `PlanStatus` (today: `ACTIVE | ARCHIVED`).
 3. **Discard + manage discarded plans** — soft-delete a plan plus a view to see / restore / purge discarded ones. Mirrors the soft-delete + restore/forever pattern used elsewhere in the app.
 4. **Deadlines integrated with the timeline (기록) view** — set a deadline on a plan/안건 and surface it in the 기록 timeline. Touches the existing timeline / PlanEvent feed.

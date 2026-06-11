@@ -7,7 +7,8 @@
 **Post-v2 shipped (2026-06-11):**
 - **Decisions list-view connections + drag-reorder** — order-spine, hover-highlight, 연결 modal, `@dnd-kit` reorder + batch `sortOrder` endpoint. Design/plan: [`plans/2026-06-10-decisions-list-spine-design.md`](plans/2026-06-10-decisions-list-spine-design.md) / `-plan.md`.
 - **Rate-limiting & abuse protection** — per-user write-throttle (Bucket4j), per-user upload quota, global upload-dir disk guard. Design/plan: [`plans/2026-06-11-rate-limiting-abuse-design.md`](plans/2026-06-11-rate-limiting-abuse-design.md) / `-plan.md`. Deferred: Cloudflare edge rules, signup/workspace caps.
-- **Next up (Decisions backlog):** plan lifecycle (lock / complete / discard+manage, deadlines→timeline) and group collaboration (vote mode, split-view plan↔discussion note w/ url/link/comment/vote) — see [`plans/decisions-backlog.md`](plans/decisions-backlog.md).
+- **Plan lock (Decisions backlog A.1)** — freeze a 계획 to read-only: orthogonal `lockedAt`/`lockedByUserId` flag (Flyway V18), `PlanLockGuard` enforcing 409 across all 14 content writes, `PLAN_LOCKED`/`PLAN_UNLOCKED` timeline events, frontend toggle + banner + read-only gating (list/canvas/roadmap). Design/plan: [`plans/2026-06-11-plan-lock-design.md`](plans/2026-06-11-plan-lock-design.md) / `-plan.md`.
+- **Next up (Decisions backlog):** rest of plan lifecycle (complete / discard+manage, deadlines→timeline) and group collaboration (vote mode, split-view plan↔discussion note w/ url/link/comment/vote) — see [`plans/decisions-backlog.md`](plans/decisions-backlog.md).
 
 ## Where we are (build log)
 
