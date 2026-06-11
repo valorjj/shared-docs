@@ -1,6 +1,8 @@
 # CLAUDE.md
 
-> Project bible. Last revised: 2026-06-10 — multi-tenant v2 (Phases A–F) **shipped to production**. **Open Google sign-up is already live** — the rebuild removed the email allowlist; there is no gate to flip. Going public = sharing the URL.
+> Project bible. Last revised: 2026-06-11 — multi-tenant v2 (Phases A–F) **shipped to production**. **Open Google sign-up is already live** — the rebuild removed the email allowlist; there is no gate to flip. Going public = sharing the URL.
+>
+> **2026-06-11 shipped:** (1) Decisions **list-view connections + drag-reorder** — an order-spine, hover-highlight, a 연결 modal, and `@dnd-kit` reorder backed by a batch `sortOrder` endpoint. (2) **Abuse protection** — a per-user write-throttle (Bucket4j), per-user upload quota, and a global upload-dir disk guard. Designs/plans in `docs/plans/2026-06-10-decisions-list-spine-*` and `docs/plans/2026-06-11-rate-limiting-abuse-*`.
 
 ## What this is
 
@@ -106,8 +108,9 @@ ESLint enforces 1–6 mechanically. The rest is review discipline.
 | Per-workspace categories (Phase C) | **Shipped.** |
 | Invitations (Phase D) | **Shipped.** Copy-link claim flow (no email), member management. |
 | Per-doc sharing / "공유받은 항목" (Phase E) | **Shipped 2026-06-10.** Notes-only slice on a generic `resource_shares` core; VIEW/EDIT; separate `/api/shares/*` path. |
-| Decisions (Pillar 3) | **Shipped 2026-06.** Plan→SubPlan→Option→Decision; canvas, roadmap board, timeline/feed. |
+| Decisions (Pillar 3) | **Shipped 2026-06.** Plan→SubPlan→Option→Decision; canvas, roadmap board, timeline/feed. **List view (2026-06-11):** order-spine (sortOrder), connection accent layer (chips + hover-highlight), 연결 modal to wire edges, drag-reorder via `@dnd-kit` + batch `PATCH /api/plans/{id}/subplans/order`. |
 | Launch polish (Phase F) | **Shipped 2026-06-10.** Privacy/Terms pages, split landing, fresh-workspace welcome. |
+| Abuse protection / rate-limiting | **Shipped 2026-06-11.** Per-user write-throttle (`RateLimitFilter`, Bucket4j in-memory, 429 + Retry-After, off in `test` profile), per-user upload quota (413 over `app.storage.per-user-quota-bytes`, 500MB), global upload-dir disk guard in `FileStorageService.store()` (413 over `app.storage.total-quota-bytes`, 10GB). **Deferred:** Cloudflare edge rules + signup/workspace caps. |
 | Open public sign-up | **Already live** — no allowlist gate in code (removed in the rebuild). Going public = share the URL. |
 | Multi-calendar overlay | **Post-v2** (next direction). |
 | Presence on shared notes | **Post-v2.** |

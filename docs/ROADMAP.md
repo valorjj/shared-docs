@@ -4,6 +4,11 @@
 
 **STATUS (2026-06-10):** The multi-tenant v2 rebuild shipped. `main` is the live v2 codebase; the DB was wiped and re-seeded at cutover. All phases A–F plus the Decisions pillar are in production. **Open Google sign-up is already live** — the rebuild removed the email allowlist (there is no `APP_AUTH_ALLOWLIST_ENABLED` gate in the code), so going public just means sharing the URL. Next direction: the multi-calendar overlay. Architecture spec: [`plans/2026-05-29-multi-tenant-v2.md`](plans/2026-05-29-multi-tenant-v2.md).
 
+**Post-v2 shipped (2026-06-11):**
+- **Decisions list-view connections + drag-reorder** — order-spine, hover-highlight, 연결 modal, `@dnd-kit` reorder + batch `sortOrder` endpoint. Design/plan: [`plans/2026-06-10-decisions-list-spine-design.md`](plans/2026-06-10-decisions-list-spine-design.md) / `-plan.md`.
+- **Rate-limiting & abuse protection** — per-user write-throttle (Bucket4j), per-user upload quota, global upload-dir disk guard. Design/plan: [`plans/2026-06-11-rate-limiting-abuse-design.md`](plans/2026-06-11-rate-limiting-abuse-design.md) / `-plan.md`. Deferred: Cloudflare edge rules, signup/workspace caps.
+- **Next up (Decisions backlog):** plan lifecycle (lock / complete / discard+manage, deadlines→timeline) and group collaboration (vote mode, split-view plan↔discussion note w/ url/link/comment/vote) — see [`plans/decisions-backlog.md`](plans/decisions-backlog.md).
+
 ## Where we are (build log)
 
 | Surface | State |
