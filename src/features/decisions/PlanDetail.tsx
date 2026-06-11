@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
-import { Plus, Lock, LockOpen } from 'lucide-react'
+import { Plus, Lock, LockOpen, CheckCircle2, RotateCcw } from 'lucide-react'
 import { Page, PageHeader, PageTitle, BackLink, Button, EmptyState, ErrorState, Skeleton, Tabs } from '../../components/ui'
 import { useAuth } from '../../auth/useAuth'
 import { useActiveWorkspace } from '../../auth/useActiveWorkspace'
@@ -12,7 +12,7 @@ import {
   useAddOption, useUpdateOption, useDeleteOption,
   useRateOption, useDeleteRating, useLockDecision, useReopenDecision,
   useTimeline, useCreateEdge, useDeleteEdge, useReorderSubPlans,
-  useLockPlan, useUnlockPlan,
+  useLockPlan, useUnlockPlan, useCompletePlan, useUncompletePlan,
 } from './api'
 import SortableSubPlanSection from './SortableSubPlanSection'
 import PlanCanvas from './PlanCanvas'
@@ -52,6 +52,8 @@ export default function PlanDetail() {
   const reorder = useReorderSubPlans(planId)
   const lockPlan = useLockPlan()
   const unlockPlan = useUnlockPlan()
+  const completePlan = useCompletePlan()
+  const uncompletePlan = useUncompletePlan()
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
 
   const onDragEnd = (e: DragEndEvent) => {
@@ -78,6 +80,7 @@ export default function PlanDetail() {
 
   const { data: timeline, isLoading: timelineLoading } = useTimeline(planId, view === 'timeline')
   const locked = tree?.lockedAt != null
+  const completed = tree?.status === 'COMPLETED'
 
   // 안건 connections (the canvas edges) surfaced in the list view: resolve each
   // edge to source/target titles and group per 안건 into outgoing/incoming.
@@ -192,19 +195,35 @@ export default function PlanDetail() {
               value={view}
               onChange={setView}
             />
-            {locked ? (
-              <Button variant="ghost" size="sm" leading={<LockOpen size={14} />} disabled={unlockPlan.isPending}
-                onClick={() => unlockPlan.mutate(tree.id)}>잠금 해제</Button>
-            ) : (
-              <Button variant="ghost" size="sm" leading={<Lock size={14} />} disabled={lockPlan.isPending}
-                onClick={() => lockPlan.mutate(tree.id)}>잠금</Button>
-            )}
+            <div className={styles.planBarActions}>
+              {locked ? (
+                <Button variant="ghost" size="sm" leading={<LockOpen size={14} />} disabled={unlockPlan.isPending}
+                  onClick={() => unlockPlan.mutate(tree.id)}>잠금 해제</Button>
+              ) : (
+                <Button variant="ghost" size="sm" leading={<Lock size={14} />} disabled={lockPlan.isPending}
+                  onClick={() => lockPlan.mutate(tree.id)}>잠금</Button>
+              )}
+              {completed ? (
+                <Button variant="ghost" size="sm" leading={<RotateCcw size={14} />} disabled={uncompletePlan.isPending}
+                  onClick={() => uncompletePlan.mutate(tree.id)}>다시 진행</Button>
+              ) : (
+                <Button variant="ghost" size="sm" leading={<CheckCircle2 size={14} />} disabled={completePlan.isPending}
+                  onClick={() => completePlan.mutate(tree.id)}>완료</Button>
+              )}
+            </div>
           </div>
 
           {locked && (
             <div className={styles.lockBanner}>
               <Lock size={14} className={styles.lockBannerIcon} aria-hidden="true" />
               <span>이 계획은 잠겨 있어요. 잠금을 해제하면 다시 편집할 수 있어요.</span>
+            </div>
+          )}
+
+          {!locked && completed && (
+            <div className={styles.lockBanner}>
+              <CheckCircle2 size={14} className={styles.lockBannerIcon} aria-hidden="true" />
+              <span>완료된 계획이에요. ‘다시 진행’으로 되돌릴 수 있어요.</span>
             </div>
           )}
 

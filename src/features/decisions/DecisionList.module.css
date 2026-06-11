@@ -27,6 +27,11 @@
   color: var(--c-text);
 }
 
+/* Trash cards are not navigable — the body is a plain <div>, so no pointer cursor. */
+.cardMainStatic {
+  cursor: default;
+}
+
 .cardTop {
   display: flex;
   align-items: center;

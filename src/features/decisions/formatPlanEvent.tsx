@@ -10,6 +10,8 @@ const ICONS: Record<PlanEventType, LucideIcon> = {
   DECISION_REOPENED: RotateCcw,
   PLAN_LOCKED: Lock,
   PLAN_UNLOCKED: LockOpen,
+  PLAN_COMPLETED: CheckCircle2,
+  PLAN_UNCOMPLETED: RotateCcw,
 }
 
 export function planEventIcon(type: PlanEventType): LucideIcon {
@@ -30,6 +32,8 @@ export function planEventText(e: PlanEvent, actor: string): string {
     case 'DECISION_REOPENED': return `${actor}님이 ${q(p.subPlanTitle)} 안건의 결정을 다시 열었어요`
     case 'PLAN_LOCKED': return `${actor}님이 계획을 잠갔어요`
     case 'PLAN_UNLOCKED': return `${actor}님이 계획 잠금을 해제했어요`
+    case 'PLAN_COMPLETED': return `${actor}님이 계획을 완료했어요`
+    case 'PLAN_UNCOMPLETED': return `${actor}님이 계획을 다시 진행했어요`
     default: return `${actor}님이 활동했어요`
   }
 }

@@ -10,6 +10,8 @@ import type {
 export const decisionKeys = {
   scope: (wsId: number | null) => ['decisions', wsId] as const,
   list: (wsId: number | null) => ['decisions', wsId, 'list'] as const,
+  completed: (wsId: number | null) => ['decisions', wsId, 'completed'] as const,
+  trash: (wsId: number | null) => ['decisions', wsId, 'trash'] as const,
   tree: (wsId: number | null, planId: number) => ['decisions', wsId, 'tree', planId] as const,
   timeline: (wsId: number | null, planId: number) => ['decisions', wsId, 'timeline', planId] as const,
   feed: (wsId: number | null) => ['decisions', wsId, 'feed'] as const,
@@ -22,6 +24,23 @@ export function usePlans() {
     queryKey: decisionKeys.list(activeId),
     queryFn: async () => (await apiClient.get<PlanSummary[]>('/api/plans')).data,
     enabled: activeId != null,
+  })
+}
+
+export function useCompletedPlans(enabled = true) {
+  const { activeId } = useActiveWorkspace()
+  return useQuery({
+    queryKey: decisionKeys.completed(activeId),
+    queryFn: async () => (await apiClient.get<PlanSummary[]>('/api/plans/completed')).data,
+    enabled: enabled && activeId != null,
+  })
+}
+export function useTrashedPlans(enabled = true) {
+  const { activeId } = useActiveWorkspace()
+  return useQuery({
+    queryKey: decisionKeys.trash(activeId),
+    queryFn: async () => (await apiClient.get<PlanSummary[]>('/api/plans/trash')).data,
+    enabled: enabled && activeId != null,
   })
 }
 
@@ -72,6 +91,34 @@ export function useDeletePlan() {
   const qc = useQueryClient(); const { activeId } = useActiveWorkspace()
   return useMutation({
     mutationFn: async (id: number) => { await apiClient.delete(`/api/plans/${id}`) },
+    onSuccess: () => qc.invalidateQueries({ queryKey: decisionKeys.scope(activeId) }),
+  })
+}
+export function useCompletePlan() {
+  const qc = useQueryClient(); const { activeId } = useActiveWorkspace()
+  return useMutation({
+    mutationFn: async (id: number) => (await apiClient.post<PlanSummary>(`/api/plans/${id}/complete`)).data,
+    onSuccess: () => qc.invalidateQueries({ queryKey: decisionKeys.scope(activeId) }),
+  })
+}
+export function useUncompletePlan() {
+  const qc = useQueryClient(); const { activeId } = useActiveWorkspace()
+  return useMutation({
+    mutationFn: async (id: number) => (await apiClient.post<PlanSummary>(`/api/plans/${id}/uncomplete`)).data,
+    onSuccess: () => qc.invalidateQueries({ queryKey: decisionKeys.scope(activeId) }),
+  })
+}
+export function useRestorePlan() {
+  const qc = useQueryClient(); const { activeId } = useActiveWorkspace()
+  return useMutation({
+    mutationFn: async (id: number) => { await apiClient.post(`/api/plans/${id}/restore`) },
+    onSuccess: () => qc.invalidateQueries({ queryKey: decisionKeys.scope(activeId) }),
+  })
+}
+export function useDeletePlanForever() {
+  const qc = useQueryClient(); const { activeId } = useActiveWorkspace()
+  return useMutation({
+    mutationFn: async (id: number) => { await apiClient.delete(`/api/plans/${id}/forever`) },
     onSuccess: () => qc.invalidateQueries({ queryKey: decisionKeys.scope(activeId) }),
   })
 }
