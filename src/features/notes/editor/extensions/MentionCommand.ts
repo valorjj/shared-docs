@@ -18,6 +18,7 @@ export type MentionItem = {
   id: number
   title: string
   hint?: string | null
+  planId?: number | null
 }
 
 export type MentionState = {
@@ -87,6 +88,7 @@ export const MentionCommand = Extension.create<MentionOptions>({
                   kind: props.kind,
                   entityId: props.id,
                   title: props.title,
+                  planId: props.planId ?? null,
                 },
               },
               { type: 'text', text: ' ' },

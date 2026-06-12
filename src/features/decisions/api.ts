@@ -6,6 +6,7 @@ import type {
   OptionNode, PlanEvent, PlanSummary, PlanTree, Rating, RatePayload, ReorderSubPlansPayload,
   SubPlanEdge, SubPlanNode, TitleDescPayload, UpdatePlanPayload,
 } from './types'
+import type { Note } from '../notes/types'
 
 export const decisionKeys = {
   scope: (wsId: number | null) => ['decisions', wsId] as const,
@@ -305,5 +306,21 @@ export function useReorderSubPlans(planId: number) {
     },
     onError: (_e, _v, ctx) => { if (ctx?.prev) qc.setQueryData(ctx.key, ctx.prev) },
     onSettled: () => qc.invalidateQueries({ queryKey: decisionKeys.scope(activeId) }),
+  })
+}
+
+// ── Discussion note ──
+
+/** Idempotent POST: ensures the plan's linked discussion note exists and
+ *  returns it. Re-running on a stale cache is safe — the backend creates
+ *  once and returns the same note on every subsequent call. */
+export function useDiscussionNote(planId: number, enabled: boolean) {
+  const { activeId } = useActiveWorkspace()
+  return useQuery({
+    queryKey: [...decisionKeys.tree(activeId, planId), 'discussion-note'],
+    queryFn: async () => (await apiClient.post<Note>(`/api/plans/${planId}/discussion-note`)).data,
+    enabled: enabled && activeId != null && Number.isFinite(planId),
+    staleTime: 60 * 1000,
+    retry: false, // 409 discussion-note-private must surface, not retry
   })
 }
