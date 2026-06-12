@@ -11,6 +11,7 @@ import {
   usePlanTree, useAddSubPlan, useUpdateSubPlan, useDeleteSubPlan,
   useAddOption, useUpdateOption, useDeleteOption,
   useRateOption, useDeleteRating, useLockDecision, useReopenDecision,
+  useCastVote, useRetractVote,
   useTimeline, useCreateEdge, useDeleteEdge, useReorderSubPlans,
   useLockPlan, useUnlockPlan, useCompletePlan, useUncompletePlan,
 } from './api'
@@ -54,6 +55,8 @@ export default function PlanDetail() {
   const unlockPlan = useUnlockPlan()
   const completePlan = useCompletePlan()
   const uncompletePlan = useUncompletePlan()
+  const castVote = useCastVote()
+  const retractVote = useRetractVote()
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
 
   const onDragEnd = (e: DragEndEvent) => {
@@ -145,6 +148,13 @@ export default function PlanDetail() {
       })
   }, [tree, connectingFor])
 
+  const leadingOptionId = (sp: SubPlanNode): number | null => {
+    const max = Math.max(...sp.options.map((o) => o.voterUserIds.length))
+    if (max <= 0) return null
+    const leaders = sp.options.filter((o) => o.voterUserIds.length === max)
+    return leaders.length === 1 ? leaders[0].id : null
+  }
+
   const renderSubPlan = (sp: SubPlanNode, i: number) => (
     <SortableSubPlanSection
       key={sp.id}
@@ -157,7 +167,7 @@ export default function PlanDetail() {
       onHoverChange={(hovered) => setHoveredSubPlanId(hovered ? sp.id : null)}
       myUserId={myUserId}
       nameOf={nameOf}
-      busy={rate.isPending || lock.isPending || reopen.isPending || deleteSubPlan.isPending || deleteOption.isPending}
+      busy={rate.isPending || lock.isPending || reopen.isPending || deleteSubPlan.isPending || deleteOption.isPending || castVote.isPending || retractVote.isPending}
       onEdit={() => setEditingSubPlan(sp)}
       onDelete={() => { if (window.confirm('삭제할까요? 되돌릴 수 없어요.')) deleteSubPlan.mutate(sp.id) }}
       onAddOption={() => setAddingOptionFor(sp.id)}
@@ -172,6 +182,8 @@ export default function PlanDetail() {
       onClearRating={(optionId) => clearRating.mutate(optionId)}
       onDecide={() => setDecidingFor(sp)}
       onReopen={() => { if (window.confirm('이 결정을 다시 열까요? 기록은 남아요.')) reopen.mutate(sp.id) }}
+      onVote={(o) => castVote.mutate(o.id)}
+      onRetractVote={(o) => retractVote.mutate(o.id)}
       onOpenConnect={() => setConnectingFor(sp)}
       locked={locked}
     />
@@ -295,7 +307,7 @@ export default function PlanDetail() {
       <DecisionModal
         open={decidingFor != null} onClose={() => setDecidingFor(null)}
         options={decidingFor?.options ?? []}
-        currentChosenId={decidingFor?.decision?.chosenOptionId ?? null}
+        currentChosenId={decidingFor?.decision?.chosenOptionId ?? (decidingFor ? leadingOptionId(decidingFor) : null)}
         busy={lock.isPending}
         onSubmit={(payload) => { if (decidingFor) lock.mutate({ subPlanId: decidingFor.id, payload }, { onSuccess: () => setDecidingFor(null) }) }}
       />

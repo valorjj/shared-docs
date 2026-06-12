@@ -97,3 +97,25 @@
 .otherComment {
   color: var(--c-text-muted);
 }
+
+.vote {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  font-size: var(--fs-xs);
+  color: var(--c-text-muted);
+  background: none;
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-pill);
+  cursor: pointer;
+}
+.vote:hover:not(:disabled) { background: var(--c-surface-tint); }
+.vote:disabled { cursor: default; opacity: .6; }
+.voteOn { color: var(--c-primary); border-color: var(--c-primary); background: var(--c-primary-soft); }
+
+.voters {
+  font-size: var(--fs-xs);
+  color: var(--c-text-subtle);
+  margin: 0;
+}
