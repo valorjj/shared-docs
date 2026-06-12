@@ -204,6 +204,22 @@ export function useDeleteRating() {
   })
 }
 
+// ── Vote (투표) mutations ──
+export function useCastVote() {
+  const qc = useQueryClient(); const { activeId } = useActiveWorkspace()
+  return useMutation({
+    mutationFn: async (optionId: number) => { await apiClient.put(`/api/options/${optionId}/vote`) },
+    onSuccess: () => qc.invalidateQueries({ queryKey: decisionKeys.scope(activeId) }),
+  })
+}
+export function useRetractVote() {
+  const qc = useQueryClient(); const { activeId } = useActiveWorkspace()
+  return useMutation({
+    mutationFn: async (optionId: number) => { await apiClient.delete(`/api/options/${optionId}/vote`) },
+    onSuccess: () => qc.invalidateQueries({ queryKey: decisionKeys.scope(activeId) }),
+  })
+}
+
 // ── Decision (결정) mutations ──
 export function useLockDecision() {
   const qc = useQueryClient(); const { activeId } = useActiveWorkspace()

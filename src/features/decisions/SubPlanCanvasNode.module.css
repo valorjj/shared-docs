@@ -99,6 +99,12 @@
   white-space: nowrap;
 }
 
+.optionVotes {
+  font-size: var(--fs-xs);
+  color: var(--c-primary);
+  white-space: nowrap;
+}
+
 .optionAvg {
   font-size: var(--fs-xs);
   color: var(--c-text-muted);

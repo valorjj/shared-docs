@@ -26,6 +26,7 @@ export type DecisionInfo = {
   reason: string
   decidedByUserId: number
   decidedAt: string
+  voteSnapshot: string | null
 }
 
 export type OptionNode = {
@@ -36,7 +37,10 @@ export type OptionNode = {
   avgScore: number | null
   ratingCount: number
   ratings: Rating[]
+  voterUserIds: number[]
 }
+
+export type VoteSnapshotEntry = { optionId: number; title: string; count: number; voters: string[] }
 
 export type SubPlanNode = {
   id: number

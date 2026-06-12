@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ChevronDown, ChevronRight, Pencil, Trash2, Check } from 'lucide-react'
+import { ChevronDown, ChevronRight, Pencil, Trash2, Check, Vote } from 'lucide-react'
 import { IconButton } from '../../components/ui'
 import RatingControl from './RatingControl'
 import styles from './OptionRow.module.css'
@@ -9,6 +9,7 @@ type Props = {
   option: OptionNode
   myUserId: number
   isChosen: boolean
+  decided: boolean
   nameOf: (userId: number) => string
   busy?: boolean
   locked?: boolean
@@ -16,14 +17,18 @@ type Props = {
   onClearRating: () => void
   onEdit: () => void
   onDelete: () => void
+  onVote: () => void
+  onRetractVote: () => void
 }
 
 export default function OptionRow({
-  option, myUserId, isChosen, nameOf, busy, locked, onRate, onClearRating, onEdit, onDelete,
+  option, myUserId, isChosen, decided, nameOf, busy, locked, onRate, onClearRating, onEdit, onDelete, onVote, onRetractVote,
 }: Props) {
   const [open, setOpen] = useState(false)
   const myRating = option.ratings.find((r) => r.userId === myUserId) ?? null
   const others = option.ratings.filter((r) => r.userId !== myUserId)
+  const iVoted = option.voterUserIds.includes(myUserId)
+  const frozen = !!locked || decided
 
   return (
     <div className={isChosen ? `${styles.row} ${styles.rowChosen}` : styles.row}>
@@ -36,6 +41,18 @@ export default function OptionRow({
         <span className={styles.avg}>
           {option.avgScore != null ? `평균 ${option.avgScore.toFixed(1)} (${option.ratingCount})` : '평가 없음'}
         </span>
+        <button
+          type="button"
+          className={iVoted ? `${styles.vote} ${styles.voteOn}` : styles.vote}
+          disabled={busy || frozen}
+          aria-pressed={iVoted}
+          aria-label={iVoted ? '투표 취소' : '투표'}
+          title={iVoted ? '투표 취소' : '투표'}
+          onClick={() => (iVoted ? onRetractVote() : onVote())}
+        >
+          <Vote size={13} />
+          {option.voterUserIds.length > 0 && <span>{option.voterUserIds.length}</span>}
+        </button>
         {!locked && (
           <div className={styles.actions}>
             <IconButton variant="ghost" size="sm" label="선택지 수정" onClick={onEdit}><Pencil size={14} /></IconButton>
@@ -58,6 +75,9 @@ export default function OptionRow({
                 </li>
               ))}
             </ul>
+          )}
+          {option.voterUserIds.length > 0 && (
+            <p className={styles.voters}>투표: {option.voterUserIds.map(nameOf).join(', ')}</p>
           )}
         </div>
       )}

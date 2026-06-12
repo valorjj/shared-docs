@@ -1,9 +1,9 @@
 import { Plus, Pencil, Trash2, Link2 } from 'lucide-react'
-import type { ReactNode } from 'react'
+import { useMemo, type ReactNode } from 'react'
 import { Button, IconButton, Badge } from '../../components/ui'
 import OptionRow from './OptionRow'
 import styles from './SubPlanSection.module.css'
-import type { OptionNode, SubPlanNode } from './types'
+import type { OptionNode, SubPlanNode, VoteSnapshotEntry } from './types'
 
 const STATUS_LABEL: Record<SubPlanNode['status'], string> = {
   EMPTY: '대기', IN_PROGRESS: '진행 중', DECIDED: '결정됨',
@@ -31,6 +31,8 @@ type Props = {
   onClearRating: (optionId: number) => void
   onDecide: () => void
   onReopen: () => void
+  onVote: (option: OptionNode) => void
+  onRetractVote: (option: OptionNode) => void
   onOpenConnect?: () => void
   dragHandle?: ReactNode
   locked?: boolean
@@ -38,11 +40,18 @@ type Props = {
 
 export default function SubPlanSection({
   subPlan, links, onJumpToSubPlan, highlight = 'normal', onHoverChange, myUserId, nameOf, busy, onEdit, onDelete, onAddOption,
-  onEditOption, onDeleteOption, onRate, onClearRating, onDecide, onReopen, onOpenConnect, dragHandle, locked,
+  onEditOption, onDeleteOption, onRate, onClearRating, onDecide, onReopen, onVote, onRetractVote, onOpenConnect, dragHandle, locked,
 }: Props) {
   const { decision } = subPlan
   const chosen = decision ? subPlan.options.find((o) => o.id === decision.chosenOptionId) ?? null : null
   const hasLinks = links != null && (links.outgoing.length > 0 || links.incoming.length > 0)
+
+  const snapshot: VoteSnapshotEntry[] | null = useMemo(() => {
+    if (!decision?.voteSnapshot) return null
+    try { return JSON.parse(decision.voteSnapshot) as VoteSnapshotEntry[] } catch { return null }
+  }, [decision])
+  const chosenTally = snapshot?.find((e) => e.optionId === decision?.chosenOptionId)
+  const totalVotes = snapshot?.reduce((n, e) => n + e.count, 0) ?? 0
 
   return (
     <section
@@ -98,7 +107,10 @@ export default function SubPlanSection({
       {decision && chosen && (
         <div className={styles.banner}>
           <span className={styles.bannerTag}>결정됨</span>
-          <span className={styles.bannerBody}><strong>{chosen.title}</strong> · {decision.reason}</span>
+          <span className={styles.bannerBody}>
+            <strong>{chosen.title}</strong> · {decision.reason}
+            {snapshot && <span className={styles.bannerVotes}> · {totalVotes}표 중 {chosenTally?.count ?? 0}표</span>}
+          </span>
           {!locked && <Button variant="ghost" size="sm" onClick={onReopen} disabled={busy}>다시 열기</Button>}
         </div>
       )}
@@ -113,12 +125,15 @@ export default function SubPlanSection({
               option={o}
               myUserId={myUserId}
               isChosen={decision?.chosenOptionId === o.id}
+              decided={decision != null}
               nameOf={nameOf}
               busy={busy}
               onRate={(score, comment) => onRate(o.id, score, comment)}
               onClearRating={() => onClearRating(o.id)}
               onEdit={() => onEditOption(o)}
               onDelete={() => onDeleteOption(o)}
+              onVote={() => onVote(o)}
+              onRetractVote={() => onRetractVote(o)}
               locked={locked}
             />
           ))}
@@ -129,7 +144,9 @@ export default function SubPlanSection({
         <div className={styles.footer}>
           <Button variant="outline" size="sm" leading={<Plus size={14} />} onClick={onAddOption}>선택지 추가</Button>
           {!decision && subPlan.options.length > 0 && (
-            <Button variant="soft" size="sm" onClick={onDecide} disabled={busy}>결정하기</Button>
+            <Button variant="soft" size="sm" onClick={onDecide} disabled={busy}>
+              {subPlan.options.some((o) => o.voterUserIds.length > 0) ? '결과 확정하기' : '결정하기'}
+            </Button>
           )}
         </div>
       )}
