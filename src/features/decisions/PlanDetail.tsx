@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { useParams, useSearchParams } from 'react-router-dom'
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { Plus, Lock, LockOpen, CheckCircle2, RotateCcw } from 'lucide-react'
@@ -107,6 +107,35 @@ export default function PlanDetail() {
   }
 
   const [hoveredSubPlanId, setHoveredSubPlanId] = useState<number | null>(null)
+
+  const [searchParams] = useSearchParams()
+  const jumpedRef = useRef<string | null>(null)
+  useEffect(() => {
+    if (!tree) return
+    const spParam = searchParams.get('subplan')
+    const optParam = searchParams.get('option')
+    const jumpKey = `${planId}:${spParam}:${optParam}`
+    if (jumpedRef.current === jumpKey) return
+    const spNum = Number(spParam)
+    let targetId: number | null = spParam != null && Number.isFinite(spNum) ? spNum : null
+    if (targetId == null && optParam != null) {
+      const optId = Number(optParam)
+      if (Number.isFinite(optId)) {
+        targetId = tree.subPlans.find((sp) => sp.options.some((o) => o.id === optId))?.id ?? null
+      }
+    }
+    if (targetId != null) {
+      jumpedRef.current = jumpKey
+      jumpToSubPlan(targetId)
+      // Timeout-driven transient: flash the accent layer then clear it.
+      // The leading setTimeout keeps the setState out of the effect body
+      // (avoids cascading renders) while still firing on the next tick.
+      setTimeout(() => {
+        setHoveredSubPlanId(targetId)
+        setTimeout(() => setHoveredSubPlanId((prev) => (prev === targetId ? null : prev)), 1600)
+      }, 0)
+    }
+  }, [tree, searchParams, planId])
 
   // Neighbor ids (both directions) of the hovered 안건 — drives the accent layer.
   const hoveredNeighbors = useMemo(() => {

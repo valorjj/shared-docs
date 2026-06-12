@@ -13,9 +13,13 @@ export type EntityKind =
   | 'anniversary'
   | 'recipe'
   | 'link'
+  | 'plan'
+  | 'subplan'
+  | 'option'
 
 export const ENTITY_KINDS: readonly EntityKind[] = [
   'note', 'sheet', 'purchase', 'todo', 'anniversary', 'recipe', 'link',
+  'plan', 'subplan', 'option',
 ] as const
 
 export type NoteLinkLookupItem = {
@@ -103,6 +107,20 @@ export const EntityLink = Node.create<EntityLinkOptions>({
         renderHTML: (attrs) =>
           attrs.title == null ? {} : { 'data-title': String(attrs.title) },
       },
+      // Parent plan id for subplan/option — immutable in the domain (안건/선택지
+      // never change plan). Stored so the chip can build deep-link URLs without
+      // a runtime lookup.
+      planId: {
+        default: null as number | null,
+        parseHTML: (el: HTMLElement) => {
+          const raw = el.getAttribute('data-plan-id')
+          if (!raw) return null
+          const n = Number(raw)
+          return Number.isFinite(n) ? n : null
+        },
+        renderHTML: (attrs: { planId: number | null }) =>
+          attrs.planId != null ? { 'data-plan-id': String(attrs.planId) } : {},
+      },
     }
   },
 
@@ -173,5 +191,8 @@ function kindLabel(kind: EntityKind): string {
     case 'anniversary': return '기념일'
     case 'recipe': return '레시피'
     case 'link': return '링크'
+    case 'plan': return '계획'
+    case 'subplan': return '안건'
+    case 'option': return '선택지'
   }
 }

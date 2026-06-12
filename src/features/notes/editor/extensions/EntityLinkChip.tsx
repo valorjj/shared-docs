@@ -4,12 +4,15 @@ import { type MouseEvent as ReactMouseEvent } from 'react'
 import {
   Cake,
   ChefHat,
+  CircleDot,
   CreditCard,
   FileText,
   Link2,
+  ListTree,
   Sheet as SheetIcon,
   SquareCheck,
   Trash2,
+  Vote,
   type LucideIcon,
 } from 'lucide-react'
 import { useNotes, useTombstoneNote } from '../../api'
@@ -46,6 +49,7 @@ export default function EntityLinkChip({ node }: NodeViewProps) {
   const kind = (node.attrs.kind as EntityKind | undefined) ?? 'note'
   const entityId = node.attrs.entityId as number | null
   const storedTitle = (node.attrs.title as string | null) ?? null
+  const planId = (node.attrs.planId as number | null) ?? null
   const navigate = useNavigate()
   const requestEntityNav = useEntityNavigate()
 
@@ -56,7 +60,7 @@ export default function EntityLinkChip({ node }: NodeViewProps) {
       requestEntityNav(kind, id)
       return
     }
-    navigate(navTarget(kind, id))
+    navigate(navTarget(kind, id, planId))
   }
 
   const notesQuery = useNotes()
@@ -186,6 +190,9 @@ function iconFor(kind: EntityKind): LucideIcon {
     case 'anniversary': return Cake
     case 'recipe': return ChefHat
     case 'link': return Link2
+    case 'plan': return Vote
+    case 'subplan': return ListTree
+    case 'option': return CircleDot
   }
 }
 
@@ -198,10 +205,13 @@ function kindLabel(kind: EntityKind): string {
     case 'anniversary': return '기념일'
     case 'recipe': return '레시피'
     case 'link': return '링크'
+    case 'plan': return '계획'
+    case 'subplan': return '안건'
+    case 'option': return '선택지'
   }
 }
 
-function navTarget(kind: EntityKind, id: number): string {
+function navTarget(kind: EntityKind, id: number, planId: number | null): string {
   switch (kind) {
     case 'note': return `/?note=${id}`
     case 'sheet': return `/sheets?sheet=${id}`
@@ -210,5 +220,8 @@ function navTarget(kind: EntityKind, id: number): string {
     case 'anniversary': return `/data/anniversaries?id=${id}`
     case 'recipe': return `/data/recipes/${id}`
     case 'link': return `/data/links?id=${id}`
+    case 'plan': return `/decisions/${id}`
+    case 'subplan': return planId != null ? `/decisions/${planId}?subplan=${id}` : '/decisions'
+    case 'option': return planId != null ? `/decisions/${planId}?option=${id}` : '/decisions'
   }
 }

@@ -4,11 +4,14 @@ import { useQuery } from '@tanstack/react-query'
 import {
   Cake,
   ChefHat,
+  CircleDot,
   CreditCard,
   FileText,
   Link2,
+  ListTree,
   Sheet,
   SquareCheck,
+  Vote,
   type LucideIcon,
 } from 'lucide-react'
 import { apiClient } from '../../../api/client'
@@ -185,5 +188,8 @@ function iconFor(kind: EntityKind): LucideIcon {
     case 'anniversary': return Cake
     case 'recipe': return ChefHat
     case 'link': return Link2
+    case 'plan': return Vote
+    case 'subplan': return ListTree
+    case 'option': return CircleDot
   }
 }
