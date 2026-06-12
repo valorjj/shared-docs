@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
-import { Plus, Lock, LockOpen, CheckCircle2, RotateCcw } from 'lucide-react'
+import { Plus, Lock, LockOpen, CheckCircle2, RotateCcw, MessagesSquare } from 'lucide-react'
 import { Page, PageHeader, PageTitle, BackLink, Button, EmptyState, ErrorState, Skeleton, Tabs } from '../../components/ui'
 import { useAuth } from '../../auth/useAuth'
 import { useActiveWorkspace } from '../../auth/useActiveWorkspace'
@@ -21,6 +21,7 @@ import Timeline from './Timeline'
 import TitleDescModal from './TitleDescModal'
 import DecisionModal from './DecisionModal'
 import ConnectModal, { type ConnectCandidate } from './ConnectModal'
+import DiscussionPane from './DiscussionPane'
 import styles from './PlanDetail.module.css'
 import type { OptionNode, SubPlanNode } from './types'
 
@@ -80,6 +81,15 @@ export default function PlanDetail() {
   const [decidingFor, setDecidingFor] = useState<SubPlanNode | null>(null)
   const [view, setView] = useState<'list' | 'canvas' | 'timeline'>('list')
   const [connectingFor, setConnectingFor] = useState<SubPlanNode | null>(null)
+
+  const [discussionOpen, setDiscussionOpen] = useState(
+    () => localStorage.getItem(`discussion-open-${planId}`) === '1',
+  )
+  const toggleDiscussion = () =>
+    setDiscussionOpen((v) => {
+      localStorage.setItem(`discussion-open-${planId}`, v ? '0' : '1')
+      return !v
+    })
 
   const { data: timeline, isLoading: timelineLoading } = useTimeline(planId, view === 'timeline')
   const locked = tree?.lockedAt != null
@@ -229,7 +239,8 @@ export default function PlanDetail() {
       {isError && <ErrorState error={error} onRetry={() => refetch()} />}
 
       {tree && (
-        <>
+        <div className={discussionOpen ? styles.split : undefined}>
+          <div className={styles.main}>
           <div className={styles.planBar}>
             <Tabs
               items={[{ key: 'list', label: '목록' }, { key: 'canvas', label: '캔버스' }, { key: 'timeline', label: '기록' }]}
@@ -251,6 +262,8 @@ export default function PlanDetail() {
                 <Button variant="ghost" size="sm" leading={<CheckCircle2 size={14} />} disabled={completePlan.isPending}
                   onClick={() => completePlan.mutate(tree.id)}>완료</Button>
               )}
+              <Button variant="ghost" size="sm" leading={<MessagesSquare size={14} />}
+                onClick={toggleDiscussion}>논의</Button>
             </div>
           </div>
 
@@ -303,7 +316,13 @@ export default function PlanDetail() {
               )}
             </>
           )}
-        </>
+          </div>
+          {discussionOpen && (
+            <aside className={styles.pane} aria-label="논의">
+              <DiscussionPane planId={planId} onClose={toggleDiscussion} />
+            </aside>
+          )}
+        </div>
       )}
 
       {/* 안건 add/edit */}
