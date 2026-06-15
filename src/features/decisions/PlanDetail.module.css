@@ -127,7 +127,7 @@
 
 .split {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(320px, 38%);
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
   gap: var(--sp-4);
   align-items: start;
 }
@@ -140,7 +140,8 @@
   position: sticky;
   top: var(--sp-4);
   max-height: calc(100vh - 96px);
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
 }
