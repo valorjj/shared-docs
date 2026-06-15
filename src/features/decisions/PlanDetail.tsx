@@ -308,7 +308,7 @@ export default function PlanDetail() {
           <div className={styles.main}>
           <div ref={sentinelRef} aria-hidden="true" className={styles.sentinel} />
           <div className={`${styles.controlStrip}${scrolled ? ' ' + styles.stuck : ''}`}>
-            <span className={styles.condensedTitle}>{tree.title}{dday ? ` · ${dday}` : ''}</span>
+            <span className={styles.condensedTitle} aria-hidden="true">{tree.title}{dday ? ` · ${dday}` : ''}</span>
             <Tabs
               items={[{ key: 'list', label: '목록' }, { key: 'canvas', label: '캔버스' }, { key: 'timeline', label: '기록' }]}
               value={view}

@@ -19,10 +19,6 @@
   margin-top: var(--sp-4);
 }
 
-.viewToggle {
-  margin-bottom: var(--sp-4);
-}
-
 .spine.active { border-left-color: var(--c-accent); }
 
 .sentinel {
