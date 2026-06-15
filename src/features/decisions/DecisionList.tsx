@@ -13,6 +13,7 @@ import {
   useCompletedPlans, useTrashedPlans, useCompletePlan, useUncompletePlan,
   useRestorePlan, useDeletePlanForever,
 } from './api'
+import DeadlineChip from './DeadlineChip'
 import PlanModal from './PlanModal'
 import Timeline from './Timeline'
 import styles from './DecisionList.module.css'
@@ -81,6 +82,12 @@ export default function DecisionList() {
           {p.lockedAt != null
             ? <Badge>잠김</Badge>
             : view === 'completed' ? <Badge>완료</Badge> : null}
+          <DeadlineChip
+            deadline={p.deadline}
+            settledAt={view === 'completed' ? p.completedAt : null}
+            settledNoun="완료"
+            editable={false}
+          />
         </div>
         {p.description && <span className={styles.cardDesc}>{p.description}</span>}
         <span className={styles.cardMeta}>안건 {p.subPlanCount} · 결정 {p.decidedCount}</span>

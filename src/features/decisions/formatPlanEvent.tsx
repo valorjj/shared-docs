@@ -1,4 +1,4 @@
-import { Flag, ListPlus, CirclePlus, CheckCircle2, RefreshCw, RotateCcw, Lock, LockOpen, CalendarClock, type LucideIcon } from 'lucide-react'
+import { Flag, ListPlus, CirclePlus, CheckCircle2, RefreshCw, RotateCcw, Lock, LockOpen, CalendarClock, CalendarX, type LucideIcon } from 'lucide-react'
 import type { PlanEvent, PlanEventType } from './types'
 
 const ICONS: Record<PlanEventType, LucideIcon> = {
@@ -13,11 +13,18 @@ const ICONS: Record<PlanEventType, LucideIcon> = {
   PLAN_COMPLETED: CheckCircle2,
   PLAN_UNCOMPLETED: RotateCcw,
   DEADLINE_SET: CalendarClock,
-  DEADLINE_CLEARED: CalendarClock,
+  DEADLINE_CLEARED: CalendarX,
 }
 
 export function planEventIcon(type: PlanEventType): LucideIcon {
   return ICONS[type]
+}
+
+function deadlineForEvent(iso: string | null | undefined, eventCreatedAt: string): string {
+  if (!iso) return ''
+  const [y, m, d] = iso.split('-').map(Number)
+  const eventYear = new Date(eventCreatedAt).getFullYear()
+  return `${y !== eventYear ? `${y}년 ` : ''}${m}월 ${d}일`
 }
 
 /** Korean sentence for one event. `actor` is the already-resolved display name.
@@ -36,6 +43,16 @@ export function planEventText(e: PlanEvent, actor: string): string {
     case 'PLAN_UNLOCKED': return `${actor}님이 계획 잠금을 해제했어요`
     case 'PLAN_COMPLETED': return `${actor}님이 계획을 완료했어요`
     case 'PLAN_UNCOMPLETED': return `${actor}님이 계획을 다시 진행했어요`
+    case 'DEADLINE_SET': {
+      const when = deadlineForEvent(p.deadline, e.createdAt)
+      return e.subPlanId == null
+        ? `${actor}님이 계획 기한을 ${when}로 정했어요`
+        : `${actor}님이 ${q(p.subPlanTitle)} 안건 기한을 ${when}로 정했어요`
+    }
+    case 'DEADLINE_CLEARED':
+      return e.subPlanId == null
+        ? `${actor}님이 계획 기한을 없앴어요`
+        : `${actor}님이 ${q(p.subPlanTitle)} 안건 기한을 없앴어요`
     default: return `${actor}님이 활동했어요`
   }
 }

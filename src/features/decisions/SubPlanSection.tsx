@@ -1,4 +1,5 @@
 import { Plus, Pencil, Trash2, Link2 } from 'lucide-react'
+import DeadlineChip from './DeadlineChip'
 import { useMemo, type ReactNode } from 'react'
 import { Button, IconButton, Badge } from '../../components/ui'
 import OptionRow from './OptionRow'
@@ -36,11 +37,15 @@ type Props = {
   onOpenConnect?: () => void
   dragHandle?: ReactNode
   locked?: boolean
+  onSetDeadline: (deadline: string) => void
+  onClearDeadline: () => void
+  deadlineBusy?: boolean
 }
 
 export default function SubPlanSection({
   subPlan, links, onJumpToSubPlan, highlight = 'normal', onHoverChange, myUserId, nameOf, busy, onEdit, onDelete, onAddOption,
   onEditOption, onDeleteOption, onRate, onClearRating, onDecide, onReopen, onVote, onRetractVote, onOpenConnect, dragHandle, locked,
+  onSetDeadline, onClearDeadline, deadlineBusy,
 }: Props) {
   const { decision } = subPlan
   const chosen = decision ? subPlan.options.find((o) => o.id === decision.chosenOptionId) ?? null : null
@@ -64,6 +69,15 @@ export default function SubPlanSection({
         <div className={styles.titleWrap}>
           <h2 className={styles.title}>{subPlan.title}</h2>
           <Badge>{STATUS_LABEL[subPlan.status]}</Badge>
+          <DeadlineChip
+            deadline={subPlan.deadline}
+            settledAt={decision?.decidedAt ?? null}
+            settledNoun="결정"
+            editable={!locked && decision == null}
+            busy={deadlineBusy}
+            onSet={onSetDeadline}
+            onClear={onClearDeadline}
+          />
         </div>
         {!locked && (
           <div className={styles.actions}>
