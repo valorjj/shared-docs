@@ -3,7 +3,7 @@ import { useParams, useSearchParams } from 'react-router-dom'
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { Plus, Lock, LockOpen, CheckCircle2, RotateCcw, MessagesSquare } from 'lucide-react'
-import { Page, PageHeader, PageTitle, BackLink, Button, EmptyState, ErrorState, Skeleton, Tabs } from '../../components/ui'
+import { Page, PageHeader, PageTitle, BackLink, Button, IconButton, EmptyState, ErrorState, Skeleton, Tabs } from '../../components/ui'
 import { useAuth } from '../../auth/useAuth'
 import { useActiveWorkspace } from '../../auth/useActiveWorkspace'
 import { useMembers } from '../workspaces/membersApi'
@@ -241,7 +241,44 @@ export default function PlanDetail() {
     <Page>
       <PageHeader>
         <BackLink to="/decisions" mobileOnly>결정</BackLink>
-        <PageTitle>{tree?.title ?? '계획'}</PageTitle>
+        <div className={styles.headerRow}>
+          <div className={styles.headerMain}>
+            {tree?.groupLabel && <div className={styles.eyebrow}>{tree.groupLabel}</div>}
+            <PageTitle>{tree?.title ?? '계획'}</PageTitle>
+            {tree?.description && <p className={styles.subtitle}>{tree.description}</p>}
+            {tree && (
+              <div className={styles.metaRow}>
+                <DeadlineChip
+                  deadline={tree.deadline}
+                  settledAt={completed ? tree.completedAt : null}
+                  settledNoun="완료"
+                  editable={!locked && !completed}
+                  busy={setPlanDeadline.isPending || clearPlanDeadline.isPending}
+                  onSet={(deadline) => setPlanDeadline.mutate({ id: tree.id, deadline })}
+                  onClear={() => clearPlanDeadline.mutate(tree.id)}
+                />
+              </div>
+            )}
+          </div>
+          {tree && (
+            <div className={styles.lifecycle}>
+              {locked ? (
+                <IconButton variant="ghost" size="sm" label="잠금 해제" disabled={unlockPlan.isPending}
+                  onClick={() => unlockPlan.mutate(tree.id)}><LockOpen size={16} /></IconButton>
+              ) : (
+                <IconButton variant="ghost" size="sm" label="잠금" disabled={lockPlan.isPending}
+                  onClick={() => lockPlan.mutate(tree.id)}><Lock size={16} /></IconButton>
+              )}
+              {completed ? (
+                <IconButton variant="ghost" size="sm" label="다시 진행" disabled={uncompletePlan.isPending}
+                  onClick={() => uncompletePlan.mutate(tree.id)}><RotateCcw size={16} /></IconButton>
+              ) : (
+                <IconButton variant="ghost" size="sm" label="완료" disabled={completePlan.isPending}
+                  onClick={() => completePlan.mutate(tree.id)}><CheckCircle2 size={16} /></IconButton>
+              )}
+            </div>
+          )}
+        </div>
       </PageHeader>
 
       {isLoading && <div className={styles.list}><Skeleton height={120} radius="var(--r-md)" /></div>}
@@ -256,34 +293,8 @@ export default function PlanDetail() {
               value={view}
               onChange={setView}
             />
-            <div className={styles.planBarActions}>
-              <DeadlineChip
-                deadline={tree.deadline}
-                settledAt={completed ? tree.completedAt : null}
-                settledNoun="완료"
-                editable={!locked && !completed}
-                busy={setPlanDeadline.isPending || clearPlanDeadline.isPending}
-                onSet={(deadline) => setPlanDeadline.mutate({ id: tree.id, deadline })}
-                onClear={() => clearPlanDeadline.mutate(tree.id)}
-              />
-              <span className={styles.actionDivider} aria-hidden="true" />
-              {locked ? (
-                <Button variant="ghost" size="sm" leading={<LockOpen size={14} />} disabled={unlockPlan.isPending}
-                  onClick={() => unlockPlan.mutate(tree.id)}>잠금 해제</Button>
-              ) : (
-                <Button variant="ghost" size="sm" leading={<Lock size={14} />} disabled={lockPlan.isPending}
-                  onClick={() => lockPlan.mutate(tree.id)}>잠금</Button>
-              )}
-              {completed ? (
-                <Button variant="ghost" size="sm" leading={<RotateCcw size={14} />} disabled={uncompletePlan.isPending}
-                  onClick={() => uncompletePlan.mutate(tree.id)}>다시 진행</Button>
-              ) : (
-                <Button variant="ghost" size="sm" leading={<CheckCircle2 size={14} />} disabled={completePlan.isPending}
-                  onClick={() => completePlan.mutate(tree.id)}>완료</Button>
-              )}
-              <Button variant="ghost" size="sm" leading={<MessagesSquare size={14} />}
-                onClick={toggleDiscussion}>논의</Button>
-            </div>
+            <Button variant="ghost" size="sm" leading={<MessagesSquare size={14} />}
+              onClick={toggleDiscussion}>논의</Button>
           </div>
 
           {locked && (
@@ -310,8 +321,6 @@ export default function PlanDetail() {
 
           {view === 'list' && (
             <>
-              {tree.description && <p className={styles.planDesc}>{tree.description}</p>}
-
               {tree.subPlans.length === 0 ? (
                 <EmptyState title="안건이 없어요" description={locked ? '잠긴 계획이에요.' : '결정할 안건을 추가해 보세요.'}
                   action={locked ? undefined : <Button variant="outline" size="sm" leading={<Plus size={14} />} onClick={() => setAddingSubPlan(true)}>안건 추가</Button>} />

@@ -23,12 +23,6 @@
   margin-bottom: var(--sp-4);
 }
 
-.planDesc {
-  font-size: var(--fs-base);
-  color: var(--c-text-muted);
-  margin: 0 0 var(--sp-4);
-}
-
 .spine.active { border-left-color: var(--c-accent); }
 
 .planBar {
@@ -39,19 +33,44 @@
   margin-bottom: var(--sp-4);
 }
 
-.planBarActions {
+.headerRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.headerMain {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.eyebrow {
+  font-size: var(--fs-sm);
+  color: var(--c-text-subtle);
+}
+
+.subtitle {
+  font-size: var(--fs-base);
+  color: var(--c-text-muted);
+  margin: 0;
+}
+
+/* Row wrapper for the plan's attributes (기한 chip, room for more). Also keeps the
+   chip content-width — a direct child of the column-flex .headerMain would stretch. */
+.metaRow {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.lifecycle {
   display: flex;
   align-items: center;
   gap: var(--sp-1);
-}
-
-/* Separates the 기한 chip (a plan attribute) from the lifecycle actions
-   (잠금/완료/논의) so the chip reads as its own unit, not another ghost button. */
-.actionDivider {
-  width: 1px;
-  align-self: stretch;
-  margin: 2px var(--sp-1);
-  background: var(--c-border);
+  flex: none;
 }
 
 .lockBanner {
