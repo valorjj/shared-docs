@@ -1,0 +1,37 @@
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 8px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--c-border);
+  background: var(--c-surface);
+  color: var(--c-text-subtle);
+  font-size: var(--fs-xs);
+  line-height: 1.6;
+  white-space: nowrap;
+}
+
+.button { cursor: pointer; font: inherit; font-size: var(--fs-xs); }
+.button:hover { background: var(--c-surface-tint); }
+.button:focus-visible { outline: none; box-shadow: var(--ring-focus); }
+
+.neutral { /* base look above */ }
+
+.accent {
+  color: var(--c-accent);
+  border-color: var(--c-accent-soft-strong);
+  background: var(--c-accent-soft);
+}
+
+.danger {
+  color: var(--c-danger);
+  border-color: var(--c-danger-border);
+  background: var(--c-danger-soft);
+}
+
+.ghost {
+  color: var(--c-text-subtle);
+  border-style: dashed;
+  background: none;
+}
