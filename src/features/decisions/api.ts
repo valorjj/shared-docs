@@ -137,6 +137,22 @@ export function useUnlockPlan() {
     onSuccess: () => qc.invalidateQueries({ queryKey: decisionKeys.scope(activeId) }),
   })
 }
+export function useSetPlanDeadline() {
+  const qc = useQueryClient(); const { activeId } = useActiveWorkspace()
+  return useMutation({
+    mutationFn: async (v: { id: number; deadline: string }) =>
+      (await apiClient.put<PlanSummary>(`/api/plans/${v.id}/deadline`, { deadline: v.deadline })).data,
+    onSuccess: () => qc.invalidateQueries({ queryKey: decisionKeys.scope(activeId) }),
+  })
+}
+export function useClearPlanDeadline() {
+  const qc = useQueryClient(); const { activeId } = useActiveWorkspace()
+  return useMutation({
+    mutationFn: async (id: number) =>
+      (await apiClient.delete<PlanSummary>(`/api/plans/${id}/deadline`)).data,
+    onSuccess: () => qc.invalidateQueries({ queryKey: decisionKeys.scope(activeId) }),
+  })
+}
 
 // ── SubPlan (안건) mutations ──
 export function useAddSubPlan(planId: number) {
@@ -159,6 +175,22 @@ export function useDeleteSubPlan() {
   const qc = useQueryClient(); const { activeId } = useActiveWorkspace()
   return useMutation({
     mutationFn: async (id: number) => { await apiClient.delete(`/api/subplans/${id}`) },
+    onSuccess: () => qc.invalidateQueries({ queryKey: decisionKeys.scope(activeId) }),
+  })
+}
+export function useSetSubPlanDeadline() {
+  const qc = useQueryClient(); const { activeId } = useActiveWorkspace()
+  return useMutation({
+    mutationFn: async (v: { id: number; deadline: string }) =>
+      (await apiClient.put<SubPlanNode>(`/api/subplans/${v.id}/deadline`, { deadline: v.deadline })).data,
+    onSuccess: () => qc.invalidateQueries({ queryKey: decisionKeys.scope(activeId) }),
+  })
+}
+export function useClearSubPlanDeadline() {
+  const qc = useQueryClient(); const { activeId } = useActiveWorkspace()
+  return useMutation({
+    mutationFn: async (id: number) =>
+      (await apiClient.delete<SubPlanNode>(`/api/subplans/${id}/deadline`)).data,
     onSuccess: () => qc.invalidateQueries({ queryKey: decisionKeys.scope(activeId) }),
   })
 }

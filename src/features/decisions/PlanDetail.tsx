@@ -14,7 +14,9 @@ import {
   useCastVote, useRetractVote,
   useTimeline, useCreateEdge, useDeleteEdge, useReorderSubPlans,
   useLockPlan, useUnlockPlan, useCompletePlan, useUncompletePlan,
+  useSetPlanDeadline, useClearPlanDeadline, useSetSubPlanDeadline, useClearSubPlanDeadline,
 } from './api'
+import DeadlineChip from './DeadlineChip'
 import SortableSubPlanSection from './SortableSubPlanSection'
 import PlanCanvas from './PlanCanvas'
 import Timeline from './Timeline'
@@ -56,6 +58,10 @@ export default function PlanDetail() {
   const unlockPlan = useUnlockPlan()
   const completePlan = useCompletePlan()
   const uncompletePlan = useUncompletePlan()
+  const setPlanDeadline = useSetPlanDeadline()
+  const clearPlanDeadline = useClearPlanDeadline()
+  const setSubPlanDeadline = useSetSubPlanDeadline()
+  const clearSubPlanDeadline = useClearSubPlanDeadline()
   const castVote = useCastVote()
   const retractVote = useRetractVote()
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
@@ -225,6 +231,9 @@ export default function PlanDetail() {
       onRetractVote={(o) => retractVote.mutate(o.id)}
       onOpenConnect={() => setConnectingFor(sp)}
       locked={locked}
+      onSetDeadline={(deadline) => setSubPlanDeadline.mutate({ id: sp.id, deadline })}
+      onClearDeadline={() => clearSubPlanDeadline.mutate(sp.id)}
+      deadlineBusy={setSubPlanDeadline.isPending || clearSubPlanDeadline.isPending}
     />
   )
 
@@ -248,6 +257,15 @@ export default function PlanDetail() {
               onChange={setView}
             />
             <div className={styles.planBarActions}>
+              <DeadlineChip
+                deadline={tree.deadline}
+                settledAt={completed ? tree.completedAt : null}
+                settledNoun="완료"
+                editable={!locked && !completed}
+                busy={setPlanDeadline.isPending || clearPlanDeadline.isPending}
+                onSet={(deadline) => setPlanDeadline.mutate({ id: tree.id, deadline })}
+                onClear={() => clearPlanDeadline.mutate(tree.id)}
+              />
               {locked ? (
                 <Button variant="ghost" size="sm" leading={<LockOpen size={14} />} disabled={unlockPlan.isPending}
                   onClick={() => unlockPlan.mutate(tree.id)}>잠금 해제</Button>
