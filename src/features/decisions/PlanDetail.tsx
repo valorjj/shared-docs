@@ -3,7 +3,7 @@ import { useParams, useSearchParams } from 'react-router-dom'
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { Plus, Lock, LockOpen, CheckCircle2, RotateCcw, MessagesSquare } from 'lucide-react'
-import { Page, PageHeader, PageTitle, BackLink, Button, IconButton, EmptyState, ErrorState, Skeleton, Tabs } from '../../components/ui'
+import { Page, PageHeader, PageTitle, BackLink, Button, IconButton, Fab, EmptyState, ErrorState, Skeleton, Tabs } from '../../components/ui'
 import { useAuth } from '../../auth/useAuth'
 import { useActiveWorkspace } from '../../auth/useActiveWorkspace'
 import { useMembers } from '../workspaces/membersApi'
@@ -363,6 +363,9 @@ export default function PlanDetail() {
                     </div>
                   )}
                 </div>
+              )}
+              {!locked && !discussionOpen && tree.subPlans.length > 0 && (
+                <Fab className={styles.fabAdd} label="안건 추가" onClick={() => setAddingSubPlan(true)} />
               )}
             </>
           )}

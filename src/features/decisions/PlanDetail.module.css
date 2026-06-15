@@ -163,3 +163,26 @@
     overflow-y: auto;
   }
 }
+
+.fabAdd.fabAdd {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .fabAdd.fabAdd {
+    display: inline-flex;
+  }
+  /* the inline full-width 안건 추가 button is redundant with the FAB on mobile */
+  .addRow {
+    display: none;
+  }
+  /* global TopNav is hidden < 767px, so the strip pins to the very top */
+  .controlStrip {
+    top: 0;
+  }
+  /* long title shouldn't crowd the lifecycle icons — stack on narrow screens */
+  .headerRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
