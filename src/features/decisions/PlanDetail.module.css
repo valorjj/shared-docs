@@ -101,6 +101,12 @@
   flex: none;
 }
 
+.stripLifecycle {
+  display: none;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
 .lockBanner {
   display: flex;
   align-items: center;
@@ -180,5 +186,11 @@
   .headerRow {
     flex-direction: column;
     align-items: stretch;
+  }
+  .stripLifecycle {
+    display: inline-flex;
+  }
+  .lifecycle {
+    display: none;
   }
 }

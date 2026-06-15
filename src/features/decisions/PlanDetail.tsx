@@ -119,6 +119,25 @@ export default function PlanDetail() {
 
   const dday = tree?.deadline ? deadlineLabel(tree.deadline, toLocalDateString(new Date())).text : null
 
+  const lifecycleControls = tree && (
+    <>
+      {locked ? (
+        <IconButton variant="ghost" size="sm" label="잠금 해제" disabled={unlockPlan.isPending}
+          onClick={() => unlockPlan.mutate(tree.id)}><LockOpen size={16} /></IconButton>
+      ) : (
+        <IconButton variant="ghost" size="sm" label="잠금" disabled={lockPlan.isPending}
+          onClick={() => lockPlan.mutate(tree.id)}><Lock size={16} /></IconButton>
+      )}
+      {completed ? (
+        <IconButton variant="ghost" size="sm" label="다시 진행" disabled={uncompletePlan.isPending}
+          onClick={() => uncompletePlan.mutate(tree.id)}><RotateCcw size={16} /></IconButton>
+      ) : (
+        <IconButton variant="ghost" size="sm" label="완료" disabled={completePlan.isPending}
+          onClick={() => completePlan.mutate(tree.id)}><CheckCircle2 size={16} /></IconButton>
+      )}
+    </>
+  )
+
   // 안건 connections (the canvas edges) surfaced in the list view: resolve each
   // edge to source/target titles and group per 안건 into outgoing/incoming.
   const linksBySubPlan = useMemo(() => {
@@ -281,20 +300,7 @@ export default function PlanDetail() {
           </div>
           {tree && (
             <div className={styles.lifecycle}>
-              {locked ? (
-                <IconButton variant="ghost" size="sm" label="잠금 해제" disabled={unlockPlan.isPending}
-                  onClick={() => unlockPlan.mutate(tree.id)}><LockOpen size={16} /></IconButton>
-              ) : (
-                <IconButton variant="ghost" size="sm" label="잠금" disabled={lockPlan.isPending}
-                  onClick={() => lockPlan.mutate(tree.id)}><Lock size={16} /></IconButton>
-              )}
-              {completed ? (
-                <IconButton variant="ghost" size="sm" label="다시 진행" disabled={uncompletePlan.isPending}
-                  onClick={() => uncompletePlan.mutate(tree.id)}><RotateCcw size={16} /></IconButton>
-              ) : (
-                <IconButton variant="ghost" size="sm" label="완료" disabled={completePlan.isPending}
-                  onClick={() => completePlan.mutate(tree.id)}><CheckCircle2 size={16} /></IconButton>
-              )}
+              {lifecycleControls}
             </div>
           )}
         </div>
@@ -317,6 +323,7 @@ export default function PlanDetail() {
             <span className={styles.controlSpacer} />
             <Button variant="ghost" size="sm" leading={<MessagesSquare size={14} />}
               onClick={toggleDiscussion}>논의</Button>
+            <div className={styles.stripLifecycle}>{lifecycleControls}</div>
           </div>
 
           {locked && (
