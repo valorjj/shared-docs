@@ -16,6 +16,8 @@ export type PlanSummary = {
   lockedAt: string | null
   lockedByUserId: number | null
   deletedAt: string | null
+  deadline: string | null
+  completedAt: string | null
 }
 
 export type Rating = { userId: number; score: number; comment: string | null }
@@ -49,6 +51,7 @@ export type SubPlanNode = {
   sortOrder: number
   canvasX: number | null
   canvasY: number | null
+  deadline: string | null
   status: SubPlanStatus
   options: OptionNode[]
   decision: DecisionInfo | null
@@ -72,12 +75,15 @@ export type PlanTree = {
   createdAt: string
   lockedAt: string | null
   lockedByUserId: number | null
+  deadline: string | null
+  completedAt: string | null
   subPlans: SubPlanNode[]
   edges: SubPlanEdge[]
 }
 
 // ── Payloads ──
 export type CreatePlanPayload = { title: string; description?: string; groupLabel?: string }
+export type SetDeadlinePayload = { deadline: string }   // YYYY-MM-DD
 export type UpdatePlanPayload = { title?: string; description?: string; groupLabel?: string }
 export type TitleDescPayload = { title: string; description?: string }
 export type RatePayload = { score: number; comment?: string }
@@ -90,6 +96,7 @@ export type PlanEventType =
   | 'DECISION_LOCKED' | 'DECISION_CHANGED' | 'DECISION_REOPENED'
   | 'PLAN_LOCKED' | 'PLAN_UNLOCKED'
   | 'PLAN_COMPLETED' | 'PLAN_UNCOMPLETED'
+  | 'DEADLINE_SET' | 'DEADLINE_CLEARED'
 
 export type PlanEvent = {
   id: number

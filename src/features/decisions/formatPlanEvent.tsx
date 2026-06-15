@@ -1,4 +1,4 @@
-import { Flag, ListPlus, CirclePlus, CheckCircle2, RefreshCw, RotateCcw, Lock, LockOpen, type LucideIcon } from 'lucide-react'
+import { Flag, ListPlus, CirclePlus, CheckCircle2, RefreshCw, RotateCcw, Lock, LockOpen, CalendarClock, type LucideIcon } from 'lucide-react'
 import type { PlanEvent, PlanEventType } from './types'
 
 const ICONS: Record<PlanEventType, LucideIcon> = {
@@ -12,6 +12,8 @@ const ICONS: Record<PlanEventType, LucideIcon> = {
   PLAN_UNLOCKED: LockOpen,
   PLAN_COMPLETED: CheckCircle2,
   PLAN_UNCOMPLETED: RotateCcw,
+  DEADLINE_SET: CalendarClock,
+  DEADLINE_CLEARED: CalendarClock,
 }
 
 export function planEventIcon(type: PlanEventType): LucideIcon {
