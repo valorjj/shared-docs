@@ -9,6 +9,12 @@
   transition: opacity .15s, border-color .15s, box-shadow .15s;
 }
 
+.qno {
+  font-size: var(--fs-xs);
+  color: var(--c-text-subtle);
+  margin-bottom: 2px;
+}
+
 .head {
   display: flex;
   align-items: center;
@@ -141,3 +147,10 @@
 .dragHandle:focus-visible { outline: none; box-shadow: var(--ring-focus); }
 .dragHandle:active { cursor: grabbing; }
 .dragging { opacity: .6; }
+
+@media (max-width: 767px) {
+  .footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

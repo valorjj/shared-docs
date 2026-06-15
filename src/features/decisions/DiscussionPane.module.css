@@ -12,6 +12,13 @@
   justify-content: space-between;
   margin-bottom: var(--sp-3);
   flex: none;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding-bottom: var(--sp-2);
+  background: var(--c-surface-translucent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 .title {
@@ -22,18 +29,15 @@
 }
 
 .editorWrap {
-  flex: 1;
-  min-height: 240px;
-  overflow-y: auto;
+  flex: 0 0 auto;
+  min-height: 160px;
 }
 
 .commentsWrap {
   border-top: 1px solid var(--c-border);
   padding-top: var(--sp-3);
   margin-top: var(--sp-3);
-  flex: 0 1 auto;
-  min-height: 120px;
-  overflow-y: auto;
+  flex: 0 0 auto;
 }
 
 .privateMsg {

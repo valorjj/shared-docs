@@ -19,39 +19,92 @@
   margin-top: var(--sp-4);
 }
 
-.viewToggle {
-  margin-bottom: var(--sp-4);
-}
-
-.planDesc {
-  font-size: var(--fs-base);
-  color: var(--c-text-muted);
-  margin: 0 0 var(--sp-4);
-}
-
 .spine.active { border-left-color: var(--c-accent); }
 
-.planBar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--sp-3);
-  margin-bottom: var(--sp-4);
+.sentinel {
+  height: 1px;
 }
 
-.planBarActions {
+.controlStrip {
+  position: sticky;
+  top: 56px; /* global TopNav height — verify visually, adjust if the nav resizes */
+  z-index: 60; /* below the global nav (z-index 70) */
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-4);
+  padding: var(--sp-2) 0;
+  background: var(--c-surface-translucent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.controlSpacer {
+  flex: 1;
+}
+
+.condensedTitle {
+  font-family: var(--font-serif);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-semi);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 0;
+  opacity: 0;
+  transition: opacity var(--t-fast), max-width var(--t-fast);
+}
+
+.controlStrip.stuck .condensedTitle {
+  max-width: 260px;
+  opacity: 1;
+  margin-right: var(--sp-2);
+}
+
+.headerRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.headerMain {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.eyebrow {
+  font-size: var(--fs-sm);
+  color: var(--c-text-subtle);
+}
+
+.subtitle {
+  font-size: var(--fs-base);
+  color: var(--c-text-muted);
+  margin: 0;
+}
+
+/* Row wrapper for the plan's attributes (기한 chip, room for more). Also keeps the
+   chip content-width — a direct child of the column-flex .headerMain would stretch. */
+.metaRow {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.lifecycle {
   display: flex;
   align-items: center;
   gap: var(--sp-1);
+  flex: none;
 }
 
-/* Separates the 기한 chip (a plan attribute) from the lifecycle actions
-   (잠금/완료/논의) so the chip reads as its own unit, not another ghost button. */
-.actionDivider {
-  width: 1px;
-  align-self: stretch;
-  margin: 2px var(--sp-1);
-  background: var(--c-border);
+.stripLifecycle {
+  display: none;
+  align-items: center;
+  gap: var(--sp-1);
 }
 
 .lockBanner {
@@ -76,7 +129,7 @@
 
 .split {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(320px, 38%);
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
   gap: var(--sp-4);
   align-items: start;
 }
@@ -89,7 +142,8 @@
   position: sticky;
   top: var(--sp-4);
   max-height: calc(100vh - 96px);
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
 }
@@ -109,5 +163,34 @@
     padding-bottom: calc(var(--sp-4) + env(safe-area-inset-bottom, 0px));
     box-shadow: var(--shadow-lg); /* floating surface — shadow allowed */
     overflow-y: auto;
+  }
+}
+
+.fabAdd.fabAdd {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .fabAdd.fabAdd {
+    display: inline-flex;
+  }
+  /* the inline full-width 안건 추가 button is redundant with the FAB on mobile */
+  .addRow {
+    display: none;
+  }
+  /* global TopNav is hidden < 767px, so the strip pins to the very top */
+  .controlStrip {
+    top: 0;
+  }
+  /* long title shouldn't crowd the lifecycle icons — stack on narrow screens */
+  .headerRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .stripLifecycle {
+    display: inline-flex;
+  }
+  .lifecycle {
+    display: none;
   }
 }

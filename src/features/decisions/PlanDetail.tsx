@@ -3,7 +3,7 @@ import { useParams, useSearchParams } from 'react-router-dom'
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { Plus, Lock, LockOpen, CheckCircle2, RotateCcw, MessagesSquare } from 'lucide-react'
-import { Page, PageHeader, PageTitle, BackLink, Button, EmptyState, ErrorState, Skeleton, Tabs } from '../../components/ui'
+import { Page, PageHeader, PageTitle, BackLink, Button, IconButton, Fab, EmptyState, ErrorState, Skeleton, Tabs } from '../../components/ui'
 import { useAuth } from '../../auth/useAuth'
 import { useActiveWorkspace } from '../../auth/useActiveWorkspace'
 import { useMembers } from '../workspaces/membersApi'
@@ -17,6 +17,7 @@ import {
   useSetPlanDeadline, useClearPlanDeadline, useSetSubPlanDeadline, useClearSubPlanDeadline,
 } from './api'
 import DeadlineChip from './DeadlineChip'
+import { deadlineLabel, toLocalDateString } from './deadlineLabel'
 import SortableSubPlanSection from './SortableSubPlanSection'
 import PlanCanvas from './PlanCanvas'
 import Timeline from './Timeline'
@@ -100,6 +101,42 @@ export default function PlanDetail() {
   const { data: timeline, isLoading: timelineLoading } = useTimeline(planId, view === 'timeline')
   const locked = tree?.lockedAt != null
   const completed = tree?.status === 'COMPLETED'
+
+  const [scrolled, setScrolled] = useState(false)
+  const sentinelRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const el = sentinelRef.current
+    if (!el) return
+    // setState is in the observer CALLBACK (not the effect body) — compliant with
+    // the repo's "no setState in effect" rule. rootMargin top = sticky strip offset.
+    const io = new IntersectionObserver(
+      ([entry]) => setScrolled(!entry.isIntersecting),
+      { rootMargin: '-56px 0px 0px 0px', threshold: 0 },
+    )
+    io.observe(el)
+    return () => io.disconnect()
+  }, [tree?.id])
+
+  const dday = tree?.deadline ? deadlineLabel(tree.deadline, toLocalDateString(new Date())).text : null
+
+  const lifecycleControls = tree && (
+    <>
+      {locked ? (
+        <IconButton variant="ghost" size="sm" label="잠금 해제" disabled={unlockPlan.isPending}
+          onClick={() => unlockPlan.mutate(tree.id)}><LockOpen size={16} /></IconButton>
+      ) : (
+        <IconButton variant="ghost" size="sm" label="잠금" disabled={lockPlan.isPending}
+          onClick={() => lockPlan.mutate(tree.id)}><Lock size={16} /></IconButton>
+      )}
+      {completed ? (
+        <IconButton variant="ghost" size="sm" label="다시 진행" disabled={uncompletePlan.isPending}
+          onClick={() => uncompletePlan.mutate(tree.id)}><RotateCcw size={16} /></IconButton>
+      ) : (
+        <IconButton variant="ghost" size="sm" label="완료" disabled={completePlan.isPending}
+          onClick={() => completePlan.mutate(tree.id)}><CheckCircle2 size={16} /></IconButton>
+      )}
+    </>
+  )
 
   // 안건 connections (the canvas edges) surfaced in the list view: resolve each
   // edge to source/target titles and group per 안건 into outgoing/incoming.
@@ -203,6 +240,7 @@ export default function PlanDetail() {
   const renderSubPlan = (sp: SubPlanNode, i: number) => (
     <SortableSubPlanSection
       key={sp.id}
+      index={i + 1}
       showSpine={i > 0}
       spineActive={i > 0 && spineActive(tree!.subPlans[i - 1].id, sp.id)}
       subPlan={sp}
@@ -241,7 +279,31 @@ export default function PlanDetail() {
     <Page>
       <PageHeader>
         <BackLink to="/decisions" mobileOnly>결정</BackLink>
-        <PageTitle>{tree?.title ?? '계획'}</PageTitle>
+        <div className={styles.headerRow}>
+          <div className={styles.headerMain}>
+            {tree?.groupLabel && <div className={styles.eyebrow}>{tree.groupLabel}</div>}
+            <PageTitle>{tree?.title ?? '계획'}</PageTitle>
+            {tree?.description && <p className={styles.subtitle}>{tree.description}</p>}
+            {tree && (
+              <div className={styles.metaRow}>
+                <DeadlineChip
+                  deadline={tree.deadline}
+                  settledAt={completed ? tree.completedAt : null}
+                  settledNoun="완료"
+                  editable={!locked && !completed}
+                  busy={setPlanDeadline.isPending || clearPlanDeadline.isPending}
+                  onSet={(deadline) => setPlanDeadline.mutate({ id: tree.id, deadline })}
+                  onClear={() => clearPlanDeadline.mutate(tree.id)}
+                />
+              </div>
+            )}
+          </div>
+          {tree && (
+            <div className={styles.lifecycle}>
+              {lifecycleControls}
+            </div>
+          )}
+        </div>
       </PageHeader>
 
       {isLoading && <div className={styles.list}><Skeleton height={120} radius="var(--r-md)" /></div>}
@@ -250,40 +312,18 @@ export default function PlanDetail() {
       {tree && (
         <div className={discussionOpen ? styles.split : undefined}>
           <div className={styles.main}>
-          <div className={styles.planBar}>
+          <div ref={sentinelRef} aria-hidden="true" className={styles.sentinel} />
+          <div className={`${styles.controlStrip}${scrolled ? ' ' + styles.stuck : ''}`}>
+            <span className={styles.condensedTitle} aria-hidden="true">{tree.title}{dday ? ` · ${dday}` : ''}</span>
             <Tabs
               items={[{ key: 'list', label: '목록' }, { key: 'canvas', label: '캔버스' }, { key: 'timeline', label: '기록' }]}
               value={view}
               onChange={setView}
             />
-            <div className={styles.planBarActions}>
-              <DeadlineChip
-                deadline={tree.deadline}
-                settledAt={completed ? tree.completedAt : null}
-                settledNoun="완료"
-                editable={!locked && !completed}
-                busy={setPlanDeadline.isPending || clearPlanDeadline.isPending}
-                onSet={(deadline) => setPlanDeadline.mutate({ id: tree.id, deadline })}
-                onClear={() => clearPlanDeadline.mutate(tree.id)}
-              />
-              <span className={styles.actionDivider} aria-hidden="true" />
-              {locked ? (
-                <Button variant="ghost" size="sm" leading={<LockOpen size={14} />} disabled={unlockPlan.isPending}
-                  onClick={() => unlockPlan.mutate(tree.id)}>잠금 해제</Button>
-              ) : (
-                <Button variant="ghost" size="sm" leading={<Lock size={14} />} disabled={lockPlan.isPending}
-                  onClick={() => lockPlan.mutate(tree.id)}>잠금</Button>
-              )}
-              {completed ? (
-                <Button variant="ghost" size="sm" leading={<RotateCcw size={14} />} disabled={uncompletePlan.isPending}
-                  onClick={() => uncompletePlan.mutate(tree.id)}>다시 진행</Button>
-              ) : (
-                <Button variant="ghost" size="sm" leading={<CheckCircle2 size={14} />} disabled={completePlan.isPending}
-                  onClick={() => completePlan.mutate(tree.id)}>완료</Button>
-              )}
-              <Button variant="ghost" size="sm" leading={<MessagesSquare size={14} />}
-                onClick={toggleDiscussion}>논의</Button>
-            </div>
+            <span className={styles.controlSpacer} />
+            <Button variant="ghost" size="sm" leading={<MessagesSquare size={14} />}
+              onClick={toggleDiscussion}>논의</Button>
+            <div className={styles.stripLifecycle}>{lifecycleControls}</div>
           </div>
 
           {locked && (
@@ -310,8 +350,6 @@ export default function PlanDetail() {
 
           {view === 'list' && (
             <>
-              {tree.description && <p className={styles.planDesc}>{tree.description}</p>}
-
               {tree.subPlans.length === 0 ? (
                 <EmptyState title="안건이 없어요" description={locked ? '잠긴 계획이에요.' : '결정할 안건을 추가해 보세요.'}
                   action={locked ? undefined : <Button variant="outline" size="sm" leading={<Plus size={14} />} onClick={() => setAddingSubPlan(true)}>안건 추가</Button>} />
@@ -332,6 +370,9 @@ export default function PlanDetail() {
                     </div>
                   )}
                 </div>
+              )}
+              {!locked && !discussionOpen && tree.subPlans.length > 0 && (
+                <Fab className={styles.fabAdd} label="안건 추가" onClick={() => setAddingSubPlan(true)} />
               )}
             </>
           )}
