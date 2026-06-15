@@ -51,13 +51,13 @@ Append to `PlanEventType`:
 ### Endpoints (new `PlanController` / `SubPlanController` methods)
 
 ```
-PUT    /api/plans/{id}/deadline                    { deadline: "YYYY-MM-DD" }  → 200 PlanSummaryResponse   · DEADLINE_SET
-DELETE /api/plans/{id}/deadline                                                → 200 PlanSummaryResponse   · DEADLINE_CLEARED
-PUT    /api/plans/{id}/subplans/{subId}/deadline   { deadline: "YYYY-MM-DD" }  → 200 SubPlanResponse       · DEADLINE_SET
-DELETE /api/plans/{id}/subplans/{subId}/deadline                              → 200 SubPlanResponse       · DEADLINE_CLEARED
+PUT    /api/plans/{id}/deadline        { deadline: "YYYY-MM-DD" }  → 200 PlanSummaryResponse   · DEADLINE_SET
+DELETE /api/plans/{id}/deadline                                    → 200 PlanSummaryResponse   · DEADLINE_CLEARED
+PUT    /api/subplans/{subId}/deadline  { deadline: "YYYY-MM-DD" }  → 200 SubPlanResponse       · DEADLINE_SET
+DELETE /api/subplans/{subId}/deadline                              → 200 SubPlanResponse       · DEADLINE_CLEARED
 ```
 
-(Confirm the existing subplan route shape during planning — `SubPlanController` mounts under `/api/plans/{planId}/subplans` vs `/api/subplans/{id}`; follow whatever is already there.)
+**Route shape — flat-by-id, matching the existing controllers.** A 안건 is addressed by its own id under `SubPlanController` (`@RequestMapping("/api/subplans")`, ops on `/{subPlanId}`), exactly like `OptionController` (`/api/options/{optionId}`) and the vote/rating/decision controllers. The deadline endpoints follow suit (`/api/subplans/{subId}/deadline`) rather than nesting under `/api/plans/{id}/...`: a `subPlanId` is globally unique, the service derives its plan + workspace from it, and a `planId` in the path would only add a redundant mismatch-validation branch. The plan-level endpoint stays under `/api/plans/{id}` because plans genuinely are addressed there (`PlanController`).
 
 Service rules (in `PlanService` / subplan path):
 
