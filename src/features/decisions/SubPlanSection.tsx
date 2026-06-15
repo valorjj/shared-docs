@@ -35,6 +35,7 @@ type Props = {
   onVote: (option: OptionNode) => void
   onRetractVote: (option: OptionNode) => void
   onOpenConnect?: () => void
+  index: number
   dragHandle?: ReactNode
   locked?: boolean
   onSetDeadline: (deadline: string) => void
@@ -44,7 +45,7 @@ type Props = {
 
 export default function SubPlanSection({
   subPlan, links, onJumpToSubPlan, highlight = 'normal', onHoverChange, myUserId, nameOf, busy, onEdit, onDelete, onAddOption,
-  onEditOption, onDeleteOption, onRate, onClearRating, onDecide, onReopen, onVote, onRetractVote, onOpenConnect, dragHandle, locked,
+  onEditOption, onDeleteOption, onRate, onClearRating, onDecide, onReopen, onVote, onRetractVote, onOpenConnect, index, dragHandle, locked,
   onSetDeadline, onClearDeadline, deadlineBusy,
 }: Props) {
   const { decision } = subPlan
@@ -65,6 +66,7 @@ export default function SubPlanSection({
       onMouseEnter={() => onHoverChange?.(true)}
       onMouseLeave={() => onHoverChange?.(false)}
     >
+      <div className={styles.qno}>안건 {index}</div>
       <header className={styles.head}>
         <div className={styles.titleWrap}>
           <h2 className={styles.title}>{subPlan.title}</h2>
@@ -158,7 +160,7 @@ export default function SubPlanSection({
         <div className={styles.footer}>
           <Button variant="outline" size="sm" leading={<Plus size={14} />} onClick={onAddOption}>선택지 추가</Button>
           {!decision && subPlan.options.length > 0 && (
-            <Button variant="soft" size="sm" onClick={onDecide} disabled={busy}>
+            <Button variant="soft" onClick={onDecide} disabled={busy}>
               {subPlan.options.some((o) => o.voterUserIds.length > 0) ? '결과 확정하기' : '결정하기'}
             </Button>
           )}

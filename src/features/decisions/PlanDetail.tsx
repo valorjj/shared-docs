@@ -221,6 +221,7 @@ export default function PlanDetail() {
   const renderSubPlan = (sp: SubPlanNode, i: number) => (
     <SortableSubPlanSection
       key={sp.id}
+      index={i + 1}
       showSpine={i > 0}
       spineActive={i > 0 && spineActive(tree!.subPlans[i - 1].id, sp.id)}
       subPlan={sp}

@@ -9,6 +9,12 @@
   transition: opacity .15s, border-color .15s, box-shadow .15s;
 }
 
+.qno {
+  font-size: var(--fs-xs);
+  color: var(--c-text-subtle);
+  margin-bottom: 2px;
+}
+
 .head {
   display: flex;
   align-items: center;
