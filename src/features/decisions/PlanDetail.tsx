@@ -266,6 +266,7 @@ export default function PlanDetail() {
                 onSet={(deadline) => setPlanDeadline.mutate({ id: tree.id, deadline })}
                 onClear={() => clearPlanDeadline.mutate(tree.id)}
               />
+              <span className={styles.actionDivider} aria-hidden="true" />
               {locked ? (
                 <Button variant="ghost" size="sm" leading={<LockOpen size={14} />} disabled={unlockPlan.isPending}
                   onClick={() => unlockPlan.mutate(tree.id)}>잠금 해제</Button>

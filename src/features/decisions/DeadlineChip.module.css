@@ -18,20 +18,23 @@
 
 .neutral { /* base look above */ }
 
+/* Set + urgent states read at a glance: filled soft bg + medium weight. */
 .accent {
   color: var(--c-accent);
   border-color: var(--c-accent-soft-strong);
   background: var(--c-accent-soft);
+  font-weight: var(--fw-medium);
 }
 
 .danger {
   color: var(--c-danger);
   border-color: var(--c-danger-border);
   background: var(--c-danger-soft);
+  font-weight: var(--fw-medium);
 }
 
+/* Empty "기한" affordance: calm but present — solid hairline, muted (not subtle). */
 .ghost {
-  color: var(--c-text-subtle);
-  border-style: dashed;
-  background: none;
+  color: var(--c-text-muted);
+  background: var(--c-surface-tint);
 }

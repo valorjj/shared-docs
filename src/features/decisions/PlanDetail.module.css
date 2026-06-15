@@ -45,6 +45,15 @@
   gap: var(--sp-1);
 }
 
+/* Separates the 기한 chip (a plan attribute) from the lifecycle actions
+   (잠금/완료/논의) so the chip reads as its own unit, not another ghost button. */
+.actionDivider {
+  width: 1px;
+  align-self: stretch;
+  margin: 2px var(--sp-1);
+  background: var(--c-border);
+}
+
 .lockBanner {
   display: flex;
   align-items: center;
