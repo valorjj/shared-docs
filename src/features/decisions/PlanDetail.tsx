@@ -17,6 +17,7 @@ import {
   useSetPlanDeadline, useClearPlanDeadline, useSetSubPlanDeadline, useClearSubPlanDeadline,
 } from './api'
 import DeadlineChip from './DeadlineChip'
+import { deadlineLabel, toLocalDateString } from './deadlineLabel'
 import SortableSubPlanSection from './SortableSubPlanSection'
 import PlanCanvas from './PlanCanvas'
 import Timeline from './Timeline'
@@ -100,6 +101,23 @@ export default function PlanDetail() {
   const { data: timeline, isLoading: timelineLoading } = useTimeline(planId, view === 'timeline')
   const locked = tree?.lockedAt != null
   const completed = tree?.status === 'COMPLETED'
+
+  const [scrolled, setScrolled] = useState(false)
+  const sentinelRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const el = sentinelRef.current
+    if (!el) return
+    // setState is in the observer CALLBACK (not the effect body) — compliant with
+    // the repo's "no setState in effect" rule. rootMargin top = sticky strip offset.
+    const io = new IntersectionObserver(
+      ([entry]) => setScrolled(!entry.isIntersecting),
+      { rootMargin: '-56px 0px 0px 0px', threshold: 0 },
+    )
+    io.observe(el)
+    return () => io.disconnect()
+  }, [tree?.id])
+
+  const dday = tree?.deadline ? deadlineLabel(tree.deadline, toLocalDateString(new Date())).text : null
 
   // 안건 connections (the canvas edges) surfaced in the list view: resolve each
   // edge to source/target titles and group per 안건 into outgoing/incoming.
@@ -287,12 +305,15 @@ export default function PlanDetail() {
       {tree && (
         <div className={discussionOpen ? styles.split : undefined}>
           <div className={styles.main}>
-          <div className={styles.planBar}>
+          <div ref={sentinelRef} aria-hidden="true" className={styles.sentinel} />
+          <div className={`${styles.controlStrip}${scrolled ? ' ' + styles.stuck : ''}`}>
+            <span className={styles.condensedTitle}>{tree.title}{dday ? ` · ${dday}` : ''}</span>
             <Tabs
               items={[{ key: 'list', label: '목록' }, { key: 'canvas', label: '캔버스' }, { key: 'timeline', label: '기록' }]}
               value={view}
               onChange={setView}
             />
+            <span className={styles.controlSpacer} />
             <Button variant="ghost" size="sm" leading={<MessagesSquare size={14} />}
               onClick={toggleDiscussion}>논의</Button>
           </div>

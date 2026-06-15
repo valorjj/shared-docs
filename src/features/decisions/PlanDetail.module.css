@@ -25,12 +25,44 @@
 
 .spine.active { border-left-color: var(--c-accent); }
 
-.planBar {
+.sentinel {
+  height: 1px;
+}
+
+.controlStrip {
+  position: sticky;
+  top: 56px; /* global TopNav height — verify visually, adjust if the nav resizes */
+  z-index: 60; /* below the global nav (z-index 70) */
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: var(--sp-3);
   margin-bottom: var(--sp-4);
+  padding: var(--sp-2) 0;
+  background: var(--c-surface-translucent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.controlSpacer {
+  flex: 1;
+}
+
+.condensedTitle {
+  font-family: var(--font-serif);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-semi);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 0;
+  opacity: 0;
+  transition: opacity var(--t-fast), max-width var(--t-fast);
+}
+
+.controlStrip.stuck .condensedTitle {
+  max-width: 260px;
+  opacity: 1;
+  margin-right: var(--sp-2);
 }
 
 .headerRow {
