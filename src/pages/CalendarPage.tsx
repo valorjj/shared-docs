@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useActiveWorkspace } from '../auth/useActiveWorkspace'
 import { DayPicker, type DayButtonProps } from 'react-day-picker'
 import { ko } from 'react-day-picker/locale'
 import 'react-day-picker/style.css'
@@ -9,6 +10,7 @@ import {
   ShoppingBag,
   ArrowLeftRight,
   Filter,
+  Layers,
 } from 'lucide-react'
 import {
   AppSidebar,
@@ -38,6 +40,10 @@ import './CalendarPage.css'
 
 const EVENT_TYPES: CalendarEventType[] = ['anniversary', 'todo', 'purchase', 'settlement']
 
+// Stable empty override set, so the enabledWorkspaces memo dep doesn't churn
+// when no workspace is toggled off.
+const EMPTY_OFF: Set<number> = new Set()
+
 type SourceMeta = {
   label: string
   color: string
@@ -54,17 +60,19 @@ const SOURCE_META: Record<CalendarEventType, SourceMeta> = {
 export default function CalendarPage() {
   const navigate = useNavigate()
   const isMobile = useIsMobile()
+  const { setActiveId } = useActiveWorkspace()
   const [month, setMonth] = useState<Date>(new Date())
   const [selected, setSelected] = useState<Date | undefined>(new Date())
   const [enabled, setEnabled] = useState<Set<CalendarEventType>>(() => new Set(EVENT_TYPES))
   const [filtersSheetOpen, setFiltersSheetOpen] = useState(false)
+  const [allWorkspaces, setAllWorkspaces] = useState(false)
 
   const range = useMemo(
     () => monthRange(month.getFullYear(), month.getMonth()),
     [month],
   )
 
-  const { data: events, isLoading: eventsLoading } = useCalendarEvents(range.from, range.to)
+  const { data: events, isLoading: eventsLoading } = useCalendarEvents(range.from, range.to, allWorkspaces)
 
   const sourceCounts = useMemo(() => {
     const counts: Record<CalendarEventType, number> = {
@@ -74,9 +82,40 @@ export default function CalendarPage() {
     return counts
   }, [events])
 
+  const workspacesInView = useMemo(() => {
+    const map = new Map<number, { name: string; count: number }>()
+    for (const e of events ?? []) {
+      const cur = map.get(e.workspaceId)
+      if (cur) cur.count++
+      else map.set(e.workspaceId, { name: e.workspaceName, count: 1 })
+    }
+    return Array.from(map, ([id, v]) => ({ id, name: v.name, count: v.count }))
+      .sort((a, b) => a.name.localeCompare(b.name, 'ko'))
+  }, [events])
+
+  // Per-workspace toggle: store user overrides keyed by the sorted workspace-id fingerprint.
+  // When the visible set changes (mode flip / month change) the fingerprint changes,
+  // causing the overrides to reset so every present workspace defaults back to ON.
+  const [wsOverrides, setWsOverrides] = useState<{ key: string; off: Set<number> }>({
+    key: '',
+    off: new Set(),
+  })
+  const wsKey = workspacesInView.map((w) => w.id).join(',')
+  // Workspaces the user explicitly turned off, scoped to the current visible
+  // set (wsKey). When that set changes the key no longer matches, so the
+  // overrides drop and every present workspace defaults back to ON.
+  const activeOff = wsOverrides.key === wsKey ? wsOverrides.off : EMPTY_OFF
+  const enabledWorkspaces = useMemo(
+    () => new Set(workspacesInView.map((w) => w.id).filter((id) => !activeOff.has(id))),
+    [workspacesInView, activeOff],
+  )
+
   const visibleEvents = useMemo(
-    () => (events ?? []).filter((e) => enabled.has(e.type)),
-    [events, enabled],
+    () =>
+      (events ?? []).filter(
+        (e) => enabled.has(e.type) && (!allWorkspaces || enabledWorkspaces.has(e.workspaceId)),
+      ),
+    [events, enabled, allWorkspaces, enabledWorkspaces],
   )
 
   const eventsByDate = useMemo(() => {
@@ -110,7 +149,17 @@ export default function CalendarPage() {
     })
   }
 
+  const toggleWorkspace = (id: number) => {
+    setWsOverrides((prev) => {
+      const next = new Set(prev.key === wsKey ? prev.off : [])
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return { key: wsKey, off: next }
+    })
+  }
+
   const handleEventClick = (e: CalendarEvent) => {
+    if (allWorkspaces) setActiveId(e.workspaceId)
     const ym = e.date.slice(0, 7)
     switch (e.type) {
       case 'anniversary':
@@ -143,6 +192,15 @@ export default function CalendarPage() {
             onToggle={toggleSource}
           />
         </AppSidebarSection>
+        {allWorkspaces && (
+          <AppSidebarSection label="워크스페이스">
+            <WorkspaceFilters
+              workspaces={workspacesInView}
+              enabled={enabledWorkspaces}
+              onToggle={toggleWorkspace}
+            />
+          </AppSidebarSection>
+        )}
       </AppSidebar>
 
       <main className={styles.main}>
@@ -157,6 +215,14 @@ export default function CalendarPage() {
             <span>{filterLabel}</span>
           </button>
           <h1 className={styles.title}>캘린더</h1>
+          <Button
+            variant={allWorkspaces ? 'soft' : 'outline'}
+            size="sm"
+            onClick={() => setAllWorkspaces((v) => !v)}
+            aria-pressed={allWorkspaces}
+          >
+            전체 워크스페이스
+          </Button>
           <Button variant="outline" size="sm" onClick={goToday}>오늘</Button>
         </header>
         <p className={styles.sub}>기념일 · 마감일 · 구매 · 정산이 한눈에</p>
@@ -211,6 +277,7 @@ export default function CalendarPage() {
                   <EventRow
                     key={`${e.type}-${e.refId}-${e.date}`}
                     event={e}
+                    workspaceLabel={allWorkspaces ? e.workspaceName : null}
                     onClick={() => handleEventClick(e)}
                   />
                 ))}
@@ -257,6 +324,14 @@ export default function CalendarPage() {
           onOpenChange={setFiltersSheetOpen}
           title="일정 필터"
         >
+          <AppSidebarSection label="범위">
+            <AppSidebarItem
+              Icon={Filter}
+              label="전체 워크스페이스"
+              active={allWorkspaces}
+              onClick={() => setAllWorkspaces((v) => !v)}
+            />
+          </AppSidebarSection>
           <AppSidebarSection label="일정 종류">
             <SourceFilters
               enabled={enabled}
@@ -264,6 +339,15 @@ export default function CalendarPage() {
               onToggle={toggleSource}
             />
           </AppSidebarSection>
+          {allWorkspaces && (
+            <AppSidebarSection label="워크스페이스">
+              <WorkspaceFilters
+                workspaces={workspacesInView}
+                enabled={enabledWorkspaces}
+                onToggle={toggleWorkspace}
+              />
+            </AppSidebarSection>
+          )}
         </AppSidebarSheet>
       )}
     </div>
@@ -307,6 +391,31 @@ function SourceFilters({
   )
 }
 
+function WorkspaceFilters({
+  workspaces,
+  enabled,
+  onToggle,
+}: {
+  workspaces: { id: number; name: string; count: number }[]
+  enabled: Set<number>
+  onToggle: (id: number) => void
+}) {
+  return (
+    <>
+      {workspaces.map((w) => (
+        <AppSidebarItem
+          key={w.id}
+          Icon={Layers}
+          label={w.name}
+          count={w.count}
+          active={enabled.has(w.id)}
+          onClick={() => onToggle(w.id)}
+        />
+      ))}
+    </>
+  )
+}
+
 function CalendarDayButton({
   events,
   ...rest
@@ -331,7 +440,15 @@ function CalendarDayButton({
   )
 }
 
-function EventRow({ event, onClick }: { event: CalendarEvent; onClick: () => void }) {
+function EventRow({
+  event,
+  workspaceLabel,
+  onClick,
+}: {
+  event: CalendarEvent
+  workspaceLabel: string | null
+  onClick: () => void
+}) {
   const meta = SOURCE_META[event.type]
   const Icon = meta.Icon
   const color = meta.color
@@ -348,7 +465,10 @@ function EventRow({ event, onClick }: { event: CalendarEvent; onClick: () => voi
           <Icon size={18} strokeWidth={2} />
         </span>
         <div className="cal-page__event-body">
-          <div className="cal-page__event-title">{event.title}</div>
+          <div className="cal-page__event-title">
+            {event.title}
+            {workspaceLabel && <span className={styles.wsLabel}>{workspaceLabel}</span>}
+          </div>
           <div className="cal-page__event-meta">
             {event.category && <Badge>{event.category}</Badge>}
             {event.amount != null && event.currency && (
