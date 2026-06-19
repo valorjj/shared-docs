@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useActiveWorkspace } from '../auth/useActiveWorkspace'
 import { DayPicker, type DayButtonProps } from 'react-day-picker'
 import { ko } from 'react-day-picker/locale'
 import 'react-day-picker/style.css'
@@ -59,6 +60,7 @@ const SOURCE_META: Record<CalendarEventType, SourceMeta> = {
 export default function CalendarPage() {
   const navigate = useNavigate()
   const isMobile = useIsMobile()
+  const { setActiveId } = useActiveWorkspace()
   const [month, setMonth] = useState<Date>(new Date())
   const [selected, setSelected] = useState<Date | undefined>(new Date())
   const [enabled, setEnabled] = useState<Set<CalendarEventType>>(() => new Set(EVENT_TYPES))
@@ -157,6 +159,7 @@ export default function CalendarPage() {
   }
 
   const handleEventClick = (e: CalendarEvent) => {
+    if (allWorkspaces) setActiveId(e.workspaceId)
     const ym = e.date.slice(0, 7)
     switch (e.type) {
       case 'anniversary':
@@ -274,6 +277,7 @@ export default function CalendarPage() {
                   <EventRow
                     key={`${e.type}-${e.refId}-${e.date}`}
                     event={e}
+                    workspaceLabel={allWorkspaces ? e.workspaceName : null}
                     onClick={() => handleEventClick(e)}
                   />
                 ))}
@@ -436,7 +440,15 @@ function CalendarDayButton({
   )
 }
 
-function EventRow({ event, onClick }: { event: CalendarEvent; onClick: () => void }) {
+function EventRow({
+  event,
+  workspaceLabel,
+  onClick,
+}: {
+  event: CalendarEvent
+  workspaceLabel: string | null
+  onClick: () => void
+}) {
   const meta = SOURCE_META[event.type]
   const Icon = meta.Icon
   const color = meta.color
@@ -453,7 +465,10 @@ function EventRow({ event, onClick }: { event: CalendarEvent; onClick: () => voi
           <Icon size={18} strokeWidth={2} />
         </span>
         <div className="cal-page__event-body">
-          <div className="cal-page__event-title">{event.title}</div>
+          <div className="cal-page__event-title">
+            {event.title}
+            {workspaceLabel && <span className={styles.wsLabel}>{workspaceLabel}</span>}
+          </div>
           <div className="cal-page__event-meta">
             {event.category && <Badge>{event.category}</Badge>}
             {event.amount != null && event.currency && (

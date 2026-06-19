@@ -72,6 +72,16 @@
   }
 }
 
+.wsLabel {
+  margin-left: 0.5rem;
+  padding: 0.05rem 0.4rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  color: var(--c-text-muted);
+  background: var(--c-surface-tint);
+  white-space: nowrap;
+}
+
 @media (max-width: 767px) {
   .root {
     min-height: calc(100svh - 56px - env(safe-area-inset-bottom, 0px));
