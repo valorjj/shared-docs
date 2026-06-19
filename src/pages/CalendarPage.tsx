@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { DayPicker, type DayButtonProps } from 'react-day-picker'
 import { ko } from 'react-day-picker/locale'
@@ -9,6 +9,7 @@ import {
   ShoppingBag,
   ArrowLeftRight,
   Filter,
+  Layers,
 } from 'lucide-react'
 import {
   AppSidebar,
@@ -75,9 +76,41 @@ export default function CalendarPage() {
     return counts
   }, [events])
 
+  const workspacesInView = useMemo(() => {
+    const map = new Map<number, { name: string; count: number }>()
+    for (const e of events ?? []) {
+      const cur = map.get(e.workspaceId)
+      if (cur) cur.count++
+      else map.set(e.workspaceId, { name: e.workspaceName, count: 1 })
+    }
+    return Array.from(map, ([id, v]) => ({ id, name: v.name, count: v.count }))
+      .sort((a, b) => a.name.localeCompare(b.name, 'ko'))
+  }, [events])
+
+  // Per-workspace toggle: store user overrides keyed by the sorted workspace-id fingerprint.
+  // When the visible set changes (mode flip / month change) the fingerprint changes,
+  // causing the overrides to reset so every present workspace defaults back to ON.
+  const [wsOverrides, setWsOverrides] = useState<{ key: string; off: Set<number> }>({
+    key: '',
+    off: new Set(),
+  })
+  const wsKey = workspacesInView.map((w) => w.id).join(',')
+  const wsOverridesRef = useRef(wsOverrides)
+  wsOverridesRef.current = wsOverrides
+  const activeOverrides = wsKey === wsOverrides.key ? wsOverrides.off : new Set<number>()
+  const enabledWorkspaces = useMemo(
+    () => new Set(workspacesInView.map((w) => w.id).filter((id) => !activeOverrides.has(id))),
+    // wsKey drives the memo reset; activeOverrides is derived from the same wsKey comparison above
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [workspacesInView, wsKey, wsOverrides],
+  )
+
   const visibleEvents = useMemo(
-    () => (events ?? []).filter((e) => enabled.has(e.type)),
-    [events, enabled],
+    () =>
+      (events ?? []).filter(
+        (e) => enabled.has(e.type) && (!allWorkspaces || enabledWorkspaces.has(e.workspaceId)),
+      ),
+    [events, enabled, allWorkspaces, enabledWorkspaces],
   )
 
   const eventsByDate = useMemo(() => {
@@ -109,6 +142,15 @@ export default function CalendarPage() {
       else next.add(t)
       return next
     })
+  }
+
+  const toggleWorkspace = (id: number) => {
+    const currentKey = wsOverridesRef.current.key === wsKey ? wsOverridesRef.current.key : wsKey
+    const currentOff = wsOverridesRef.current.key === wsKey ? wsOverridesRef.current.off : new Set<number>()
+    const nextOff = new Set(currentOff)
+    if (nextOff.has(id)) nextOff.delete(id)
+    else nextOff.add(id)
+    setWsOverrides({ key: currentKey, off: nextOff })
   }
 
   const handleEventClick = (e: CalendarEvent) => {
@@ -144,6 +186,15 @@ export default function CalendarPage() {
             onToggle={toggleSource}
           />
         </AppSidebarSection>
+        {allWorkspaces && (
+          <AppSidebarSection label="워크스페이스">
+            <WorkspaceFilters
+              workspaces={workspacesInView}
+              enabled={enabledWorkspaces}
+              onToggle={toggleWorkspace}
+            />
+          </AppSidebarSection>
+        )}
       </AppSidebar>
 
       <main className={styles.main}>
@@ -281,6 +332,15 @@ export default function CalendarPage() {
               onToggle={toggleSource}
             />
           </AppSidebarSection>
+          {allWorkspaces && (
+            <AppSidebarSection label="워크스페이스">
+              <WorkspaceFilters
+                workspaces={workspacesInView}
+                enabled={enabledWorkspaces}
+                onToggle={toggleWorkspace}
+              />
+            </AppSidebarSection>
+          )}
         </AppSidebarSheet>
       )}
     </div>
@@ -320,6 +380,31 @@ function SourceFilters({
           />
         )
       })}
+    </>
+  )
+}
+
+function WorkspaceFilters({
+  workspaces,
+  enabled,
+  onToggle,
+}: {
+  workspaces: { id: number; name: string; count: number }[]
+  enabled: Set<number>
+  onToggle: (id: number) => void
+}) {
+  return (
+    <>
+      {workspaces.map((w) => (
+        <AppSidebarItem
+          key={w.id}
+          Icon={Layers}
+          label={w.name}
+          count={w.count}
+          active={enabled.has(w.id)}
+          onClick={() => onToggle(w.id)}
+        />
+      ))}
     </>
   )
 }
