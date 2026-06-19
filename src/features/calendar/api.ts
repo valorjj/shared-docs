@@ -16,24 +16,29 @@ export type CalendarEvent = {
   done: boolean | null
   amount: number | null
   currency: string | null
+  workspaceId: number
+  workspaceName: string
 }
 
 export const calendarKeys = {
   scope: (wsId: number | null) => ['calendar', wsId] as const,
-  events: (wsId: number | null, from: string, to: string) => ['calendar', wsId, 'events', from, to] as const,
+  events: (wsId: number | null, all: boolean, from: string, to: string) =>
+    ['calendar', all ? 'all' : wsId, 'events', from, to] as const,
 }
 
-async function fetchEvents(from: string, to: string): Promise<CalendarEvent[]> {
-  const { data } = await apiClient.get<CalendarEvent[]>('/api/calendar/events', { params: { from, to } })
+async function fetchEvents(from: string, to: string, all: boolean): Promise<CalendarEvent[]> {
+  const path = all ? '/api/calendar/events/all' : '/api/calendar/events'
+  const { data } = await apiClient.get<CalendarEvent[]>(path, { params: { from, to } })
   return data
 }
 
-export function useCalendarEvents(from: string, to: string) {
+export function useCalendarEvents(from: string, to: string, all: boolean) {
   const { activeId } = useActiveWorkspace()
   return useQuery({
-    queryKey: calendarKeys.events(activeId, from, to),
-    queryFn: () => fetchEvents(from, to),
-    enabled: activeId != null && !!(from && to),
+    queryKey: calendarKeys.events(activeId, all, from, to),
+    queryFn: () => fetchEvents(from, to, all),
+    // per-workspace mode needs an active workspace; all-mode does not.
+    enabled: (all || activeId != null) && !!(from && to),
   })
 }
 

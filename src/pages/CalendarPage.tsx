@@ -58,13 +58,14 @@ export default function CalendarPage() {
   const [selected, setSelected] = useState<Date | undefined>(new Date())
   const [enabled, setEnabled] = useState<Set<CalendarEventType>>(() => new Set(EVENT_TYPES))
   const [filtersSheetOpen, setFiltersSheetOpen] = useState(false)
+  const [allWorkspaces, setAllWorkspaces] = useState(false)
 
   const range = useMemo(
     () => monthRange(month.getFullYear(), month.getMonth()),
     [month],
   )
 
-  const { data: events, isLoading: eventsLoading } = useCalendarEvents(range.from, range.to)
+  const { data: events, isLoading: eventsLoading } = useCalendarEvents(range.from, range.to, allWorkspaces)
 
   const sourceCounts = useMemo(() => {
     const counts: Record<CalendarEventType, number> = {
@@ -157,6 +158,14 @@ export default function CalendarPage() {
             <span>{filterLabel}</span>
           </button>
           <h1 className={styles.title}>캘린더</h1>
+          <Button
+            variant={allWorkspaces ? 'soft' : 'outline'}
+            size="sm"
+            onClick={() => setAllWorkspaces((v) => !v)}
+            aria-pressed={allWorkspaces}
+          >
+            전체 워크스페이스
+          </Button>
           <Button variant="outline" size="sm" onClick={goToday}>오늘</Button>
         </header>
         <p className={styles.sub}>기념일 · 마감일 · 구매 · 정산이 한눈에</p>
@@ -257,6 +266,14 @@ export default function CalendarPage() {
           onOpenChange={setFiltersSheetOpen}
           title="일정 필터"
         >
+          <AppSidebarSection label="범위">
+            <AppSidebarItem
+              Icon={Filter}
+              label="전체 워크스페이스"
+              active={allWorkspaces}
+              onClick={() => setAllWorkspaces((v) => !v)}
+            />
+          </AppSidebarSection>
           <AppSidebarSection label="일정 종류">
             <SourceFilters
               enabled={enabled}
