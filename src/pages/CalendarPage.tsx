@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { DayPicker, type DayButtonProps } from 'react-day-picker'
 import { ko } from 'react-day-picker/locale'
@@ -38,6 +38,10 @@ import styles from './CalendarPage.module.css'
 import './CalendarPage.css'
 
 const EVENT_TYPES: CalendarEventType[] = ['anniversary', 'todo', 'purchase', 'settlement']
+
+// Stable empty override set, so the enabledWorkspaces memo dep doesn't churn
+// when no workspace is toggled off.
+const EMPTY_OFF: Set<number> = new Set()
 
 type SourceMeta = {
   label: string
@@ -95,15 +99,13 @@ export default function CalendarPage() {
     off: new Set(),
   })
   const wsKey = workspacesInView.map((w) => w.id).join(',')
-  const wsOverridesRef = useRef(wsOverrides)
-  wsOverridesRef.current = wsOverrides
-  const activeOverrides = useMemo(
-    () => wsKey === wsOverrides.key ? wsOverrides.off : new Set<number>(),
-    [wsKey, wsOverrides.key, wsOverrides.off],
-  )
+  // Workspaces the user explicitly turned off, scoped to the current visible
+  // set (wsKey). When that set changes the key no longer matches, so the
+  // overrides drop and every present workspace defaults back to ON.
+  const activeOff = wsOverrides.key === wsKey ? wsOverrides.off : EMPTY_OFF
   const enabledWorkspaces = useMemo(
-    () => new Set(workspacesInView.map((w) => w.id).filter((id) => !activeOverrides.has(id))),
-    [workspacesInView, activeOverrides],
+    () => new Set(workspacesInView.map((w) => w.id).filter((id) => !activeOff.has(id))),
+    [workspacesInView, activeOff],
   )
 
   const visibleEvents = useMemo(
@@ -146,12 +148,12 @@ export default function CalendarPage() {
   }
 
   const toggleWorkspace = (id: number) => {
-    const currentKey = wsOverridesRef.current.key === wsKey ? wsOverridesRef.current.key : wsKey
-    const currentOff = wsOverridesRef.current.key === wsKey ? wsOverridesRef.current.off : new Set<number>()
-    const nextOff = new Set(currentOff)
-    if (nextOff.has(id)) nextOff.delete(id)
-    else nextOff.add(id)
-    setWsOverrides({ key: currentKey, off: nextOff })
+    setWsOverrides((prev) => {
+      const next = new Set(prev.key === wsKey ? prev.off : [])
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return { key: wsKey, off: next }
+    })
   }
 
   const handleEventClick = (e: CalendarEvent) => {
