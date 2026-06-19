@@ -97,12 +97,13 @@ export default function CalendarPage() {
   const wsKey = workspacesInView.map((w) => w.id).join(',')
   const wsOverridesRef = useRef(wsOverrides)
   wsOverridesRef.current = wsOverrides
-  const activeOverrides = wsKey === wsOverrides.key ? wsOverrides.off : new Set<number>()
+  const activeOverrides = useMemo(
+    () => wsKey === wsOverrides.key ? wsOverrides.off : new Set<number>(),
+    [wsKey, wsOverrides.key, wsOverrides.off],
+  )
   const enabledWorkspaces = useMemo(
     () => new Set(workspacesInView.map((w) => w.id).filter((id) => !activeOverrides.has(id))),
-    // wsKey drives the memo reset; activeOverrides is derived from the same wsKey comparison above
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [workspacesInView, wsKey, wsOverrides],
+    [workspacesInView, activeOverrides],
   )
 
   const visibleEvents = useMemo(
