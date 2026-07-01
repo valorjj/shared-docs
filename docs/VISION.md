@@ -1,6 +1,6 @@
 # Vision
 
-> Last revised: 2026-06-10 — multi-tenant v2 direction, now **built and deployed** (Phases A–F shipped 2026-06; `main` is live). The "private 2-person app" framing from 2026-05-28 was reversed; see `plans/2026-05-29-multi-tenant-v2.md`. Open Google sign-up is already live (the rebuild removed the email allowlist — no gate to flip); going public is just sharing the URL.
+> Last revised: 2026-06-19 — multi-tenant v2 direction, now **built and deployed** (Phases A–F shipped 2026-06; `main` is live). The "private 2-person app" framing from 2026-05-28 was reversed; see `plans/2026-05-29-multi-tenant-v2.md`. Open Google sign-up is already live (the rebuild removed the email allowlist — no gate to flip); going public is just sharing the URL. The Decisions backlog (§4 Pillar 3) and the multi-calendar overlay (§5) — both listed below as "post-v2" — have since shipped; only presence (§5) remains unbuilt.
 
 ## 1. What this is
 
@@ -42,10 +42,10 @@ Each user has private notes (PRIVATE visibility flag). Even in a shared workspac
 ### Pillar 2 — Shared notebook
 Notes the workspace can read and edit. Bear-style Tiptap editor with slash menu, bubble menu, `@`-mention, attachments. Already implemented; survives the v2 rebuild.
 
-### Pillar 3 — Decisions (the wedge — shipped 2026-06)
-A `Plan` (e.g., "우리 첫 집 구하기") is broken into `SubPlan`s ("동네 정하기", "예산 정하기"). Each subplan has `Option`s with each member's rating + comments. A `Decision` locks in the chosen option with the reasoning. The timeline view is what people will screenshot.
+### Pillar 3 — Decisions (the wedge — shipped 2026-06, backlog complete 2026-06-19)
+A `Plan` (e.g., "우리 첫 집 구하기") is broken into `SubPlan`s ("동네 정하기", "예산 정하기"). Each subplan has `Option`s with each member's rating, a vote tally, and comments via a per-plan discussion note. A `Decision` locks in the chosen option with the reasoning and a frozen vote snapshot. The timeline view is what people will screenshot. Lifecycle (lock, complete, discard) and deadlines round out the plan's life story.
 
-This is the feature that doesn't exist anywhere else. It was Phase 3 in the old roadmap; now it's the first thing we build after v2 ships.
+This is the feature that doesn't exist anywhere else. It was Phase 3 in the old roadmap; the initial build plus its full backlog (lock/complete/discard, vote, discussion pane, deadlines) is done — see `plans/decisions-backlog.md`.
 
 ### Pillar 4 — Calculator (daily utility)
 Tape-style engineering calculator with Korean-relevant modes (기본 multi-line scratchpad with variables, 할부, 대출, 더치페이, 날짜). Already implemented; survives the v2 rebuild with the workspace_id column added.
@@ -57,8 +57,8 @@ The multi-workspace model makes two new directions cheap that weren't possible b
 ### Cross-workspace sharing
 Individual documents can be granted to specific users *outside* the workspace as viewer or editor. The recipient sees them in a top-level "공유받은 항목" view. This is how a colleague shares one specific work note with a friend's family workspace, or how I share a recipe with my mother's hobby group.
 
-### Multi-calendar overlay (post-v2 "sweet spot")
-Each workspace has its own calendar (anniversaries + todos + purchases + settlements within it). Post-v2, a unified "전체 일정" view overlays the calendars of every workspace a user belongs to — work + family + hobby in one view, each color-coded, each toggleable. This is the next direction worth investing in after v2 ships.
+### Multi-calendar overlay — shipped 2026-06-19
+Each workspace has its own calendar (anniversaries + todos + purchases + settlements within it). The 전체 워크스페이스 toggle overlays the calendars of every workspace a user belongs to — work + family + hobby in one view, each color-coded, each toggleable. Shipped ahead of the original post-v2 schedule; see `plans/2026-06-19-cross-workspace-calendar-design.md`.
 
 ## 6. What this is NOT
 
@@ -84,7 +84,7 @@ Three rules carry across every direction change:
 
 - **v2 ship date**: 4–5 weeks after Phase A starts. All 6 phases (A → F) green, allowlist removed, sign-up open.
 - **6 months after v2 ship**: at least 5 active workspaces beyond mine. Real users using the per-doc share feature.
-- **12 months after v2 ship**: the multi-calendar overlay shipped; Decisions feature shipped; at least one documented "decision archive" in production use across multiple workspaces.
+- **12 months after v2 ship**: the multi-calendar overlay shipped (✅ 2026-06-19); Decisions feature shipped (✅ 2026-06, backlog complete 2026-06-19); at least one documented "decision archive" in production use across multiple workspaces.
 
 ## 9. Pointers
 

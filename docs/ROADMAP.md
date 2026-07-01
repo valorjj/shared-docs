@@ -1,15 +1,18 @@
 # Roadmap
 
-> Last revised: 2026-06-10 — **v2 build complete and deployed (Phases A–F).** This section is now history; the phase descriptions below are kept as a build log.
+> Last revised: 2026-06-19 — **v2 build complete and deployed (Phases A–F)**, and the entire post-v2 Decisions backlog plus the multi-calendar overlay are **also shipped**. This section is now history; the phase descriptions below are kept as a build log.
 
-**STATUS (2026-06-10):** The multi-tenant v2 rebuild shipped. `main` is the live v2 codebase; the DB was wiped and re-seeded at cutover. All phases A–F plus the Decisions pillar are in production. **Open Google sign-up is already live** — the rebuild removed the email allowlist (there is no `APP_AUTH_ALLOWLIST_ENABLED` gate in the code), so going public just means sharing the URL. Next direction: the multi-calendar overlay. Architecture spec: [`plans/2026-05-29-multi-tenant-v2.md`](plans/2026-05-29-multi-tenant-v2.md).
+**STATUS (2026-06-19):** The multi-tenant v2 rebuild shipped. `main` is the live v2 codebase; the DB was wiped and re-seeded at cutover. All phases A–F plus the Decisions pillar (including its full post-v2 backlog) and the multi-calendar overlay are in production. **Open Google sign-up is already live** — the rebuild removed the email allowlist (there is no `APP_AUTH_ALLOWLIST_ENABLED` gate in the code), so going public just means sharing the URL. Next direction is open — see [`docs/plans/decisions-backlog.md`](plans/decisions-backlog.md) (closed) and the "Post-v2 directions" section below for what's left. Architecture spec: [`plans/2026-05-29-multi-tenant-v2.md`](plans/2026-05-29-multi-tenant-v2.md).
 
-**Post-v2 shipped (2026-06-11):**
-- **Decisions list-view connections + drag-reorder** — order-spine, hover-highlight, 연결 modal, `@dnd-kit` reorder + batch `sortOrder` endpoint. Design/plan: [`plans/2026-06-10-decisions-list-spine-design.md`](plans/2026-06-10-decisions-list-spine-design.md) / `-plan.md`.
-- **Rate-limiting & abuse protection** — per-user write-throttle (Bucket4j), per-user upload quota, global upload-dir disk guard. Design/plan: [`plans/2026-06-11-rate-limiting-abuse-design.md`](plans/2026-06-11-rate-limiting-abuse-design.md) / `-plan.md`. Deferred: Cloudflare edge rules, signup/workspace caps.
-- **Plan lock (Decisions backlog A.1)** — freeze a 계획 to read-only: orthogonal `lockedAt`/`lockedByUserId` flag (Flyway V18), `PlanLockGuard` enforcing 409 across all 14 content writes, `PLAN_LOCKED`/`PLAN_UNLOCKED` timeline events, frontend toggle + banner + read-only gating (list/canvas/roadmap). Design/plan: [`plans/2026-06-11-plan-lock-design.md`](plans/2026-06-11-plan-lock-design.md) / `-plan.md`.
-- **Plan complete + discard (Decisions backlog A.2/A.3)** — `PlanStatus ACTIVE|COMPLETED` (retired the dead ARCHIVED) + soft-delete 휴지통 mirroring Note (Flyway V19: `deleted_at` + index + ARCHIVED→ACTIVE backfill). Dedicated complete/uncomplete (+`PLAN_COMPLETED`/`PLAN_UNCOMPLETED` events) and discard/restore/`deleteForever`; reads split into board/완료/휴지통; `getTree`+timeline 404 for discarded. **Lock is now content-only** — deletion is no longer guarded (trash is the destruction gate). Frontend: 4-tab DecisionList + complete toggle + trash UX. Design/plan: [`plans/2026-06-11-plan-complete-discard-design.md`](plans/2026-06-11-plan-complete-discard-design.md) / `-plan.md`.
-- **Next up (Decisions backlog):** deadlines→timeline (A.4) and group collaboration (vote mode, split-view plan↔discussion note w/ url/link/comment/vote) — see [`plans/decisions-backlog.md`](plans/decisions-backlog.md).
+**Post-v2 shipped:**
+- **2026-06-11 — Decisions list-view connections + drag-reorder** — order-spine, hover-highlight, 연결 modal, `@dnd-kit` reorder + batch `sortOrder` endpoint. Design/plan: [`plans/2026-06-10-decisions-list-spine-design.md`](plans/2026-06-10-decisions-list-spine-design.md) / `-plan.md`.
+- **2026-06-11 — Rate-limiting & abuse protection** — per-user write-throttle (Bucket4j), per-user upload quota, global upload-dir disk guard. Design/plan: [`plans/2026-06-11-rate-limiting-abuse-design.md`](plans/2026-06-11-rate-limiting-abuse-design.md) / `-plan.md`. Deferred: Cloudflare edge rules, signup/workspace caps.
+- **2026-06-11 — Plan lock (Decisions backlog A.1)** — freeze a 계획 to read-only: orthogonal `lockedAt`/`lockedByUserId` flag (Flyway V18), `PlanLockGuard` enforcing 409 across all 14 content writes, `PLAN_LOCKED`/`PLAN_UNLOCKED` timeline events, frontend toggle + banner + read-only gating (list/canvas/roadmap). Design/plan: [`plans/2026-06-11-plan-lock-design.md`](plans/2026-06-11-plan-lock-design.md) / `-plan.md`.
+- **2026-06-11 — Plan complete + discard (Decisions backlog A.2/A.3)** — `PlanStatus ACTIVE|COMPLETED` (retired the dead ARCHIVED) + soft-delete 휴지통 mirroring Note (Flyway V19: `deleted_at` + index + ARCHIVED→ACTIVE backfill). Dedicated complete/uncomplete (+`PLAN_COMPLETED`/`PLAN_UNCOMPLETED` events) and discard/restore/`deleteForever`; reads split into board/완료/휴지통; `getTree`+timeline 404 for discarded. **Lock is now content-only** — deletion is no longer guarded (trash is the destruction gate). Frontend: 4-tab DecisionList + complete toggle + trash UX. Design/plan: [`plans/2026-06-11-plan-complete-discard-design.md`](plans/2026-06-11-plan-complete-discard-design.md) / `-plan.md`.
+- **2026-06-12 — Vote mode + discussion pane (Decisions backlog B.5/B.6)** — `OptionVote` tally (Flyway V20; cast/move/retract with lock + decided guards; snapshot frozen onto `Decision` at 확정); lazy 1:1 plan discussion note (Flyway V21) as a slim discussion rail; entity-link chip kinds for 계획/안건/선택지 + deep-link landing. Design/plan: `plans/2026-06-11-plan-discussion-vote-design.md` / `-plan.md`.
+- **2026-06-15 — Deadlines (Decisions backlog A.4)** — date-only `deadline` on 계획/안건 + `Plan.completedAt` (Flyway V22), live D-day `DeadlineChip` + frozen 기한 내/지나 annotation, lock-guarded set/clear endpoints with timeline events. **This closed the Decisions backlog.** Design/plan: [`plans/2026-06-15-decisions-deadlines-design.md`](plans/2026-06-15-decisions-deadlines-design.md) / `-plan.md`.
+- **2026-06-15 — PlanDetail redesign** — document-column layout, sticky control strip with condensed title on scroll, mobile FAB/top-pinned-strip shape. Design/plan: [`plans/2026-06-15-plan-page-redesign-design.md`](plans/2026-06-15-plan-page-redesign-design.md) / `-plan.md`.
+- **2026-06-19 — Cross-workspace calendar overlay** — the "sweet spot" post-v2 direction (see below), built ahead of schedule. 전체 워크스페이스 toggle, per-workspace filter chips, `GET /api/calendar/events/all`. Design/plan: [`plans/2026-06-19-cross-workspace-calendar-design.md`](plans/2026-06-19-cross-workspace-calendar-design.md) / `-plan.md`.
 
 ## Where we are (build log)
 
@@ -87,19 +90,17 @@ See spec §10 for the rollback procedure.
 
 ## Post-v2 directions
 
-These wait until v2 is shipped and stable.
+### Decisions feature (Phase 3 from the old roadmap) — ✅ shipped
 
-### Decisions feature (Phase 3 from the old roadmap)
+The original wedge of the product. `Plan → SubPlan → Option (with per-member ratings) → Decision` with a timeline view. Shipped 2026-06, backlog (lock, complete/discard, vote, discussion, deadlines) fully drained by 2026-06-19 — see [`plans/decisions-backlog.md`](plans/decisions-backlog.md).
 
-The original wedge of the product. `Plan → SubPlan → Option (with per-member ratings) → Decision` with a timeline view. Will live inside the workspace model — each Plan belongs to a workspace. Plan doc gets written when work on it starts.
+### Multi-calendar overlay (the "sweet spot") — ✅ shipped 2026-06-19
 
-### Multi-calendar overlay (the "sweet spot")
+A unified 전체 워크스페이스 view that overlays the calendars of every workspace a user belongs to (work + family + hobby), each color-coded, each toggleable. Design/plan: [`plans/2026-06-19-cross-workspace-calendar-design.md`](plans/2026-06-19-cross-workspace-calendar-design.md).
 
-A unified `/calendar/all` view that overlays the calendars of every workspace a user belongs to (work + family + hobby), each color-coded, each toggleable. The multi-workspace model from v2 makes this nearly free to build — just parallel-fetch each workspace's calendar endpoint and merge client-side.
+### Presence on shared notes — not started
 
-### Presence on shared notes
-
-Tiptap "awareness" — partner's avatar + cursor color when both viewing the same note. No real-time editing (last-write-wins remains). Uses Y.js awareness over WebSocket, no CRDT sync.
+Tiptap "awareness" — partner's avatar + cursor color when both viewing the same note. No real-time editing (last-write-wins remains). Uses Y.js awareness over WebSocket, no CRDT sync. This is the only post-v2 direction from VISION.md still unbuilt.
 
 ## Deferred indefinitely
 

@@ -1,10 +1,14 @@
 # CLAUDE.md
 
-> Project bible. Last revised: 2026-06-15 — multi-tenant v2 (Phases A–F) **shipped to production**. **Open Google sign-up is already live** — the rebuild removed the email allowlist; there is no gate to flip. Going public = sharing the URL.
+> Project bible. Last revised: 2026-06-19 — multi-tenant v2 (Phases A–F) **shipped to production**, and the full Decisions backlog plus the post-v2 multi-calendar direction are **also shipped**. **Open Google sign-up is already live** — the rebuild removed the email allowlist; there is no gate to flip. Going public = sharing the URL.
 >
-> **2026-06-15 (merged to `main`, deploy pending push):** Decisions **deadlines (기한, backlog A.4)** — date-only deadline on 계획/안건 with a live D-day chip + frozen "기한 내/지나 결정·완료" annotation; lock-guarded set/clear endpoints recording `DEADLINE_SET`/`DEADLINE_CLEARED` timeline events; added `Plan.completedAt`. Flyway **V22** (additive). This completes the Decisions backlog. Design/plan: `docs/plans/2026-06-15-decisions-deadlines-{design,plan}.md`.
+> **2026-06-19 shipped:** **Cross-workspace calendar overlay** (전체 워크스페이스) — toggle to overlay every workspace's calendar in one view, per-workspace filter chips, workspace label on events, click-to-switch-active-workspace. `GET /api/calendar/events/all` (membership-enforced merge). This was VISION.md's "sweet spot" post-v2 direction — built ahead of schedule. Design/plan: `docs/plans/2026-06-19-cross-workspace-calendar-{design,plan}.md`.
 >
-> **2026-06-11 shipped:** (1) Decisions **list-view connections + drag-reorder** — an order-spine, hover-highlight, a 연결 modal, and `@dnd-kit` reorder backed by a batch `sortOrder` endpoint. (2) **Abuse protection** — a per-user write-throttle (Bucket4j), per-user upload quota, and a global upload-dir disk guard. Designs/plans in `docs/plans/2026-06-10-decisions-list-spine-*` and `docs/plans/2026-06-11-rate-limiting-abuse-*`.
+> **2026-06-15 shipped, deployed:** (1) Decisions **deadlines (기한, backlog A.4)** — date-only deadline on 계획/안건 with a live D-day chip + frozen "기한 내/지나 결정·완료" annotation; lock-guarded set/clear endpoints recording `DEADLINE_SET`/`DEADLINE_CLEARED` timeline events; added `Plan.completedAt`. Flyway **V22**. Design/plan: `docs/plans/2026-06-15-decisions-deadlines-{design,plan}.md`. (2) **PlanDetail redesign** — document-column layout, sticky control strip with condensed title on scroll, mobile FAB/top-pinned-strip shape, discussion rail placement. Design/plan: `docs/plans/2026-06-15-plan-page-redesign-{design,plan}.md`.
+>
+> **2026-06-12 shipped:** Decisions **backlog B.5/B.6 — vote mode + discussion pane.** `OptionVote` entity (Flyway V20) with cast/move/retract + lock/decided guards, vote tally snapshot frozen onto `Decision` at 확정; lazy 1:1 plan discussion note (Flyway V21) as a slim discussion rail, entity-link chip kinds for 계획/안건/선택지 + deep-link landing. **This completed the entire Decisions backlog** — see `docs/plans/decisions-backlog.md`. Design/plan: `docs/plans/2026-06-11-plan-discussion-vote-{design,plan}.md`.
+>
+> **2026-06-11 shipped:** (1) Decisions **list-view connections + drag-reorder** — an order-spine, hover-highlight, a 연결 modal, and `@dnd-kit` reorder backed by a batch `sortOrder` endpoint. (2) **Abuse protection** — a per-user write-throttle (Bucket4j), per-user upload quota, and a global upload-dir disk guard. (3) Decisions **plan lock (A.1)** and **complete/discard (A.2/A.3)** — see `docs/plans/decisions-backlog.md`. Designs/plans in `docs/plans/2026-06-10-decisions-list-spine-*`, `docs/plans/2026-06-11-rate-limiting-abuse-*`, `docs/plans/2026-06-11-plan-lock-*`, `docs/plans/2026-06-11-plan-complete-discard-*`.
 
 ## What this is
 
@@ -16,10 +20,10 @@ The product, inside any workspace, has four pillars:
 
 1. **Personal notebook** (PRIVATE notes — already implemented)
 2. **Shared notebook** (Bear-style memo — already implemented)
-3. **Decisions** (Plan → SubPlan → Option → Decision; **shipped 2026-06** — React Flow canvas + roadmap board + timeline/feed)
+3. **Decisions** (Plan → SubPlan → Option → Decision; **shipped 2026-06** — React Flow canvas + roadmap board + timeline/feed + full lifecycle/vote/discussion backlog, see below)
 4. **Calculator** (tape-style engineering calc — already implemented)
 
-After v2, the multi-calendar overlay (work + family + hobby in one view) is the next direction. Read [`docs/VISION.md`](docs/VISION.md) for the full why, [`docs/ROADMAP.md`](docs/ROADMAP.md) for the v2 phase order.
+The multi-calendar overlay (work + family + hobby in one view) **shipped 2026-06-19** — see feature table below. Read [`docs/VISION.md`](docs/VISION.md) for the full why, [`docs/ROADMAP.md`](docs/ROADMAP.md) for the v2 phase order.
 
 ## Repo layout
 
@@ -47,7 +51,7 @@ shared-docs-root/
 ## Stack at a glance
 
 - **Frontend:** Vite + React 19 + TypeScript + CSS Modules. Tiptap v3 for the editor. React Query for data. React Router v6.
-- **Backend:** Spring Boot 3.5 + Kotlin. JPA + MariaDB (port 3307 host). **Flyway owns the schema** (latest V17); Hibernate `ddl-auto: validate` (asserts entities match the migrated schema, never mutates it).
+- **Backend:** Spring Boot 3.5 + Kotlin. JPA + MariaDB (port 3307 host). **Flyway owns the schema** (latest V22); Hibernate `ddl-auto: validate` (asserts entities match the migrated schema, never mutates it).
 - **Auth:** Google OAuth2 → JWT (24h). **Open sign-up — any Google account is accepted.** The v2 rebuild removed the old `allowed_emails` allowlist; there is **no** `APP_AUTH_ALLOWLIST_ENABLED` gate in the code. Only deactivated accounts (`User.active=false`) are rejected at login. `app.auth.bootstrap-admins` promotes listed emails to admin on sign-in.
 - **Deploy:** Vercel (frontend) + Cloudflare Tunnel → Mac Mini Docker (backend + DB + uploads volume).
 
@@ -110,12 +114,12 @@ ESLint enforces 1–6 mechanically. The rest is review discipline.
 | Per-workspace categories (Phase C) | **Shipped.** |
 | Invitations (Phase D) | **Shipped.** Copy-link claim flow (no email), member management. |
 | Per-doc sharing / "공유받은 항목" (Phase E) | **Shipped 2026-06-10.** Notes-only slice on a generic `resource_shares` core; VIEW/EDIT; separate `/api/shares/*` path. |
-| Decisions (Pillar 3) | **Shipped 2026-06.** Plan→SubPlan→Option→Decision; canvas, roadmap board, timeline/feed. **List view (2026-06-11):** order-spine (sortOrder), connection accent layer (chips + hover-highlight), 연결 modal to wire edges, drag-reorder via `@dnd-kit` + batch `PATCH /api/plans/{id}/subplans/order`. **Deadlines (2026-06-15, merged to `main`, deploy pending):** date-only `deadline` on 계획/안건 + `Plan.completedAt` (Flyway V22), `DeadlineChip` (live D-day + frozen 기한 내/지나 annotation), lock-guarded `PUT/DELETE /api/plans/{id}/deadline` + `/api/subplans/{id}/deadline` recording `DEADLINE_SET`/`DEADLINE_CLEARED` events. Backlog now complete. |
+| Decisions (Pillar 3) | **Shipped 2026-06, backlog fully drained by 2026-06-19.** Plan→SubPlan→Option→Decision; canvas, roadmap board, timeline/feed. **List view (2026-06-11):** order-spine (sortOrder), connection accent layer (chips + hover-highlight), 연결 modal to wire edges, drag-reorder via `@dnd-kit` + batch `PATCH /api/plans/{id}/subplans/order`. **Lock + complete + discard (2026-06-11):** freeze/read-only, ACTIVE\|COMPLETED status, soft-delete 휴지통. **Vote + discussion (2026-06-12):** `OptionVote` tally (cast/move/retract, frozen snapshot at 확정), lazy 1:1 discussion note per plan, entity-link chips + deep-links. **Deadlines (2026-06-15, deployed):** date-only `deadline` on 계획/안건 + `Plan.completedAt` (Flyway V22), `DeadlineChip` (live D-day + frozen 기한 내/지나 annotation), lock-guarded `PUT/DELETE /api/plans/{id}/deadline` + `/api/subplans/{id}/deadline` recording `DEADLINE_SET`/`DEADLINE_CLEARED` events. **PlanDetail redesign (2026-06-15):** document-column layout, sticky control strip, mobile FAB shape. See `docs/plans/decisions-backlog.md` (now closed). |
 | Launch polish (Phase F) | **Shipped 2026-06-10.** Privacy/Terms pages, split landing, fresh-workspace welcome. |
 | Abuse protection / rate-limiting | **Shipped 2026-06-11.** Per-user write-throttle (`RateLimitFilter`, Bucket4j in-memory, 429 + Retry-After, off in `test` profile), per-user upload quota (413 over `app.storage.per-user-quota-bytes`, 500MB), global upload-dir disk guard in `FileStorageService.store()` (413 over `app.storage.total-quota-bytes`, 10GB). **Deferred:** Cloudflare edge rules + signup/workspace caps. |
 | Open public sign-up | **Already live** — no allowlist gate in code (removed in the rebuild). Going public = share the URL. |
-| Multi-calendar overlay | **Post-v2** (next direction). |
-| Presence on shared notes | **Post-v2.** |
+| Multi-calendar overlay | **Shipped 2026-06-19.** 전체 워크스페이스 toggle overlays every workspace's calendar, per-workspace filter chips, `GET /api/calendar/events/all` (membership-enforced). |
+| Presence on shared notes | **Not started.** Only remaining post-v2 direction from VISION.md. |
 
 ## Routes
 

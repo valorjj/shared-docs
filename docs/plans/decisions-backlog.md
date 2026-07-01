@@ -1,22 +1,24 @@
 # Decisions — Backlog (later work)
 
-> Captured 2026-06-10. Ideas for the **Decisions** pillar, not yet designed or started. Each item gets the normal brainstorm → plan → build cycle when picked up. Builds on the shipped list-view work (order-spine, connection layer, 연결 modal, drag-to-reorder — see `2026-06-10-decisions-list-spine-design.md`).
+> Captured 2026-06-10. **Backlog complete as of 2026-06-19** — all items (A.1–A.4, B.5, B.6) shipped. Kept here as a record; see each item for its design/plan doc. Builds on the shipped list-view work (order-spine, connection layer, 연결 모달, drag-to-reorder — see `2026-06-10-decisions-list-spine-design.md`).
 
 ## A. Plan lifecycle / status
 
 1. ~~**Lock the plan** — freeze a 계획 to read-only once it's settled (no further edits to 안건 / 선택지 / decisions).~~ ✅ **Shipped 2026-06-11** — orthogonal `lockedAt`/`lockedByUserId` flag, `PlanLockGuard` (409 across all 14 content writes), `PLAN_LOCKED`/`PLAN_UNLOCKED` timeline events, frontend toggle + banner + read-only gating. Design/plan: `2026-06-11-plan-lock-{design,plan}.md`.
 2. ~~**Mark complete**~~ ✅ **Shipped 2026-06-11** — `PlanStatus ACTIVE|COMPLETED` (retired the dead ARCHIVED); complete/uncomplete actions + `PLAN_COMPLETED`/`PLAN_UNCOMPLETED` events; completed plans drop off the board into a 완료 view. Design/plan: `2026-06-11-plan-complete-discard-{design,plan}.md`.
 3. ~~**Discard + manage discarded plans**~~ ✅ **Shipped 2026-06-11** — soft-delete via `deletedAt` mirroring Note: discard→휴지통, 복원, 영구 삭제; reads split board/완료/휴지통; `getTree`+timeline 404 for discarded. Lock became content-only (trash is the destruction gate). Same design/plan as A.2.
-4. **Deadlines integrated with the timeline (기록) view** — set a deadline on a plan/안건 and surface it in the 기록 timeline. Touches the existing timeline / PlanEvent feed.
+4. ~~**Deadlines integrated with the timeline (기록) view**~~ ✅ **Shipped 2026-06-15, deployed** — date-only `deadline` on 계획/안건 + `Plan.completedAt` (Flyway V22); `DeadlineChip` (live D-day + frozen 기한 내/지나 annotation) on plan/안건/board + timeline lines; lock-guarded set/clear endpoints recording `DEADLINE_SET`/`DEADLINE_CLEARED` events. Design/plan: `2026-06-15-decisions-deadlines-{design,plan}.md`.
 
 ## B. Group collaboration (the core vision)
 
 The framing: **planning with a small group means they need to discuss.** A plan should aggregate — add-a-plan, add-a-url, add-a-link, add-a-comment, add-a-vote.
 
-5. **Vote mode** — group voting on 선택지. Relates to / may extend the existing per-user **ratings** (`OptionRating`, 1–5 score + comment) and the **decision lock** mechanic. Open question: is "vote" a new lighter primitive (thumbs / pick-one tally) or a re-skin of ratings?
-6. **Split-view plan ↔ discussion note (Notion/Obsidian style)** — click a plan → side panel with a discussion surface attached to that plan: attach a **url**, a **link** (likely an entity-link to a note / other resource, reusing the existing entity-chip mechanics), a **comment** thread, and a **vote**. The biggest item and the heart of the request. Likely reuses the notes editor + entity chips + the vote primitive from #5. **Comments are net-new** — there is no comment concept anywhere in the app yet.
+5. ~~**Vote mode**~~ ✅ **Shipped 2026-06-12** — `OptionVote` entity (Flyway V20), cast/move/retract with lock + decided guards, vote tally snapshot frozen onto `Decision` at 확정, vote UI + decide pre-fill. Ended up as a new lighter primitive (tally), separate from the existing per-user ratings. Design/plan: `2026-06-11-plan-discussion-vote-{design,plan}.md`.
+6. ~~**Split-view plan ↔ discussion note**~~ ✅ **Shipped 2026-06-12** — lazy 1:1 plan discussion note (Flyway V21) rendered as a slim discussion rail/pane; entity-link chip kinds for 계획/안건/선택지 + deep-link landing; comments flow through the discussion note itself rather than a separate comment-thread primitive. Same design/plan as #5.
 
-## Sequencing notes
+## Since this backlog was drained
 
-- 1–4 are small-ish backend status + UI work; deadlines hook the timeline.
-- **5 and 6 should be brainstormed together** — vote is a building block of the discussion surface. Comments are the one genuinely new domain concept and the main design risk.
+- **PlanDetail redesign** (2026-06-15) — document-column layout, sticky control strip, mobile FAB/top-strip shape, discussion rail placement. Not originally on this backlog; came out of using the shipped B.5/B.6 features. Design/plan: `2026-06-15-plan-page-redesign-{design,plan}.md`.
+- **Cross-workspace calendar overlay** (2026-06-19) — the VISION.md "sweet spot" post-v2 direction, built ahead of schedule. See `2026-06-19-cross-workspace-calendar-{design,plan}.md`.
+
+No open items remain on this backlog. Next direction should be picked fresh rather than pulled from here.
