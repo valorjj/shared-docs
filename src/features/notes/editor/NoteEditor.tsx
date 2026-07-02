@@ -21,6 +21,10 @@ import NoteEditorMobileBar from './NoteEditorMobileBar'
 import NoteEditorTitle from './NoteEditorTitle'
 import NoteEditorToolbar from './NoteEditorToolbar'
 import NoteReferrers from './NoteReferrers'
+import { useNoteCollaboration } from '../collab/useNoteCollaboration'
+import { collabColorForUser } from '../collab/collabColor'
+import CollabAvatarStack from '../collab/CollabAvatarStack'
+import { useAuth } from '../../../auth/useAuth'
 import styles from './NoteEditor.module.css'
 
 type Props = {
@@ -39,6 +43,10 @@ export default function NoteEditor({ note, onDeleted, onBack }: Props) {
   // After the 2026-05-28 share-system removal the editor is always
   // editable for whomever can see it (visibility check happens server-side).
   const canEdit = true
+
+  const { user } = useAuth()
+  const collab = useNoteCollaboration(note.id, note.visibility === 'WORKSPACE')
+  const collabUser = user ? { name: user.name, color: collabColorForUser(user.userId) } : undefined
 
   const [editor, setEditor] = useState<Editor | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
@@ -200,6 +208,7 @@ export default function NoteEditor({ note, onDeleted, onBack }: Props) {
             onDelete={handleDelete}
             onShare={() => setShareOpen(true)}
           />
+          {collab && <CollabAvatarStack provider={collab.provider} />}
           <NoteReferrers noteId={note.id} />
           <NoteEditorBody
             noteId={note.id}
@@ -214,6 +223,8 @@ export default function NoteEditor({ note, onDeleted, onBack }: Props) {
             onPickCalcSnapshot={onPickCalcSnapshot}
             registerEditor={setEditor}
             onRequestLinkDialog={openLinkDialog}
+            collab={collab}
+            collabUser={collabUser}
           />
           <NoteAttachments noteId={note.id} canEdit={canEdit} />
         </div>
