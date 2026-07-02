@@ -992,9 +992,11 @@ git commit -m "feat(notes): force-close a note's collaboration room on PRIVATE f
 In the `"dependencies"` block, alongside the existing `@tiptap/*` entries, add (keep alphabetical order as the rest of the block does):
 
 ```json
-    "@tiptap/extension-collaboration": "^3.23.4",
+    "@tiptap/extension-collaboration": "3.23.4",
     "@tiptap/y-tiptap": "^3.0.5",
 ```
+
+**`@tiptap/extension-collaboration` is an exact pin (no `^`), not a caret range — this matters.** `@tiptap/extension-collaboration@3.23.4`'s own peer dependency requires the *exact* `@tiptap/core: 3.23.4` (not a range), but `@tiptap/extension-collaboration@3.27.1` (the latest version satisfying a `^3.23.4` range) requires the exact `@tiptap/core: 3.27.1` instead — an unresolvable conflict against the rest of this project's Tiptap family, which is pinned to `3.23.4` throughout. A caret range here would let npm's resolver silently jump to 3.27.1 and hard-fail on the peer conflict (confirmed empirically: this happened during execution). The exact pin `"3.23.4"` keeps it locked to the version whose peer requirement actually matches what's installed.
 
 **Not** `@tiptap/extension-collaboration-cursor` — verified against the npm registry that this package's last release is a single `3.0.0` built against the standalone `y-prosemirror` package, while `@tiptap/extension-collaboration@3.23.4` has since moved to Tiptap's own actively-maintained fork, `@tiptap/y-tiptap` (peer dep confirmed via `npm view @tiptap/extension-collaboration@3.23.4 peerDependencies`: exact `@tiptap/core: 3.23.4` + `@tiptap/y-tiptap: ^3.0.2`). Running both packages together would mean two independent, incompatible Yjs↔ProseMirror bindings active at once. `@tiptap/y-tiptap` exports its own `yCursorPlugin` (confirmed via its published `.d.ts`) with the same shape the old extension used internally — Task 9 wires cursors directly against that instead of the stale extension package.
 
