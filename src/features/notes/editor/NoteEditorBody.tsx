@@ -130,7 +130,13 @@ export default function NoteEditorBody({
       // StarterKit v3 bundles its own Link extension which collides with the
       // explicit `Link.configure` below — disable the bundled one so the
       // configured behavior (no openOnClick, autolink, linkOnPaste) wins.
-      StarterKit.configure({ link: false }),
+      // StarterKit also bundles the standard ProseMirror undoRedo (history)
+      // extension. Running that alongside Collaboration's Yjs binding is a
+      // documented conflict (undo can revert other users' changes / desync
+      // the shared doc) — Collaboration registers its own Yjs-aware
+      // undo/redo commands internally, so disable StarterKit's when collab
+      // is active.
+      StarterKit.configure({ link: false, undoRedo: collab ? false : undefined }),
       Image.configure({ inline: false, allowBase64: false }),
       Placeholder.configure({ placeholder: "내용을 입력하세요. '/' 를 누르면 메뉴가 열려요." }),
       Link.configure({

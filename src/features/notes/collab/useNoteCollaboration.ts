@@ -5,7 +5,15 @@ import { getToken } from '../../../auth/tokenStorage'
 
 export type NoteCollaboration = { yDoc: Y.Doc; provider: WebsocketProvider } | null
 
-const WS_BASE = import.meta.env.VITE_WS_BASE_URL ?? `ws://${window.location.hostname}:8090`
+// Derive the WS origin from the same API base URL the REST client uses
+// (src/api/client.ts) rather than window.location.hostname — in prod the
+// frontend is on Vercel while the backend sits behind a Cloudflare Tunnel on
+// a different host/port, so reconstructing from the page's own origin picks
+// the wrong host, the wrong scheme (ws:// from an https:// page is blocked as
+// mixed content), and the wrong port. Swapping http(s) -> ws(s) on
+// VITE_API_BASE_URL yields the correct origin in both dev and prod.
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8090'
+const WS_BASE = import.meta.env.VITE_WS_BASE_URL ?? API_BASE.replace(/^http/, 'ws')
 
 /**
  * Owns the Y.Doc + WebsocketProvider lifecycle for one note's live
