@@ -1414,40 +1414,21 @@ git commit -m "feat(notes): wire live collaboration + cursors + avatar stack int
 ### Task 10: Cursor + avatar styling (Bear aesthetic — hairline, no shadow)
 
 **Files:**
-- Create: `shared-docs/src/features/notes/collab/CollabAvatarStack.module.css`
+- Modify: `shared-docs/src/features/notes/collab/CollabAvatarStack.module.css` (already exists — Task 9's implementer created it ad-hoc since the brief hadn't reached this task yet; Task 9's reviewer already checked it against this codebase's design tokens and approved it)
 - Modify: `shared-docs/src/features/notes/editor/NoteEditorBody.module.css`
 
-- [ ] **Step 1: Avatar stack styles**
+- [ ] **Step 1: Avatar stack styles — reconcile, don't blindly overwrite**
 
-```css
-.stack {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-1);
-  margin-left: var(--sp-2);
-}
-
-.avatar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 22px;
-  border-radius: var(--r-pill);
-  border: 1.5px solid var(--c-border);
-  background: var(--c-surface);
-  font-size: var(--fs-xs);
-  font-weight: var(--fw-medium);
-  color: var(--c-text);
-}
-```
+`CollabAvatarStack.module.css` already exists with working, reviewed-and-approved styles (hairline border via `border: 1.5px solid` + the component's inline `borderColor` per-peer, `var(--r-pill)`, `var(--fs-xs)`, `var(--fw-medium)`, an overlap stack via `.avatar + .avatar { margin-left: -6px }`). Read the current file first. It's already Bear-minimal (no shadow, hairline only) and token-based. Only change something if you find a concrete problem against that goal — do not replace working, already-reviewed code with the version below just because it differs stylistically. If you find nothing wrong, this step is a no-op; say so in your report and move to Step 2.
 
 - [ ] **Step 2: Remote cursor styles**
 
-Tiptap's `CollaborationCursor` renders a `<span class="collaboration-cursor__caret">` (the caret line) containing a `<div class="collaboration-cursor__label">` (the name tag), both with inline `border-color`/`background-color` set from the extension's `user.color`. Add to `NoteEditorBody.module.css`, alongside the existing `:global()` rules for Tiptap-injected classes:
+**This extension is `CollabCursor` (Task 9's custom wrapper around `@tiptap/y-tiptap`'s `yCursorPlugin`), not the retired `@tiptap/extension-collaboration-cursor` package — the DOM it renders is different from what that package would have produced.** Verified against `node_modules/@tiptap/y-tiptap/dist/y-tiptap.js`'s `defaultCursorBuilder`/`defaultSelectionBuilder`: the caret is `<span class="ProseMirror-yjs-cursor" style="border-color: {color}">` containing a nonbreaking space, an unclassed `<div style="background-color: {color}">{name}</div>` (the name label — no separate class, style it via a descendant selector), and another nonbreaking space. The selection decoration carries `class="ProseMirror-yjs-selection"` with an inline `background-color` (already includes alpha via the `70` hex suffix) — no additional CSS needed for selection, out of scope here.
+
+Add to `NoteEditorBody.module.css`, alongside the existing `:global()` rules for Tiptap-injected classes:
 
 ```css
-.editor :global(.collaboration-cursor__caret) {
+.editor :global(.ProseMirror-yjs-cursor) {
   position: relative;
   margin-left: -1px;
   margin-right: -1px;
@@ -1457,7 +1438,7 @@ Tiptap's `CollaborationCursor` renders a `<span class="collaboration-cursor__car
   pointer-events: none;
 }
 
-.editor :global(.collaboration-cursor__label) {
+.editor :global(.ProseMirror-yjs-cursor) > div {
   position: absolute;
   top: -1.4em;
   left: -1px;
