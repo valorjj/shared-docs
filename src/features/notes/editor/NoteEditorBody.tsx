@@ -8,6 +8,9 @@ import { TaskList } from '@tiptap/extension-task-list'
 import { TaskItem } from '@tiptap/extension-task-item'
 import { Table, TableRow, TableCell, TableHeader } from '@tiptap/extension-table'
 import { Highlight } from '@tiptap/extension-highlight'
+import Collaboration from '@tiptap/extension-collaboration'
+import { CollabCursor } from '../collab/CollabCursorExtension'
+import type { NoteCollaboration } from '../collab/useNoteCollaboration'
 import { absoluteFileUrl, useNotes } from '../api'
 import { CalcSnapshot } from '../../calc/embed/CalcSnapshot'
 import { DataSnapshot } from '../../snapshots/DataSnapshot'
@@ -61,6 +64,11 @@ type Props = {
   /** When true, hides workspace-coupled picker slash-menu entries and skips
    *  file upload on paste/drop.  Core text formatting stays fully available. */
   minimal?: boolean
+  /** Live collaboration session for this note — null when disabled (PRIVATE
+   *  notes have nothing to co-edit) or not yet connected. */
+  collab?: NoteCollaboration
+  /** Cursor identity broadcast to peers when `collab` is active. */
+  collabUser?: { name: string; color: string }
 }
 
 const IMAGE_MIME = /^image\//
@@ -79,6 +87,8 @@ export default function NoteEditorBody({
   registerEditor,
   onRequestLinkDialog,
   minimal = false,
+  collab,
+  collabUser,
 }: Props) {
   const lastNoteId = useRef(noteId)
 
@@ -170,6 +180,15 @@ export default function NoteEditorBody({
         onUpdate: setMentionState,
         onClose: () => setMentionState(null),
       }),
+      ...(collab
+        ? [
+            Collaboration.configure({ document: collab.yDoc, field: 'default' }),
+            CollabCursor.configure({
+              provider: collab.provider,
+              user: collabUser ?? { name: '익명', color: '#61afef' },
+            }),
+          ]
+        : []),
     ],
     content: initialBody || '',
     editable: canEdit,
@@ -207,7 +226,24 @@ export default function NoteEditorBody({
     onUpdate({ editor: e }) {
       onBodyChange(e.getHTML())
     },
-  })
+  }, [collab?.yDoc])
+
+  // First opener of a note has no peer to sync from — seed the Y.Doc from the
+  // last saved snapshot. A joiner who connects while someone else is already
+  // in the room instead receives their live state via the sync protocol, so
+  // this only fires when the fragment comes back empty after sync completes.
+  useEffect(() => {
+    if (!editor || !collab) return
+    const handleSync = (isSynced: boolean) => {
+      if (isSynced && collab.yDoc.getXmlFragment('default').length === 0 && initialBody) {
+        editor.commands.setContent(initialBody, { emitUpdate: false })
+      }
+    }
+    collab.provider.on('sync', handleSync)
+    return () => {
+      collab.provider.off('sync', handleSync)
+    }
+  }, [editor, collab, initialBody])
 
   async function handleFileInsert(file: File) {
     if (!editor) return
