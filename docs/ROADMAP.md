@@ -98,9 +98,9 @@ The original wedge of the product. `Plan → SubPlan → Option (with per-member
 
 A unified 전체 워크스페이스 view that overlays the calendars of every workspace a user belongs to (work + family + hobby), each color-coded, each toggleable. Design/plan: [`plans/2026-06-19-cross-workspace-calendar-design.md`](plans/2026-06-19-cross-workspace-calendar-design.md).
 
-### Presence on shared notes — not started
+### Real-time collaborative editing on shared notes — ✅ shipped 2026-07-02
 
-Tiptap "awareness" — partner's avatar + cursor color when both viewing the same note. No real-time editing (last-write-wins remains). Uses Y.js awareness over WebSocket, no CRDT sync. This is the only post-v2 direction from VISION.md still unbuilt.
+Started as "presence" (Tiptap awareness, no real-time editing) but that framing turned out to be technically unstable — live cursor position only stays meaningful if the underlying document is also synced. Shipped as full real-time collaborative editing instead: Yjs CRDT via a protocol-blind Spring WebSocket relay, ephemeral session sync (`Note.body` persistence unchanged), live colored cursors + an avatar stack. This was the last unbuilt post-v2 direction from VISION.md. Design/plan: [`plans/2026-07-02-realtime-collaboration-design.md`](plans/2026-07-02-realtime-collaboration-design.md).
 
 ## Deferred indefinitely
 

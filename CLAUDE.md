@@ -1,6 +1,8 @@
 # CLAUDE.md
 
-> Project bible. Last revised: 2026-06-19 — multi-tenant v2 (Phases A–F) **shipped to production**, and the full Decisions backlog plus the post-v2 multi-calendar direction are **also shipped**. **Open Google sign-up is already live** — the rebuild removed the email allowlist; there is no gate to flip. Going public = sharing the URL.
+> Project bible. Last revised: 2026-07-02 — multi-tenant v2 (Phases A–F) **shipped to production**, the full Decisions backlog, the post-v2 multi-calendar direction, and now **real-time collaborative editing on shared notes** are **also shipped**. **Open Google sign-up is already live** — the rebuild removed the email allowlist; there is no gate to flip. Going public = sharing the URL.
+>
+> **2026-07-02 shipped:** **Real-time collaborative editing on shared notes** — Yjs CRDT via a protocol-blind Spring WebSocket relay (`/ws/notes/{noteId}`), ephemeral session sync (no permanent Yjs state — `Note.body` persistence via the existing debounced PATCH is unchanged). Live colored cursors (custom extension wrapping `@tiptap/y-tiptap`'s `yCursorPlugin` — the official cursor package is incompatible with this Tiptap version) + an avatar stack of who's currently viewing. Also fixed a prerequisite gap: `NoteService.update()` was author-only for every note, even WORKSPACE-visibility ones — any active workspace member can now edit a WORKSPACE note's title/body/pinned (PRIVATE notes and visibility changes stay author-only). This reverses VISION.md's "not a real-time CRDT editor" line — see the amendment there. Design/plan: `docs/plans/2026-07-02-realtime-collaboration-{design,plan}.md`.
 >
 > **2026-06-19 shipped:** **Cross-workspace calendar overlay** (전체 워크스페이스) — toggle to overlay every workspace's calendar in one view, per-workspace filter chips, workspace label on events, click-to-switch-active-workspace. `GET /api/calendar/events/all` (membership-enforced merge). This was VISION.md's "sweet spot" post-v2 direction — built ahead of schedule. Design/plan: `docs/plans/2026-06-19-cross-workspace-calendar-{design,plan}.md`.
 >
@@ -119,7 +121,7 @@ ESLint enforces 1–6 mechanically. The rest is review discipline.
 | Abuse protection / rate-limiting | **Shipped 2026-06-11.** Per-user write-throttle (`RateLimitFilter`, Bucket4j in-memory, 429 + Retry-After, off in `test` profile), per-user upload quota (413 over `app.storage.per-user-quota-bytes`, 500MB), global upload-dir disk guard in `FileStorageService.store()` (413 over `app.storage.total-quota-bytes`, 10GB). **Deferred:** Cloudflare edge rules + signup/workspace caps. |
 | Open public sign-up | **Already live** — no allowlist gate in code (removed in the rebuild). Going public = share the URL. |
 | Multi-calendar overlay | **Shipped 2026-06-19.** 전체 워크스페이스 toggle overlays every workspace's calendar, per-workspace filter chips, `GET /api/calendar/events/all` (membership-enforced). |
-| Presence on shared notes | **Not started.** Only remaining post-v2 direction from VISION.md. |
+| Real-time collaborative editing on shared notes | **Shipped 2026-07-02.** Yjs CRDT via a protocol-blind Spring WebSocket relay (`/ws/notes/{noteId}`); ephemeral session sync, `Note.body` persistence unchanged. Live colored cursors + avatar stack. Fixed a prerequisite gap where non-authors couldn't edit WORKSPACE notes at all. Design/plan: `docs/plans/2026-07-02-realtime-collaboration-{design,plan}.md`. |
 
 ## Routes
 

@@ -1,6 +1,6 @@
 # Vision
 
-> Last revised: 2026-06-19 — multi-tenant v2 direction, now **built and deployed** (Phases A–F shipped 2026-06; `main` is live). The "private 2-person app" framing from 2026-05-28 was reversed; see `plans/2026-05-29-multi-tenant-v2.md`. Open Google sign-up is already live (the rebuild removed the email allowlist — no gate to flip); going public is just sharing the URL. The Decisions backlog (§4 Pillar 3) and the multi-calendar overlay (§5) — both listed below as "post-v2" — have since shipped; only presence (§5) remains unbuilt.
+> Last revised: 2026-07-02 — multi-tenant v2 direction, now **built and deployed** (Phases A–F shipped 2026-06; `main` is live). The "private 2-person app" framing from 2026-05-28 was reversed; see `plans/2026-05-29-multi-tenant-v2.md`. Open Google sign-up is already live (the rebuild removed the email allowlist — no gate to flip); going public is just sharing the URL. The Decisions backlog (§4 Pillar 3), the multi-calendar overlay (§5), and real-time collaborative editing on shared notes (§6, reversing the earlier "not a CRDT editor" line) — all listed elsewhere in this doc as "post-v2" or "not this" — have since shipped.
 
 ## 1. What this is
 
@@ -65,7 +65,7 @@ Each workspace has its own calendar (anniversaries + todos + purchases + settlem
 A short, deliberate list of things this product will not become:
 
 - ❌ **Not a Notion / Slack at scale.** Workspaces stay small (designed for 2–10, not 200). No org-charts, no @everyone, no notification systems.
-- ❌ **Not a real-time CRDT editor.** Last-write-wins for the foreseeable future; presence (avatar + cursor) only.
+- ✅ ~~Not a real-time CRDT editor~~ — **reversed 2026-07-02**: shared (WORKSPACE-visibility) notes now support real-time collaborative editing via Yjs, with live colored cursors. This stayed narrower than it sounds: sync is ephemeral (session-only, in-memory `Y.Doc`s relayed by a protocol-blind WebSocket endpoint) — persistence is still a plain saved snapshot via the existing debounced `PATCH`, not a permanent CRDT history. PRIVATE notes are unaffected (author-only, nothing to co-edit). See `docs/plans/2026-07-02-realtime-collaboration-{design,plan}.md`.
 - ❌ **Not an iMessage/SMS/email scraper.** We will never read your messages. Hard rule.
 - ❌ **Not a Bank Salad alternative.** No 마이데이터, no bank integration. Manual entry only.
 - ❌ **Not commercial.** No billing, no pricing, no plans, no upsells. Free for everyone who can sign in with Google. (May eventually need a "pay for storage above X" model if costs grow, but not before there's a reason to.)
