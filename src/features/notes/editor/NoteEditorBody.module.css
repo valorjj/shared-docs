@@ -239,3 +239,30 @@
   outline: 1px solid color-mix(in srgb, var(--c-accent) 60%, transparent);
   outline-offset: 0;
 }
+
+/* ── Remote cursor decorations from yCursorPlugin ── */
+.editor :global(.ProseMirror-yjs-cursor) {
+  position: relative;
+  margin-left: -1px;
+  margin-right: -1px;
+  border-left: 1.5px solid;
+  border-right: none;
+  word-break: normal;
+  pointer-events: none;
+}
+
+.editor :global(.ProseMirror-yjs-cursor) > div {
+  position: absolute;
+  top: -1.4em;
+  left: -1px;
+  font-size: 11px;
+  font-weight: var(--fw-medium);
+  font-family: var(--font-sans);
+  line-height: 1;
+  white-space: nowrap;
+  color: var(--c-surface);
+  padding: 2px 5px;
+  border-radius: var(--r-xs);
+  pointer-events: none;
+  user-select: none;
+}
