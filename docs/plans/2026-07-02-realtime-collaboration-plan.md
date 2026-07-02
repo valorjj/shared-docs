@@ -993,8 +993,10 @@ In the `"dependencies"` block, alongside the existing `@tiptap/*` entries, add (
 
 ```json
     "@tiptap/extension-collaboration": "^3.23.4",
-    "@tiptap/extension-collaboration-cursor": "^3.23.4",
+    "@tiptap/y-tiptap": "^3.0.5",
 ```
+
+**Not** `@tiptap/extension-collaboration-cursor` — verified against the npm registry that this package's last release is a single `3.0.0` built against the standalone `y-prosemirror` package, while `@tiptap/extension-collaboration@3.23.4` has since moved to Tiptap's own actively-maintained fork, `@tiptap/y-tiptap` (peer dep confirmed via `npm view @tiptap/extension-collaboration@3.23.4 peerDependencies`: exact `@tiptap/core: 3.23.4` + `@tiptap/y-tiptap: ^3.0.2`). Running both packages together would mean two independent, incompatible Yjs↔ProseMirror bindings active at once. `@tiptap/y-tiptap` exports its own `yCursorPlugin` (confirmed via its published `.d.ts`) with the same shape the old extension used internally — Task 9 wires cursors directly against that instead of the stale extension package.
 
 And add near `axios`/`jwt-decode` (alphabetical):
 
@@ -1003,10 +1005,12 @@ And add near `axios`/`jwt-decode` (alphabetical):
     "yjs": "^13.6.27",
 ```
 
+`y-websocket@2.0.4`'s own dependencies already include `y-protocols@^1.0.5` (satisfies `@tiptap/y-tiptap`'s peer requirement of `^1.0.1` transitively) and it peer-requires `yjs@^13.5.6` (satisfied by `^13.6.27` above) — no additional packages needed.
+
 - [ ] **Step 2: Install**
 
 Run: `npm install`
-Expected: lockfile updates, no peer-dependency errors.
+Expected: lockfile updates, no peer-dependency errors. If `npm install` reports an unmet peer dependency or version conflict for any of these four packages against the versions already pinned for the existing `@tiptap/*` family (all `3.23.4`) or against each other, STOP and report BLOCKED with the exact npm output — do not substitute different versions on your own judgment; this is exactly the kind of Tiptap-ecosystem version-compatibility question that already needed one correction to this plan and needs a second pair of eyes rather than a guess.
 
 - [ ] **Step 3: Verify the build still succeeds**
 
@@ -1133,20 +1137,71 @@ git commit -m "feat(notes): useNoteCollaboration hook owns the Y.Doc/WebsocketPr
 ### Task 9: Wire collaboration into the note editor + avatar stack
 
 **Files:**
+- Create: `shared-docs/src/features/notes/collab/CollabCursorExtension.ts`
 - Modify: `shared-docs/src/features/notes/editor/NoteEditorBody.tsx`
 - Modify: `shared-docs/src/features/notes/editor/NoteEditor.tsx`
 - Create: `shared-docs/src/features/notes/collab/CollabAvatarStack.tsx`
 
 **Interfaces:**
 - Consumes: `useNoteCollaboration` (Task 8), `collabColorForUser` (Task 7), `useAuth()` → `AuthUser { userId: number; name: string; pictureUrl: string | null }` (existing).
+- Produces: `CollabCursor` (a Tiptap `Extension`) — consumed by this same task's `NoteEditorBody.tsx` wiring below.
 
-- [ ] **Step 1: Add collaboration props to `NoteEditorBody`**
+- [ ] **Step 1: Implement the cursor extension**
+
+`@tiptap/extension-collaboration-cursor`'s last release (`3.0.0`) depends on the standalone `y-prosemirror` package, while `@tiptap/extension-collaboration` (added in Task 6) has moved to Tiptap's own maintained fork, `@tiptap/y-tiptap` — running both would mean two incompatible Yjs↔ProseMirror bindings active at once (verified against the npm registry during Task 6). `@tiptap/y-tiptap` exports its own `yCursorPlugin`, the same primitive the old extension wrapped internally — this extension wires it up directly:
+
+```typescript
+import { Extension } from '@tiptap/core'
+import { yCursorPlugin } from '@tiptap/y-tiptap'
+import type { WebsocketProvider } from 'y-websocket'
+
+export type CollabCursorOptions = {
+  provider: WebsocketProvider | null
+  user: { name: string; color: string }
+}
+
+/**
+ * Stands in for @tiptap/extension-collaboration-cursor, which hasn't shipped
+ * a release compatible with @tiptap/extension-collaboration's move to
+ * @tiptap/y-tiptap (its last release still depends on the unrelated
+ * y-prosemirror package). Wires cursor decorations directly against
+ * y-tiptap's own yCursorPlugin — the same binding Collaboration already uses
+ * under the hood, so there's exactly one Yjs↔ProseMirror binding active.
+ */
+export const CollabCursor = Extension.create<CollabCursorOptions>({
+  name: 'collabCursor',
+
+  addOptions() {
+    return {
+      provider: null,
+      user: { name: '', color: '' },
+    }
+  },
+
+  addProseMirrorPlugins() {
+    if (!this.options.provider) return []
+    this.options.provider.awareness.setLocalStateField('user', this.options.user)
+    return [yCursorPlugin(this.options.provider.awareness)]
+  },
+})
+```
+
+Verify: `npx tsc -b --noEmit`. Expected: 0 errors.
+
+Commit:
+
+```bash
+git add src/features/notes/collab/CollabCursorExtension.ts
+git commit -m "feat(notes): CollabCursor extension wraps y-tiptap's yCursorPlugin directly"
+```
+
+- [ ] **Step 2: Add collaboration props to `NoteEditorBody`**
 
 In `NoteEditorBody.tsx`, add to the imports:
 
 ```typescript
 import Collaboration from '@tiptap/extension-collaboration'
-import CollaborationCursor from '@tiptap/extension-collaboration-cursor'
+import { CollabCursor } from '../collab/CollabCursorExtension'
 import type { NoteCollaboration } from '../collab/useNoteCollaboration'
 ```
 
@@ -1183,7 +1238,7 @@ In the `useEditor()` call, add to the `extensions` array (right after the last e
     ...(collab
       ? [
           Collaboration.configure({ document: collab.yDoc, field: 'default' }),
-          CollaborationCursor.configure({
+          CollabCursor.configure({
             provider: collab.provider,
             user: collabUser ?? { name: '익명', color: '#61afef' },
           }),
@@ -1205,7 +1260,7 @@ to:
 }, [collab?.yDoc])
 ```
 
-- [ ] **Step 2: Seed the Y.Doc from the saved body when no peer answers sync**
+- [ ] **Step 3: Seed the Y.Doc from the saved body when no peer answers sync**
 
 Add this effect in `NoteEditorBody.tsx`, after the `useEditor` call (needs access to the `editor` variable it returns):
 
@@ -1228,7 +1283,7 @@ Add this effect in `NoteEditorBody.tsx`, after the `useEditor` call (needs acces
   }, [editor, collab, initialBody])
 ```
 
-- [ ] **Step 3: Compute collaboration state in `NoteEditor.tsx` and pass it down**
+- [ ] **Step 4: Compute collaboration state in `NoteEditor.tsx` and pass it down**
 
 Add imports:
 
@@ -1282,7 +1337,7 @@ Render the avatar stack in `NoteEditorMeta`'s row — add it right before the cl
           {collab && <CollabAvatarStack provider={collab.provider} />}
 ```
 
-- [ ] **Step 4: Implement the avatar stack component**
+- [ ] **Step 5: Implement the avatar stack component**
 
 ```typescript
 import { useEffect, useState } from 'react'
@@ -1320,12 +1375,12 @@ export default function CollabAvatarStack({ provider }: { provider: WebsocketPro
 }
 ```
 
-- [ ] **Step 5: Verify**
+- [ ] **Step 6: Verify**
 
 Run: `npx tsc -b --noEmit && npx eslint src/features/notes`
 Expected: 0 errors.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 7: Commit**
 
 ```bash
 git add src/features/notes/editor/NoteEditorBody.tsx src/features/notes/editor/NoteEditor.tsx src/features/notes/collab/CollabAvatarStack.tsx

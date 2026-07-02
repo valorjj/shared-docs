@@ -66,10 +66,12 @@ Two new extensions added when the note is WORKSPACE-visibility (skipped for PRIV
 
 ```ts
 Collaboration.configure({ document: yDoc }),
-CollaborationCursor.configure({ provider, user: { name, color } }),
+CollabCursor.configure({ provider, user: { name, color } }),
 ```
 
 `Collaboration` keeps a normal ProseMirror doc underneath, so `editor.getHTML()` / the existing debounced autosave effect need no changes at all.
+
+**Implementation note (discovered during execution, corrected in the plan):** `@tiptap/extension-collaboration-cursor`'s last release depends on the standalone `y-prosemirror` package, while `@tiptap/extension-collaboration` has since moved to Tiptap's own maintained fork, `@tiptap/y-tiptap` — running both would mean two incompatible Yjs↔ProseMirror bindings active at once. `CollabCursor` above is a small custom extension wrapping `@tiptap/y-tiptap`'s own `yCursorPlugin` directly, not the retired npm package. See the implementation plan's Task 6/9 for the full rationale and code.
 
 ### Visuals
 
