@@ -61,34 +61,50 @@ export default function NoteEditor({ note, onDeleted, onBack }: Props) {
   const pendingBody = useRef<string | null>(null)
   const autosaveTimer = useRef<number | null>(null)
   const [bodyDirty, setBodyDirty] = useState(false)
-  // Lets the onError retry below re-invoke the latest flushBody without a
-  // self-reference inside its own useCallback (react-hooks/immutability).
+  // True while a PATCH is in flight. Without this, a slow response (Cloudflare
+  // Tunnel round-trip) plus the user typing again after the 600ms debounce
+  // re-arms lets a SECOND PATCH fire before the first one returns — two
+  // requests from the same tab racing the row's optimistic-lock version. Root
+  // cause of the "Record has changed since last read" conflicts, no second
+  // collaborator required.
+  const savingInFlight = useRef(false)
+  // Lets the retry/requeue paths below re-invoke the latest flushBody without
+  // a self-reference inside its own useCallback (react-hooks/immutability).
   const flushBodyRef = useRef<() => void>(() => {})
 
   const flushBody = useCallback(() => {
     if (pendingBody.current === null) return
+    if (savingInFlight.current) {
+      // A save is already in flight — don't start a second one. The pending
+      // content stays queued; try again shortly.
+      if (autosaveTimer.current) window.clearTimeout(autosaveTimer.current)
+      autosaveTimer.current = window.setTimeout(() => flushBodyRef.current(), AUTOSAVE_MS)
+      return
+    }
     const body = pendingBody.current
     pendingBody.current = null
     setBodyDirty(false)
+    savingInFlight.current = true
     updateNote.mutate(
       { id: note.id, payload: { body } },
       {
+        onSettled: () => {
+          savingInFlight.current = false
+        },
         onError: () => {
-          // A concurrent editor's save can race this one on the row's
-          // optimistic-lock version. Don't silently drop the edit — put it
-          // back as pending (unless a newer edit already queued behind it;
-          // getHTML() snapshots are full-document, so the newer one already
-          // includes everything this one had) and retry on the next tick.
-          if (pendingBody.current === null) {
-            pendingBody.current = body
-          }
+          // Still lost a race (e.g. a real second collaborator). Don't
+          // silently drop the edit — requeue and retry. Prefer the editor's
+          // current HTML over the stale failed snapshot: it's a full-document
+          // snapshot, so it already includes this edit plus anything that
+          // landed (locally or via Yjs sync) since the failed attempt.
+          pendingBody.current = editor?.getHTML() ?? body
           setBodyDirty(true)
           if (autosaveTimer.current) window.clearTimeout(autosaveTimer.current)
           autosaveTimer.current = window.setTimeout(() => flushBodyRef.current(), AUTOSAVE_MS)
         },
       },
     )
-  }, [note.id, updateNote])
+  }, [note.id, updateNote, editor])
 
   useEffect(() => {
     flushBodyRef.current = flushBody
