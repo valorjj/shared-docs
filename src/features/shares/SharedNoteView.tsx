@@ -23,11 +23,14 @@ export default function SharedNoteView({ noteId }: Props) {
   const [title, setTitle] = useState<string | null>(null)
 
   const canEdit = shared.data?.effectivePermission === 'EDIT'
-  // Backend gates the WS room the same way: workspace membership OR a
-  // cross-workspace EDIT share — VIEW-only recipients never get a room, so
-  // don't bother opening a socket for them.
+  // Collab stays WORKSPACE-visibility-only (matches NoteEditor.tsx's own
+  // gate): a PRIVATE note shared cross-workspace never gets a room even with
+  // an EDIT grant (NoteCollabAccessService rejects it), so don't attempt the
+  // socket in that case — only a WORKSPACE note shared to an outside EDIT
+  // collaborator actually gets one.
+  const canCollaborate = canEdit && shared.data?.note.visibility === 'WORKSPACE'
   const { user } = useAuth()
-  const collab = useNoteCollaboration(noteId, canEdit)
+  const collab = useNoteCollaboration(noteId, canCollaborate)
   const collabUser = user ? { name: user.name, color: collabColorForUser(user.userId) } : undefined
 
   const flush = useCallback(() => {
