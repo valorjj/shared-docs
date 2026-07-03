@@ -9,6 +9,7 @@ import { TaskItem } from '@tiptap/extension-task-item'
 import { Table, TableRow, TableCell, TableHeader } from '@tiptap/extension-table'
 import { Highlight } from '@tiptap/extension-highlight'
 import Collaboration from '@tiptap/extension-collaboration'
+import { ySyncPluginKey } from '@tiptap/y-tiptap'
 import { CollabCursor } from '../collab/CollabCursorExtension'
 import type { NoteCollaboration } from '../collab/useNoteCollaboration'
 import { absoluteFileUrl, useNotes } from '../api'
@@ -229,7 +230,13 @@ export default function NoteEditorBody({
         return true
       },
     },
-    onUpdate({ editor: e }) {
+    onUpdate({ editor: e, transaction }) {
+      // The Yjs binding replays every remote peer's edit into this editor as
+      // a local ProseMirror transaction (tagged isChangeOrigin), so without
+      // this guard every connected client would re-PATCH the full body on
+      // every OTHER client's keystroke too — N-1 redundant writers racing
+      // the same row's optimistic-lock version on every change.
+      if (transaction.getMeta(ySyncPluginKey)?.isChangeOrigin) return
       onBodyChange(e.getHTML())
     },
   }, [collab?.yDoc])

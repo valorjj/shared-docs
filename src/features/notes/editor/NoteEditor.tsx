@@ -61,14 +61,38 @@ export default function NoteEditor({ note, onDeleted, onBack }: Props) {
   const pendingBody = useRef<string | null>(null)
   const autosaveTimer = useRef<number | null>(null)
   const [bodyDirty, setBodyDirty] = useState(false)
+  // Lets the onError retry below re-invoke the latest flushBody without a
+  // self-reference inside its own useCallback (react-hooks/immutability).
+  const flushBodyRef = useRef<() => void>(() => {})
 
   const flushBody = useCallback(() => {
     if (pendingBody.current === null) return
     const body = pendingBody.current
     pendingBody.current = null
     setBodyDirty(false)
-    updateNote.mutate({ id: note.id, payload: { body } })
+    updateNote.mutate(
+      { id: note.id, payload: { body } },
+      {
+        onError: () => {
+          // A concurrent editor's save can race this one on the row's
+          // optimistic-lock version. Don't silently drop the edit — put it
+          // back as pending (unless a newer edit already queued behind it;
+          // getHTML() snapshots are full-document, so the newer one already
+          // includes everything this one had) and retry on the next tick.
+          if (pendingBody.current === null) {
+            pendingBody.current = body
+          }
+          setBodyDirty(true)
+          if (autosaveTimer.current) window.clearTimeout(autosaveTimer.current)
+          autosaveTimer.current = window.setTimeout(() => flushBodyRef.current(), AUTOSAVE_MS)
+        },
+      },
+    )
   }, [note.id, updateNote])
+
+  useEffect(() => {
+    flushBodyRef.current = flushBody
+  }, [flushBody])
 
   const scheduleBodySave = useCallback(
     (html: string) => {
