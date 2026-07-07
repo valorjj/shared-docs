@@ -102,6 +102,10 @@ A unified 전체 워크스페이스 view that overlays the calendars of every wo
 
 Started as "presence" (Tiptap awareness, no real-time editing) but that framing turned out to be technically unstable — live cursor position only stays meaningful if the underlying document is also synced. Shipped as full real-time collaborative editing instead: Yjs CRDT via a protocol-blind Spring WebSocket relay, ephemeral session sync (`Note.body` persistence unchanged), live colored cursors + an avatar stack. This was the last unbuilt post-v2 direction from VISION.md. Design/plan: [`plans/2026-07-02-realtime-collaboration-design.md`](plans/2026-07-02-realtime-collaboration-design.md).
 
+### Real-time collaboration on Decisions — 🔨 built on branch (2026-07-07), pending smoke + merge
+
+Extends real-time to the Decisions pillar. Decisions data is server-authoritative (MariaDB + optimistic locking), so **not** Yjs-on-the-data: after each write commits, an `@TransactionalEventListener(AFTER_COMMIT)` broadcasts a `{"planId":…}` frame over a listen-only WS `/ws/decisions/{workspaceId}` and every client re-runs its `decisionKeys.scope(wsId)` React Query invalidation (invalidate-on-reconnect = self-healing). Presence is a separate Yjs-awareness channel `/ws/plans/{planId}` + avatar stack. Both ride a **shared collab seam** (`CollabRoomRegistry`/`BlindRelayHandler`/`JwtQueryTokenInterceptor`) onto which the shipped notes relay was retrofitted. Cross-instance fan-out deferred to the `shared-doc-yjs` lab. Built + reviewed on `decisions-realtime-collab` (both repos, unpushed); backend suite green. **Outstanding:** manual 2-browser smoke (incl. notes regression) before merge/deploy. Discussion-note collab = severable follow-up (unbuilt). Design/plan: [`plans/2026-07-07-decisions-realtime-collab-design.md`](plans/2026-07-07-decisions-realtime-collab-design.md).
+
 ## Deferred indefinitely
 
 | Item | Why |
