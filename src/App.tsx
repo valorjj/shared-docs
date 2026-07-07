@@ -21,6 +21,7 @@ const CalendarPage     = lazy(() => import('./pages/CalendarPage'))
 const CalcWorkspace    = lazy(() => import('./features/calc/CalcWorkspace'))
 const DecisionList     = lazy(() => import('./features/decisions/DecisionList'))
 const PlanDetail       = lazy(() => import('./features/decisions/PlanDetail'))
+const DecisionsCollabBoundary = lazy(() => import('./features/decisions/collab/DecisionsCollabBoundary'))
 const SharedItemList   = lazy(() => import('./features/shares/SharedItemList'))
 const Admin            = lazy(() => import('./pages/Admin'))
 const SettingsCategories = lazy(() => import('./pages/SettingsCategories'))
@@ -70,8 +71,10 @@ function App() {
             </Route>
             <Route path="/calendar" element={<CalendarPage />} />
             <Route path="/calc" element={<CalcWorkspace />} />
-            <Route path="/decisions" element={<DecisionList />} />
-            <Route path="/decisions/:planId" element={<PlanDetail />} />
+            <Route element={<DecisionsCollabBoundary />}>
+              <Route path="/decisions" element={<DecisionList />} />
+              <Route path="/decisions/:planId" element={<PlanDetail />} />
+            </Route>
             <Route path="/shared" element={<SharedItemList />} />
             <Route path="/shared/:noteId" element={<SharedItemList />} />
             {/* Per-workspace category management — any member (Phase C). */}
