@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import * as Y from 'yjs'
 import { WebsocketProvider } from 'y-websocket'
 import { getToken } from '../../../auth/tokenStorage'
@@ -16,7 +16,6 @@ type Peer = PeerUser & { clientId: number }
 export default function DecisionPresenceStack({ planId }: { planId: number }) {
   const { user } = useAuth()
   const [peers, setPeers] = useState<Peer[]>([])
-  const providerRef = useRef<WebsocketProvider | null>(null)
 
   useEffect(() => {
     const token = getToken()
@@ -24,7 +23,6 @@ export default function DecisionPresenceStack({ planId }: { planId: number }) {
 
     const yDoc = new Y.Doc()
     const provider = new WebsocketProvider(`${WS_BASE}/ws/plans`, String(planId), yDoc, { params: { token } })
-    providerRef.current = provider
     provider.awareness.setLocalStateField('user', { name: user.name, color: collabColorForUser(user.userId) })
 
     const update = () => {
@@ -43,7 +41,6 @@ export default function DecisionPresenceStack({ planId }: { planId: number }) {
       provider.awareness.off('change', update)
       provider.destroy()
       yDoc.destroy()
-      providerRef.current = null
       setPeers([])
     }
   }, [planId, user])
