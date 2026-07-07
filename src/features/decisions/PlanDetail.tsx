@@ -25,6 +25,7 @@ import TitleDescModal from './TitleDescModal'
 import DecisionModal from './DecisionModal'
 import ConnectModal, { type ConnectCandidate } from './ConnectModal'
 import DiscussionPane from './DiscussionPane'
+import DecisionPresenceStack from './collab/DecisionPresenceStack'
 import styles from './PlanDetail.module.css'
 import type { OptionNode, SubPlanNode } from './types'
 
@@ -323,6 +324,7 @@ export default function PlanDetail() {
             <span className={styles.controlSpacer} />
             <Button variant="ghost" size="sm" leading={<MessagesSquare size={14} />}
               onClick={toggleDiscussion}>논의</Button>
+            <DecisionPresenceStack planId={planId} />
             <div className={styles.stripLifecycle}>{lifecycleControls}</div>
           </div>
 
