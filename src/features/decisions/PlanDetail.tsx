@@ -15,7 +15,7 @@ import {
   useTimeline, useCreateEdge, useDeleteEdge, useReorderSubPlans,
   useLockPlan, useUnlockPlan, useCompletePlan, useUncompletePlan,
   useSetPlanDeadline, useClearPlanDeadline, useSetSubPlanDeadline, useClearSubPlanDeadline,
-  usePlanHierarchy, useCreatePlan,
+  usePlanHierarchy, useCreatePlan, usePromoteSubPlan,
 } from './api'
 import DeadlineChip from './DeadlineChip'
 import { deadlineLabel, toLocalDateString } from './deadlineLabel'
@@ -82,6 +82,7 @@ export default function PlanDetail() {
   const clearSubPlanDeadline = useClearSubPlanDeadline()
   const castVote = useCastVote()
   const retractVote = useRetractVote()
+  const promote = usePromoteSubPlan()
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
 
   const onDragEnd = (e: DragEndEvent) => {
@@ -273,7 +274,7 @@ export default function PlanDetail() {
       onHoverChange={(hovered) => setHoveredSubPlanId(hovered ? sp.id : null)}
       myUserId={myUserId}
       nameOf={nameOf}
-      busy={rate.isPending || lock.isPending || reopen.isPending || deleteSubPlan.isPending || deleteOption.isPending || castVote.isPending || retractVote.isPending}
+      busy={rate.isPending || lock.isPending || reopen.isPending || deleteSubPlan.isPending || deleteOption.isPending || castVote.isPending || retractVote.isPending || promote.isPending}
       onEdit={() => setEditingSubPlan(sp)}
       onDelete={() => { if (window.confirm('삭제할까요? 되돌릴 수 없어요.')) deleteSubPlan.mutate(sp.id) }}
       onAddOption={() => setAddingOptionFor(sp.id)}
@@ -291,6 +292,10 @@ export default function PlanDetail() {
       onVote={(o) => castVote.mutate(o.id)}
       onRetractVote={(o) => retractVote.mutate(o.id)}
       onOpenConnect={() => setConnectingFor(sp)}
+      onPromote={() => {
+        if (!window.confirm(`'${sp.title}' 안건을 하위결정으로 전환할까요? 선택지와 투표는 새 계획으로 옮겨져요.`)) return
+        promote.mutate(sp.id, { onSuccess: (p) => navigate(`/decisions/${p.id}`) })
+      }}
       locked={locked}
       onSetDeadline={(deadline) => setSubPlanDeadline.mutate({ id: sp.id, deadline })}
       onClearDeadline={() => clearSubPlanDeadline.mutate(sp.id)}
@@ -395,7 +400,7 @@ export default function PlanDetail() {
             </div>
           )}
 
-          {view === 'canvas' && <PlanCanvas tree={tree} locked={locked} />}
+          {view === 'canvas' && <PlanCanvas tree={tree} childPlans={childPlans} locked={locked} />}
 
           {view === 'timeline' && (
             timelineLoading
