@@ -29,6 +29,7 @@ import PlanModal from './PlanModal'
 import ConnectModal, { type ConnectCandidate } from './ConnectModal'
 import DiscussionPane from './DiscussionPane'
 import DecisionPresenceStack from './collab/DecisionPresenceStack'
+import PlanTreeNavigator from './PlanTreeNavigator'
 import styles from './PlanDetail.module.css'
 import type { OptionNode, SubPlanNode } from './types'
 
@@ -444,6 +445,8 @@ export default function PlanDetail() {
           )}
         </div>
       )}
+
+      {tree && hierarchy && <PlanTreeNavigator hierarchy={hierarchy} currentId={planId} />}
 
       {/* 안건 add/edit */}
       <TitleDescModal
