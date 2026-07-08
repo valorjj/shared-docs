@@ -71,7 +71,7 @@ export default function DecisionList() {
   const { sections, hasNamedGroup, groupOptions } = useMemo(() => toSections(plans ?? []), [plans])
 
   const onDiscard = (p: PlanSummary) => {
-    if (window.confirm('휴지통으로 이동할까요? 휴지통에서 언제든 복원할 수 있어요.')) discard.mutate(p.id)
+    if (window.confirm('휴지통으로 이동할까요? 하위결정도 함께 이동해요. 휴지통에서 언제든 복원할 수 있어요.')) discard.mutate(p.id)
   }
 
   const renderCard = (p: PlanSummary, view: 'board' | 'completed') => (
@@ -115,7 +115,7 @@ export default function DecisionList() {
       <div className={styles.cardActions}>
         <IconButton variant="ghost" size="sm" label="복원" onClick={() => restore.mutate(p.id)}><RotateCcw size={14} /></IconButton>
         <IconButton variant="ghost" size="sm" label="영구 삭제"
-          onClick={() => { if (window.confirm('계획과 모든 안건·선택지·결정이 완전히 사라집니다. 되돌릴 수 없어요.')) purge.mutate(p.id) }}>
+          onClick={() => { if (window.confirm('계획과 모든 하위결정·안건·선택지·결정이 완전히 사라집니다. 되돌릴 수 없어요.')) purge.mutate(p.id) }}>
           <Trash2 size={14} />
         </IconButton>
       </div>

@@ -23,7 +23,7 @@ export default function PlanTreeNavigator({ hierarchy, currentId }: Props) {
   })
 
   const renderNode = (node: PlanHierarchyNode, depth: number): ReactElement => (
-    <li key={node.id} className={styles.item}>
+    <li key={node.id}>
       <button
         type="button"
         className={`${styles.node}${node.id === currentId ? ' ' + styles.current : ''}`}
