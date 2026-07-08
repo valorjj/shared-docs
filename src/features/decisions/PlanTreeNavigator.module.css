@@ -1,0 +1,126 @@
+.toggle {
+  position: fixed;
+  right: var(--sp-4);
+  bottom: 96px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-pill);
+  background: var(--c-surface);
+  color: var(--c-text-muted);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  z-index: 30;
+}
+
+.toggle:hover {
+  background: var(--c-surface-tint);
+  color: var(--c-text);
+}
+
+.panel {
+  position: fixed;
+  right: var(--sp-4);
+  bottom: 96px;
+  width: 260px;
+  max-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  background: var(--c-surface);
+  box-shadow: var(--shadow-md);
+  z-index: 30;
+  overflow: hidden;
+}
+
+.panelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--sp-2) var(--sp-3);
+  border-bottom: 1px solid var(--c-border);
+}
+
+.panelTitle {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semi);
+  color: var(--c-text-muted);
+}
+
+.tree,
+.children {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.tree {
+  overflow-y: auto;
+  padding: var(--sp-2) 0;
+}
+
+.node {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  width: 100%;
+  padding: 6px 10px;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font-size: var(--fs-sm);
+  color: var(--c-text-muted);
+  text-align: left;
+  transition: background var(--t-fast);
+}
+
+.node:hover {
+  background: var(--c-surface-tint);
+  color: var(--c-text);
+}
+
+.current {
+  background: var(--c-primary-soft);
+  color: var(--c-text);
+  font-weight: var(--fw-medium);
+}
+
+.dot {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: var(--r-pill);
+}
+
+.dotActive {
+  background: var(--c-primary);
+}
+
+.dotDone {
+  background: var(--c-border-strong);
+}
+
+.nodeTitle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 767px) {
+  .toggle {
+    bottom: 152px; /* clear the 안건-추가 FAB */
+  }
+
+  .panel {
+    inset: auto 0 0 0;
+    width: auto;
+    max-height: 70vh;
+    border-radius: var(--r-lg) var(--r-lg) 0 0;
+    box-shadow: var(--shadow-lg);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}

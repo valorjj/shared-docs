@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useParams, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { Plus, Lock, LockOpen, CheckCircle2, RotateCcw, MessagesSquare } from 'lucide-react'
@@ -15,17 +15,21 @@ import {
   useTimeline, useCreateEdge, useDeleteEdge, useReorderSubPlans,
   useLockPlan, useUnlockPlan, useCompletePlan, useUncompletePlan,
   useSetPlanDeadline, useClearPlanDeadline, useSetSubPlanDeadline, useClearSubPlanDeadline,
+  usePlanHierarchy, useCreatePlan, usePromoteSubPlan,
 } from './api'
 import DeadlineChip from './DeadlineChip'
 import { deadlineLabel, toLocalDateString } from './deadlineLabel'
 import SortableSubPlanSection from './SortableSubPlanSection'
+import SubDecisionSection from './SubDecisionSection'
 import PlanCanvas from './PlanCanvas'
 import Timeline from './Timeline'
 import TitleDescModal from './TitleDescModal'
 import DecisionModal from './DecisionModal'
+import PlanModal from './PlanModal'
 import ConnectModal, { type ConnectCandidate } from './ConnectModal'
 import DiscussionPane from './DiscussionPane'
 import DecisionPresenceStack from './collab/DecisionPresenceStack'
+import PlanTreeNavigator from './PlanTreeNavigator'
 import styles from './PlanDetail.module.css'
 import type { OptionNode, SubPlanNode } from './types'
 
@@ -37,6 +41,18 @@ export default function PlanDetail() {
   const { activeId } = useActiveWorkspace()
 
   const { data: tree, isLoading, isError, error, refetch } = usePlanTree(planId)
+  const { data: hierarchy } = usePlanHierarchy(planId)
+  const navigate = useNavigate()
+  const hierarchyById = useMemo(
+    () => new Map((hierarchy?.nodes ?? []).map((n) => [n.id, n] as const)),
+    [hierarchy],
+  )
+  const childPlans = useMemo(
+    () => (hierarchy?.nodes ?? []).filter((n) => n.parentPlanId === planId),
+    [hierarchy, planId],
+  )
+  const createChild = useCreatePlan()
+  const [addingChild, setAddingChild] = useState(false)
   const { data: members } = useMembers(activeId)
   const nameOf = (uid: number) =>
     uid === myUserId ? '나' : members?.find((m) => m.userId === uid)?.name ?? '알 수 없음'
@@ -66,6 +82,7 @@ export default function PlanDetail() {
   const clearSubPlanDeadline = useClearSubPlanDeadline()
   const castVote = useCastVote()
   const retractVote = useRetractVote()
+  const promote = usePromoteSubPlan()
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
 
   const onDragEnd = (e: DragEndEvent) => {
@@ -134,7 +151,13 @@ export default function PlanDetail() {
           onClick={() => uncompletePlan.mutate(tree.id)}><RotateCcw size={16} /></IconButton>
       ) : (
         <IconButton variant="ghost" size="sm" label="완료" disabled={completePlan.isPending}
-          onClick={() => completePlan.mutate(tree.id)}><CheckCircle2 size={16} /></IconButton>
+          onClick={() => {
+            const open = childPlans.filter((c) => c.status === 'ACTIVE').length
+            const msg = open > 0
+              ? `미완료 하위결정 ${open}개가 있어요. 그래도 완료할까요?`
+              : '이 계획을 완료할까요?'
+            if (window.confirm(msg)) completePlan.mutate(tree.id)
+          }}><CheckCircle2 size={16} /></IconButton>
       )}
     </>
   )
@@ -251,7 +274,7 @@ export default function PlanDetail() {
       onHoverChange={(hovered) => setHoveredSubPlanId(hovered ? sp.id : null)}
       myUserId={myUserId}
       nameOf={nameOf}
-      busy={rate.isPending || lock.isPending || reopen.isPending || deleteSubPlan.isPending || deleteOption.isPending || castVote.isPending || retractVote.isPending}
+      busy={rate.isPending || lock.isPending || reopen.isPending || deleteSubPlan.isPending || deleteOption.isPending || castVote.isPending || retractVote.isPending || promote.isPending}
       onEdit={() => setEditingSubPlan(sp)}
       onDelete={() => { if (window.confirm('삭제할까요? 되돌릴 수 없어요.')) deleteSubPlan.mutate(sp.id) }}
       onAddOption={() => setAddingOptionFor(sp.id)}
@@ -269,6 +292,10 @@ export default function PlanDetail() {
       onVote={(o) => castVote.mutate(o.id)}
       onRetractVote={(o) => retractVote.mutate(o.id)}
       onOpenConnect={() => setConnectingFor(sp)}
+      onPromote={() => {
+        if (!window.confirm(`'${sp.title}' 안건을 하위결정으로 전환할까요? 선택지와 투표는 새 계획으로 옮겨져요.`)) return
+        promote.mutate(sp.id, { onSuccess: (p) => navigate(`/decisions/${p.id}`) })
+      }}
       locked={locked}
       onSetDeadline={(deadline) => setSubPlanDeadline.mutate({ id: sp.id, deadline })}
       onClearDeadline={() => clearSubPlanDeadline.mutate(sp.id)}
@@ -279,7 +306,38 @@ export default function PlanDetail() {
   return (
     <Page>
       <PageHeader>
-        <BackLink to="/decisions" mobileOnly>결정</BackLink>
+        <BackLink
+          to={tree?.parentPlanId != null ? `/decisions/${tree.parentPlanId}` : '/decisions'}
+          mobileOnly
+        >
+          {tree?.parentPlanId != null ? hierarchyById.get(tree.parentPlanId)?.title ?? '상위 결정' : '결정'}
+        </BackLink>
+        {tree && (
+          <nav className={styles.breadcrumb} aria-label="상위 결정 경로">
+            <Link to="/decisions">결정</Link>
+            {(hierarchy?.ancestorIds ?? []).length > 2 ? (
+              <>
+                <span className={styles.crumbSep}>›</span>
+                <span className={styles.crumbEllipsis}>…</span>
+                {hierarchy!.ancestorIds.slice(-1).map((id) => (
+                  <span key={id}>
+                    <span className={styles.crumbSep}>›</span>
+                    <Link to={`/decisions/${id}`}>{hierarchyById.get(id)?.title ?? '…'}</Link>
+                  </span>
+                ))}
+              </>
+            ) : (
+              (hierarchy?.ancestorIds ?? []).map((id) => (
+                <span key={id}>
+                  <span className={styles.crumbSep}>›</span>
+                  <Link to={`/decisions/${id}`}>{hierarchyById.get(id)?.title ?? '…'}</Link>
+                </span>
+              ))
+            )}
+            <span className={styles.crumbSep}>›</span>
+            <span className={styles.crumbCurrent} aria-current="page">{tree.title}</span>
+          </nav>
+        )}
         <div className={styles.headerRow}>
           <div className={styles.headerMain}>
             {tree?.groupLabel && <div className={styles.eyebrow}>{tree.groupLabel}</div>}
@@ -311,7 +369,7 @@ export default function PlanDetail() {
       {isError && <ErrorState error={error} onRetry={() => refetch()} />}
 
       {tree && (
-        <div className={discussionOpen ? styles.split : undefined}>
+        <div key={planId} className={`${discussionOpen ? styles.split : styles.mainWrap} ${styles.zoomEnter}`}>
           <div className={styles.main}>
           <div ref={sentinelRef} aria-hidden="true" className={styles.sentinel} />
           <div className={`${styles.controlStrip}${scrolled ? ' ' + styles.stuck : ''}`}>
@@ -342,7 +400,7 @@ export default function PlanDetail() {
             </div>
           )}
 
-          {view === 'canvas' && <PlanCanvas tree={tree} locked={locked} />}
+          {view === 'canvas' && <PlanCanvas tree={tree} childPlans={childPlans} locked={locked} />}
 
           {view === 'timeline' && (
             timelineLoading
@@ -373,6 +431,12 @@ export default function PlanDetail() {
                   )}
                 </div>
               )}
+              <SubDecisionSection
+                childPlans={childPlans}
+                locked={locked}
+                onOpen={(id) => navigate(`/decisions/${id}`)}
+                onAdd={() => setAddingChild(true)}
+              />
               {!locked && !discussionOpen && tree.subPlans.length > 0 && (
                 <Fab className={styles.fabAdd} label="안건 추가" onClick={() => setAddingSubPlan(true)} />
               )}
@@ -386,6 +450,8 @@ export default function PlanDetail() {
           )}
         </div>
       )}
+
+      {tree && hierarchy && <PlanTreeNavigator hierarchy={hierarchy} currentId={planId} />}
 
       {/* 안건 add/edit */}
       <TitleDescModal
@@ -420,6 +486,18 @@ export default function PlanDetail() {
         currentChosenId={decidingFor?.decision?.chosenOptionId ?? (decidingFor ? leadingOptionId(decidingFor) : null)}
         busy={lock.isPending}
         onSubmit={(payload) => { if (decidingFor) lock.mutate({ subPlanId: decidingFor.id, payload }, { onSuccess: () => setDecidingFor(null) }) }}
+      />
+
+      <PlanModal
+        open={addingChild}
+        onClose={() => setAddingChild(false)}
+        busy={createChild.isPending}
+        onSubmit={(p) =>
+          createChild.mutate(
+            { ...p, parentPlanId: planId },
+            { onSuccess: () => setAddingChild(false) },
+          )
+        }
       />
 
       <ConnectModal

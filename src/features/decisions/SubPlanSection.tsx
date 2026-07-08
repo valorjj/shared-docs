@@ -1,4 +1,4 @@
-import { Plus, Pencil, Trash2, Link2 } from 'lucide-react'
+import { Plus, Pencil, Trash2, Link2, GitFork } from 'lucide-react'
 import DeadlineChip from './DeadlineChip'
 import { useMemo, type ReactNode } from 'react'
 import { Button, IconButton, Badge } from '../../components/ui'
@@ -35,6 +35,7 @@ type Props = {
   onVote: (option: OptionNode) => void
   onRetractVote: (option: OptionNode) => void
   onOpenConnect?: () => void
+  onPromote?: () => void
   index: number
   dragHandle?: ReactNode
   locked?: boolean
@@ -45,7 +46,7 @@ type Props = {
 
 export default function SubPlanSection({
   subPlan, links, onJumpToSubPlan, highlight = 'normal', onHoverChange, myUserId, nameOf, busy, onEdit, onDelete, onAddOption,
-  onEditOption, onDeleteOption, onRate, onClearRating, onDecide, onReopen, onVote, onRetractVote, onOpenConnect, index, dragHandle, locked,
+  onEditOption, onDeleteOption, onRate, onClearRating, onDecide, onReopen, onVote, onRetractVote, onOpenConnect, onPromote, index, dragHandle, locked,
   onSetDeadline, onClearDeadline, deadlineBusy,
 }: Props) {
   const { decision } = subPlan
@@ -86,6 +87,11 @@ export default function SubPlanSection({
             {dragHandle}
             {onOpenConnect && (
               <IconButton variant="ghost" size="sm" label="안건 연결" onClick={onOpenConnect}><Link2 size={14} /></IconButton>
+            )}
+            {onPromote && decision == null && (
+              <IconButton variant="ghost" size="sm" label="하위결정으로 전환" onClick={onPromote}>
+                <GitFork size={14} />
+              </IconButton>
             )}
             <IconButton variant="ghost" size="sm" label="안건 수정" onClick={onEdit}><Pencil size={14} /></IconButton>
             <IconButton variant="ghost" size="sm" label="안건 삭제" onClick={onDelete}><Trash2 size={14} /></IconButton>

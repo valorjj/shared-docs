@@ -1,4 +1,4 @@
-import { Flag, ListPlus, CirclePlus, CheckCircle2, RefreshCw, RotateCcw, Lock, LockOpen, CalendarClock, CalendarX, type LucideIcon } from 'lucide-react'
+import { Flag, ListPlus, CirclePlus, CheckCircle2, RefreshCw, RotateCcw, Lock, LockOpen, CalendarClock, CalendarX, Trash2, GitFork, type LucideIcon } from 'lucide-react'
 import type { PlanEvent, PlanEventType } from './types'
 
 const ICONS: Record<PlanEventType, LucideIcon> = {
@@ -14,6 +14,9 @@ const ICONS: Record<PlanEventType, LucideIcon> = {
   PLAN_UNCOMPLETED: RotateCcw,
   DEADLINE_SET: CalendarClock,
   DEADLINE_CLEARED: CalendarX,
+  SUBDECISION_ADDED: ListPlus,
+  SUBDECISION_REMOVED: Trash2,
+  SUBPLAN_PROMOTED: GitFork,
 }
 
 export function planEventIcon(type: PlanEventType): LucideIcon {
@@ -53,6 +56,9 @@ export function planEventText(e: PlanEvent, actor: string): string {
       return e.subPlanId == null
         ? `${actor}님이 계획 기한을 없앴어요`
         : `${actor}님이 ${q(p.subPlanTitle)} 안건 기한을 없앴어요`
+    case 'SUBDECISION_ADDED': return `${actor}님이 하위결정 ${q(p.title)}을(를) 추가했어요`
+    case 'SUBDECISION_REMOVED': return `${actor}님이 하위결정 ${q(p.title)}을(를) 휴지통으로 보냈어요`
+    case 'SUBPLAN_PROMOTED': return `${actor}님이 안건 ${q(p.title)}을(를) 하위결정으로 전환했어요`
     default: return `${actor}님이 활동했어요`
   }
 }
