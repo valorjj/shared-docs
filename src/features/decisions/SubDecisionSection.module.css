@@ -1,0 +1,71 @@
+.section {
+  margin-top: var(--sp-6);
+}
+
+.heading {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semi);
+  color: var(--c-text-muted);
+  margin: 0 0 var(--sp-3);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--sp-3);
+}
+
+.card,
+.addCard {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  background: var(--c-surface);
+  cursor: pointer;
+  text-align: left;
+  transition: background var(--t-fast);
+}
+
+.card:hover,
+.addCard:hover {
+  background: var(--c-surface-tint);
+}
+
+.cardTitle {
+  font-size: var(--fs-base);
+  font-weight: var(--fw-medium);
+  color: var(--c-text);
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  font-size: var(--fs-xs);
+  color: var(--c-text-subtle);
+}
+
+.progress {
+  color: var(--c-primary);
+}
+
+.done {
+  color: var(--c-text-muted);
+}
+
+.addCard {
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  border-style: dashed;
+  border-color: var(--c-border-dashed);
+  color: var(--c-text-muted);
+  font-size: var(--fs-sm);
+}
