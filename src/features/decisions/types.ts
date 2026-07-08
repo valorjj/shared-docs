@@ -9,6 +9,7 @@ export type PlanSummary = {
   canvasX: number | null
   canvasY: number | null
   groupLabel: string | null
+  parentPlanId: number | null
   subPlanCount: number
   decidedCount: number
   createdByUserId: number
@@ -71,6 +72,7 @@ export type PlanTree = {
   canvasX: number | null
   canvasY: number | null
   groupLabel: string | null
+  parentPlanId: number | null
   createdByUserId: number
   createdAt: string
   lockedAt: string | null
@@ -81,8 +83,30 @@ export type PlanTree = {
   edges: SubPlanEdge[]
 }
 
+export type PlanHierarchyNode = {
+  id: number
+  parentPlanId: number | null
+  title: string
+  status: PlanStatus
+  deadline: string | null
+  completedAt: string | null
+  lockedAt: string | null
+  canvasX: number | null
+  canvasY: number | null
+  subPlanCount: number
+  decidedCount: number
+  childCount: number
+  createdAt: string
+}
+
+export type PlanHierarchy = {
+  rootId: number
+  ancestorIds: number[]
+  nodes: PlanHierarchyNode[]
+}
+
 // ── Payloads ──
-export type CreatePlanPayload = { title: string; description?: string; groupLabel?: string }
+export type CreatePlanPayload = { title: string; description?: string; groupLabel?: string; parentPlanId?: number }
 export type SetDeadlinePayload = { deadline: string }   // YYYY-MM-DD
 export type UpdatePlanPayload = { title?: string; description?: string; groupLabel?: string }
 export type TitleDescPayload = { title: string; description?: string }
@@ -97,6 +121,7 @@ export type PlanEventType =
   | 'PLAN_LOCKED' | 'PLAN_UNLOCKED'
   | 'PLAN_COMPLETED' | 'PLAN_UNCOMPLETED'
   | 'DEADLINE_SET' | 'DEADLINE_CLEARED'
+  | 'SUBDECISION_ADDED' | 'SUBDECISION_REMOVED' | 'SUBPLAN_PROMOTED'
 
 export type PlanEvent = {
   id: number

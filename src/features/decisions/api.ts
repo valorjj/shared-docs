@@ -3,7 +3,7 @@ import { apiClient } from '../../api/client'
 import { useActiveWorkspace } from '../../auth/useActiveWorkspace'
 import type {
   CanvasPositionPayload, CreateEdgePayload, CreatePlanPayload, LockDecisionPayload,
-  OptionNode, PlanEvent, PlanSummary, PlanTree, Rating, RatePayload, ReorderSubPlansPayload,
+  OptionNode, PlanEvent, PlanHierarchy, PlanSummary, PlanTree, Rating, RatePayload, ReorderSubPlansPayload,
   SubPlanEdge, SubPlanNode, TitleDescPayload, UpdatePlanPayload,
 } from './types'
 import type { Note } from '../notes/types'
@@ -16,6 +16,7 @@ export const decisionKeys = {
   tree: (wsId: number | null, planId: number) => ['decisions', wsId, 'tree', planId] as const,
   timeline: (wsId: number | null, planId: number) => ['decisions', wsId, 'timeline', planId] as const,
   feed: (wsId: number | null) => ['decisions', wsId, 'feed'] as const,
+  hierarchy: (wsId: number | null, planId: number) => ['decisions', wsId, 'hierarchy', planId] as const,
 }
 
 // ── Queries ──
@@ -60,6 +61,15 @@ export function useTimeline(planId: number, enabled = true) {
     queryKey: decisionKeys.timeline(activeId, planId),
     queryFn: async () => (await apiClient.get<PlanEvent[]>(`/api/plans/${planId}/timeline`)).data,
     enabled: enabled && activeId != null && Number.isFinite(planId),
+  })
+}
+
+export function usePlanHierarchy(planId: number) {
+  const { activeId } = useActiveWorkspace()
+  return useQuery({
+    queryKey: decisionKeys.hierarchy(activeId, planId),
+    queryFn: async () => (await apiClient.get<PlanHierarchy>(`/api/plans/${planId}/hierarchy`)).data,
+    enabled: activeId != null && Number.isFinite(planId),
   })
 }
 
@@ -194,6 +204,15 @@ export function useClearSubPlanDeadline() {
     onSuccess: () => qc.invalidateQueries({ queryKey: decisionKeys.scope(activeId) }),
   })
 }
+export function usePromoteSubPlan() {
+  const qc = useQueryClient()
+  const { activeId } = useActiveWorkspace()
+  return useMutation({
+    mutationFn: async (subPlanId: number) =>
+      (await apiClient.post<PlanSummary>(`/api/subplans/${subPlanId}/promote`)).data,
+    onSuccess: () => qc.invalidateQueries({ queryKey: decisionKeys.scope(activeId) }),
+  })
+}
 
 // ── Option (선택지) mutations ──
 export function useAddOption() {
@@ -282,6 +301,17 @@ export function useMoveSubPlan() {
     mutationFn: async (v: { id: number; payload: CanvasPositionPayload }) => {
       await apiClient.patch(`/api/subplans/${v.id}`, v.payload)
     },
+  })
+}
+
+/** Position-only persist for a sub-decision node on the parent canvas. Mirrors
+ *  useMoveSubPlan above: canvas state is seeded once by the mounted canvas and
+ *  the next mount reads the persisted value, so this does NOT invalidate any
+ *  query — fire-and-forget, same as useMoveSubPlan. */
+export function useMovePlan() {
+  return useMutation({
+    mutationFn: async (p: { id: number } & CanvasPositionPayload) =>
+      (await apiClient.patch<PlanSummary>(`/api/plans/${p.id}`, { canvasX: p.canvasX, canvasY: p.canvasY })).data,
   })
 }
 
