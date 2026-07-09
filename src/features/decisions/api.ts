@@ -2,9 +2,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '../../api/client'
 import { useActiveWorkspace } from '../../auth/useActiveWorkspace'
 import type {
-  CanvasPositionPayload, CreateEdgePayload, CreatePlanPayload, LockDecisionPayload,
-  OptionNode, PlanEvent, PlanHierarchy, PlanSummary, PlanTree, Rating, RatePayload, ReorderSubPlansPayload,
-  SubPlanEdge, SubPlanNode, TitleDescPayload, UpdatePlanPayload,
+  CanvasPositionPayload, CreateEdgePayload, CreateLinkResourcePayload, CreatePlanPayload, LockDecisionPayload,
+  OptionNode, PlanEvent, PlanHierarchy, PlanResource, PlanSummary, PlanTree, Rating, RatePayload, ReorderSubPlansPayload,
+  SubPlanEdge, SubPlanNode, TitleDescPayload, UpdatePlanPayload, UpdateResourceTitlePayload,
 } from './types'
 import type { Note } from '../notes/types'
 
@@ -17,6 +17,7 @@ export const decisionKeys = {
   timeline: (wsId: number | null, planId: number) => ['decisions', wsId, 'timeline', planId] as const,
   feed: (wsId: number | null) => ['decisions', wsId, 'feed'] as const,
   hierarchy: (wsId: number | null, planId: number) => ['decisions', wsId, 'hierarchy', planId] as const,
+  resources: (wsId: number | null, planId: number) => ['decisions', wsId, 'resources', planId] as const,
 }
 
 // ── Queries ──
@@ -384,5 +385,75 @@ export function useDiscussionNote(planId: number, enabled: boolean) {
     enabled: enabled && activeId != null && Number.isFinite(planId),
     staleTime: 60 * 1000,
     retry: false, // 409 discussion-note-private must surface, not retry
+  })
+}
+
+// ── Plan resources (자료) ──
+async function listResourcesReq(planId: number): Promise<PlanResource[]> {
+  const { data } = await apiClient.get<PlanResource[]>(`/api/plans/${planId}/resources`)
+  return data
+}
+async function addLinkResourceReq(planId: number, payload: CreateLinkResourcePayload): Promise<PlanResource> {
+  const { data } = await apiClient.post<PlanResource>(`/api/plans/${planId}/resources`, payload)
+  return data
+}
+async function uploadResourceFileReq(planId: number, file: File): Promise<PlanResource> {
+  const form = new FormData()
+  form.append('file', file)
+  const { data } = await apiClient.post<PlanResource>(
+    `/api/plans/${planId}/resources/file`,
+    form,
+    { headers: { 'Content-Type': 'multipart/form-data' } },
+  )
+  return data
+}
+async function updateResourceTitleReq(id: number, payload: UpdateResourceTitlePayload): Promise<PlanResource> {
+  const { data } = await apiClient.patch<PlanResource>(`/api/resources/${id}`, payload)
+  return data
+}
+async function deleteResourceReq(id: number): Promise<void> {
+  await apiClient.delete(`/api/resources/${id}`)
+}
+
+export function usePlanResources(planId: number) {
+  const { activeId } = useActiveWorkspace()
+  return useQuery({
+    queryKey: decisionKeys.resources(activeId, planId),
+    queryFn: () => listResourcesReq(planId),
+    enabled: activeId != null && Number.isFinite(planId),
+  })
+}
+export function useAddLinkResource(planId: number) {
+  const qc = useQueryClient()
+  const { activeId } = useActiveWorkspace()
+  return useMutation({
+    mutationFn: (payload: CreateLinkResourcePayload) => addLinkResourceReq(planId, payload),
+    onSuccess: () => qc.invalidateQueries({ queryKey: decisionKeys.scope(activeId) }),
+  })
+}
+export function useUploadResourceFile(planId: number) {
+  const qc = useQueryClient()
+  const { activeId } = useActiveWorkspace()
+  return useMutation({
+    mutationFn: (file: File) => uploadResourceFileReq(planId, file),
+    onSuccess: () => qc.invalidateQueries({ queryKey: decisionKeys.scope(activeId) }),
+  })
+}
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- planId kept for hook-factory call-site symmetry with useAddLinkResource/useUploadResourceFile
+export function useUpdateResourceTitle(_planId: number) {
+  const qc = useQueryClient()
+  const { activeId } = useActiveWorkspace()
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: number; payload: UpdateResourceTitlePayload }) => updateResourceTitleReq(id, payload),
+    onSuccess: () => qc.invalidateQueries({ queryKey: decisionKeys.scope(activeId) }),
+  })
+}
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- planId kept for hook-factory call-site symmetry with useAddLinkResource/useUploadResourceFile
+export function useDeleteResource(_planId: number) {
+  const qc = useQueryClient()
+  const { activeId } = useActiveWorkspace()
+  return useMutation({
+    mutationFn: (id: number) => deleteResourceReq(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: decisionKeys.scope(activeId) }),
   })
 }
