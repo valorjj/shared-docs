@@ -439,8 +439,7 @@ export function useUploadResourceFile(planId: number) {
     onSuccess: () => qc.invalidateQueries({ queryKey: decisionKeys.scope(activeId) }),
   })
 }
-// eslint-disable-next-line @typescript-eslint/no-unused-vars -- planId kept for hook-factory call-site symmetry with useAddLinkResource/useUploadResourceFile
-export function useUpdateResourceTitle(_planId: number) {
+export function useUpdateResourceTitle() {
   const qc = useQueryClient()
   const { activeId } = useActiveWorkspace()
   return useMutation({
@@ -448,8 +447,7 @@ export function useUpdateResourceTitle(_planId: number) {
     onSuccess: () => qc.invalidateQueries({ queryKey: decisionKeys.scope(activeId) }),
   })
 }
-// eslint-disable-next-line @typescript-eslint/no-unused-vars -- planId kept for hook-factory call-site symmetry with useAddLinkResource/useUploadResourceFile
-export function useDeleteResource(_planId: number) {
+export function useDeleteResource() {
   const qc = useQueryClient()
   const { activeId } = useActiveWorkspace()
   return useMutation({
