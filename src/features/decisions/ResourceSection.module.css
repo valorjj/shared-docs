@@ -1,0 +1,125 @@
+.section {
+  margin-top: var(--sp-6);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--sp-3);
+}
+
+.heading {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semi);
+  color: var(--c-text-muted);
+  margin: 0;
+}
+
+.headerActions {
+  display: flex;
+  gap: var(--sp-2);
+}
+
+.addButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px var(--sp-2);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-sm);
+  background: var(--c-surface);
+  color: var(--c-text-muted);
+  font-size: var(--fs-xs);
+  cursor: pointer;
+}
+
+.addButton:hover {
+  background: var(--c-surface-tint);
+  color: var(--c-text);
+}
+
+.hiddenInput {
+  display: none;
+}
+
+.empty {
+  font-size: var(--fs-sm);
+  color: var(--c-text-subtle);
+  margin: 0;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-sm);
+  background: var(--c-surface);
+}
+
+.row:hover {
+  background: var(--c-surface-tint);
+}
+
+.tile {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r-sm);
+}
+
+.name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--fs-sm);
+  color: var(--c-text);
+  text-decoration: none;
+}
+
+.name:hover {
+  text-decoration: underline;
+}
+
+.meta {
+  flex: none;
+  font-size: var(--fs-xs);
+  color: var(--c-text-subtle);
+}
+
+.remove {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--c-text-subtle);
+  cursor: pointer;
+}
+
+.remove:hover {
+  background: var(--c-danger-soft);
+  color: var(--c-danger);
+}

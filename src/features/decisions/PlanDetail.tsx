@@ -21,6 +21,7 @@ import DeadlineChip from './DeadlineChip'
 import { deadlineLabel, toLocalDateString } from './deadlineLabel'
 import SortableSubPlanSection from './SortableSubPlanSection'
 import SubDecisionSection from './SubDecisionSection'
+import ResourceSection from './ResourceSection'
 import PlanCanvas from './PlanCanvas'
 import Timeline from './Timeline'
 import TitleDescModal from './TitleDescModal'
@@ -437,6 +438,7 @@ export default function PlanDetail() {
                 onOpen={(id) => navigate(`/decisions/${id}`)}
                 onAdd={() => setAddingChild(true)}
               />
+              <ResourceSection planId={planId} />
               {!locked && !discussionOpen && tree.subPlans.length > 0 && (
                 <Fab className={styles.fabAdd} label="안건 추가" onClick={() => setAddingSubPlan(true)} />
               )}
