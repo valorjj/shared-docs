@@ -255,3 +255,28 @@
     animation: none;
   }
 }
+
+.commentsSection {
+  margin-top: var(--sp-6);
+}
+
+/* Comments.tsx ships its own global (non-module) Comments.css styled as a
+ * standalone centered card (max-width/margin/border/background) — that
+ * predates this feature and isn't something to fix here. This :global()
+ * override just strips the card chrome so it reads as a plain in-flow
+ * section, matching 하위결정/자료 above it. */
+.commentsSection :global(.comments) {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 0;
+}
+
+.commentsSection :global(.comments__title) {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semi);
+  color: var(--c-text-muted);
+  margin: 0 0 var(--sp-3);
+}

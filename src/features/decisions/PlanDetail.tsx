@@ -22,6 +22,7 @@ import { deadlineLabel, toLocalDateString } from './deadlineLabel'
 import SortableSubPlanSection from './SortableSubPlanSection'
 import SubDecisionSection from './SubDecisionSection'
 import ResourceSection from './ResourceSection'
+import Comments from '../../components/Comments'
 import PlanCanvas from './PlanCanvas'
 import Timeline from './Timeline'
 import TitleDescModal from './TitleDescModal'
@@ -439,6 +440,9 @@ export default function PlanDetail() {
                 onAdd={() => setAddingChild(true)}
               />
               <ResourceSection planId={planId} />
+              <div className={styles.commentsSection}>
+                <Comments pageId={`plan:${planId}`} />
+              </div>
               {!locked && !discussionOpen && tree.subPlans.length > 0 && (
                 <Fab className={styles.fabAdd} label="안건 추가" onClick={() => setAddingSubPlan(true)} />
               )}
