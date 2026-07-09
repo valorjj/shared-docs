@@ -122,6 +122,7 @@ export type PlanEventType =
   | 'PLAN_COMPLETED' | 'PLAN_UNCOMPLETED'
   | 'DEADLINE_SET' | 'DEADLINE_CLEARED'
   | 'SUBDECISION_ADDED' | 'SUBDECISION_REMOVED' | 'SUBPLAN_PROMOTED'
+  | 'RESOURCE_ADDED' | 'RESOURCE_REMOVED'
 
 export type PlanEvent = {
   id: number
@@ -134,3 +135,23 @@ export type PlanEvent = {
 }
 
 export type ReorderSubPlansPayload = { orderedSubPlanIds: number[] }
+
+export type PlanResourceKind = 'LINK' | 'FILE'
+
+export type PlanResource = {
+  id: number
+  planId: number
+  kind: PlanResourceKind
+  url: string | null
+  title: string | null
+  attachmentId: number | null
+  originalFilename: string | null
+  contentType: string | null
+  sizeBytes: number | null
+  fileUrl: string | null
+  createdByUserId: number
+  createdAt: string
+}
+
+export type CreateLinkResourcePayload = { url: string; title?: string }
+export type UpdateResourceTitlePayload = { title?: string }
