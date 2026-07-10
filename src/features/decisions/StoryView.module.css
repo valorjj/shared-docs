@@ -1,0 +1,115 @@
+.story {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+  padding-left: var(--sp-4);
+  border-left: 1px solid var(--c-border);
+  margin-left: var(--sp-2);
+}
+
+.month {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.axisMarker {
+  position: relative;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semi);
+  color: var(--c-text-muted);
+}
+
+/* the node on the axis line */
+.axisMarker::before {
+  content: '';
+  position: absolute;
+  left: calc(-1 * var(--sp-4) - 5px);
+  top: 50%;
+  transform: translateY(-50%);
+  width: 9px;
+  height: 9px;
+  border-radius: var(--r-pill);
+  background: var(--c-primary);
+  border: 2px solid var(--c-bg);
+}
+
+.upcomingMarker {
+  color: var(--c-text-subtle);
+}
+
+.upcomingMarker::before {
+  background: var(--c-border-strong);
+}
+
+.cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  align-items: flex-start;
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  background: var(--c-surface);
+  cursor: pointer;
+  text-align: left;
+  transition: background var(--t-fast);
+}
+
+.card:hover {
+  background: var(--c-surface-tint);
+}
+
+.cardHead {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+
+.cardTitle {
+  font-size: var(--fs-base);
+  font-weight: var(--fw-medium);
+  color: var(--c-text);
+}
+
+.active {
+  font-size: var(--fs-xs);
+  color: var(--c-primary);
+}
+
+.done {
+  font-size: var(--fs-xs);
+  color: var(--c-text-muted);
+}
+
+.cluster {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  color: var(--c-text-subtle);
+}
+
+.dots {
+  display: inline-flex;
+  gap: 3px;
+}
+
+.dot {
+  width: 5px;
+  height: 5px;
+  border-radius: var(--r-pill);
+  background: var(--c-primary-soft-strong);
+}
+
+.clusterCount {
+  font-size: var(--fs-xs);
+  color: var(--c-text-subtle);
+}
