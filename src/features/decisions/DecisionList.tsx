@@ -66,10 +66,14 @@ export default function DecisionList() {
   const planNameOf = (id: number) => (plans ?? []).find((p) => p.id === id)?.title ?? '계획'
 
   const { data: feed, isLoading: feedLoading } = useFeed(tab === 'feed')
-  const { data: completed, isLoading: completedLoading } = useCompletedPlans(tab === 'completed')
+  const { data: completed, isLoading: completedLoading } = useCompletedPlans(tab === 'completed' || tab === 'story')
   const { data: trashed, isLoading: trashLoading } = useTrashedPlans(tab === 'trash')
 
   const { sections, hasNamedGroup, groupOptions } = useMemo(() => toSections(plans ?? []), [plans])
+  const storyPlans = useMemo(
+    () => [...(plans ?? []), ...(completed ?? [])],
+    [plans, completed],
+  )
 
   const onDiscard = (p: PlanSummary) => {
     if (window.confirm('휴지통으로 이동할까요? 하위결정도 함께 이동해요. 휴지통에서 언제든 복원할 수 있어요.')) discard.mutate(p.id)
@@ -176,13 +180,13 @@ export default function DecisionList() {
 
       {tab === 'story' && (
         <>
-          {isLoading && <div className={styles.list}><Skeleton height={84} radius="var(--r-md)" /></div>}
+          {(isLoading || completedLoading) && <div className={styles.list}><Skeleton height={84} radius="var(--r-md)" /></div>}
           {isError && <ErrorState error={error} onRetry={() => refetch()} />}
-          {plans && plans.length === 0 && (
+          {!isLoading && !completedLoading && storyPlans.length === 0 && (
             <EmptyState icon={<Vote size={24} strokeWidth={1.5} />} title="아직 계획이 없어요"
                         description="계획을 추가하면 시간순 스토리로 볼 수 있어요." />
           )}
-          {plans && plans.length > 0 && <StoryView plans={plans} onOpen={(id) => navigate(`/decisions/${id}`)} />}
+          {!isLoading && !completedLoading && storyPlans.length > 0 && <StoryView plans={storyPlans} onOpen={(id) => navigate(`/decisions/${id}`)} />}
         </>
       )}
 
