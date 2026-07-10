@@ -16,11 +16,12 @@ import {
 import DeadlineChip from './DeadlineChip'
 import PlanModal from './PlanModal'
 import Timeline from './Timeline'
+import StoryView from './StoryView'
 import styles from './DecisionList.module.css'
 import type { PlanSummary } from './types'
 
 const UNGROUPED = '분류 없음'
-type Tab = 'board' | 'completed' | 'trash' | 'feed'
+type Tab = 'board' | 'story' | 'completed' | 'trash' | 'feed'
 
 type Section = { key: string; label: string; named: boolean; plans: PlanSummary[] }
 
@@ -128,7 +129,7 @@ export default function DecisionList() {
 
       <Tabs
         className={styles.tabs}
-        items={[{ key: 'board', label: '보드' }, { key: 'completed', label: '완료' }, { key: 'trash', label: '휴지통' }, { key: 'feed', label: '활동' }]}
+        items={[{ key: 'board', label: '보드' }, { key: 'story', label: '스토리' }, { key: 'completed', label: '완료' }, { key: 'trash', label: '휴지통' }, { key: 'feed', label: '활동' }]}
         value={tab}
         onChange={setTab}
       />
@@ -173,6 +174,18 @@ export default function DecisionList() {
         </>
       )}
 
+      {tab === 'story' && (
+        <>
+          {isLoading && <div className={styles.list}><Skeleton height={84} radius="var(--r-md)" /></div>}
+          {isError && <ErrorState error={error} onRetry={() => refetch()} />}
+          {plans && plans.length === 0 && (
+            <EmptyState icon={<Vote size={24} strokeWidth={1.5} />} title="아직 계획이 없어요"
+                        description="계획을 추가하면 시간순 스토리로 볼 수 있어요." />
+          )}
+          {plans && plans.length > 0 && <StoryView plans={plans} onOpen={(id) => navigate(`/decisions/${id}`)} />}
+        </>
+      )}
+
       {tab === 'completed' && (
         completedLoading
           ? <div className={styles.list}><Skeleton height={84} radius="var(--r-md)" /></div>
@@ -189,7 +202,7 @@ export default function DecisionList() {
               : <EmptyState title="휴지통이 비어 있어요" description="삭제한 계획이 여기에 머물러요." />)
       )}
 
-      {tab === 'board' && <Fab label="계획 추가" icon={<Plus size={26} strokeWidth={2.5} />} onClick={() => setAdding(true)} />}
+      {(tab === 'board' || tab === 'story') && <Fab label="계획 추가" icon={<Plus size={26} strokeWidth={2.5} />} onClick={() => setAdding(true)} />}
 
       <PlanModal
         open={adding} onClose={() => setAdding(false)} groupOptions={groupOptions} busy={create.isPending}
