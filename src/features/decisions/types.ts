@@ -12,6 +12,7 @@ export type PlanSummary = {
   parentPlanId: number | null
   subPlanCount: number
   decidedCount: number
+  childCount: number
   createdByUserId: number
   createdAt: string
   lockedAt: string | null
