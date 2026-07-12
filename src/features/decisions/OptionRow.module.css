@@ -83,3 +83,35 @@
   color: var(--c-text-subtle);
   margin: 0;
 }
+
+.proConCount {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--fs-xs);
+  color: var(--c-text-subtle);
+}
+
+.commentsSection {
+  margin-top: var(--sp-1);
+}
+
+/* Comments.tsx ships its own global (non-module) Comments.css styled as a
+ * standalone centered card (max-width/margin/border/background) — this
+ * :global() override strips the card chrome so it reads as a plain in-flow
+ * section, matching the other sections of the expanded body. */
+.commentsSection :global(.comments) {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 0;
+}
+
+.commentsSection :global(.comments__title) {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semi);
+  color: var(--c-text-muted);
+  margin: 0 0 var(--sp-3);
+}

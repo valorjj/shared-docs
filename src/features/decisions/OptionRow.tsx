@@ -1,6 +1,8 @@
 import { useState } from 'react'
-import { ChevronDown, ChevronRight, Pencil, Trash2, Check, Vote } from 'lucide-react'
+import { ChevronDown, ChevronRight, Pencil, Trash2, Check, Vote, ListChecks } from 'lucide-react'
 import { IconButton } from '../../components/ui'
+import Comments from '../../components/Comments'
+import ProConSection from './ProConSection'
 import styles from './OptionRow.module.css'
 import type { OptionNode } from './types'
 
@@ -45,6 +47,11 @@ export default function OptionRow({
           <Vote size={13} />
           {option.voterUserIds.length > 0 && <span>{option.voterUserIds.length}</span>}
         </button>
+        {option.proCons.length > 0 && (
+          <span className={styles.proConCount}>
+            <ListChecks size={13} /> 장단점 {option.proCons.length}
+          </span>
+        )}
         {!locked && (
           <div className={styles.actions}>
             <IconButton variant="ghost" size="sm" label="선택지 수정" onClick={onEdit}><Pencil size={14} /></IconButton>
@@ -56,9 +63,13 @@ export default function OptionRow({
       {open && (
         <div className={styles.body}>
           {option.description && <p className={styles.desc}>{option.description}</p>}
+          <ProConSection optionId={option.id} proCons={option.proCons} locked={!!locked} />
           {option.voterUserIds.length > 0 && (
             <p className={styles.voters}>투표: {option.voterUserIds.map(nameOf).join(', ')}</p>
           )}
+          <div className={styles.commentsSection}>
+            <Comments pageId={`option:${option.id}`} />
+          </div>
         </div>
       )}
     </div>
