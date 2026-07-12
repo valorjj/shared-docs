@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { ChevronDown, ChevronRight, Pencil, Trash2, Check, Vote } from 'lucide-react'
 import { IconButton } from '../../components/ui'
-import RatingControl from './RatingControl'
 import styles from './OptionRow.module.css'
 import type { OptionNode } from './types'
 
@@ -13,8 +12,6 @@ type Props = {
   nameOf: (userId: number) => string
   busy?: boolean
   locked?: boolean
-  onRate: (score: number, comment: string | undefined) => void
-  onClearRating: () => void
   onEdit: () => void
   onDelete: () => void
   onVote: () => void
@@ -22,11 +19,9 @@ type Props = {
 }
 
 export default function OptionRow({
-  option, myUserId, isChosen, decided, nameOf, busy, locked, onRate, onClearRating, onEdit, onDelete, onVote, onRetractVote,
+  option, myUserId, isChosen, decided, nameOf, busy, locked, onEdit, onDelete, onVote, onRetractVote,
 }: Props) {
   const [open, setOpen] = useState(false)
-  const myRating = option.ratings.find((r) => r.userId === myUserId) ?? null
-  const others = option.ratings.filter((r) => r.userId !== myUserId)
   const iVoted = option.voterUserIds.includes(myUserId)
   const frozen = !!locked || decided
 
@@ -38,9 +33,6 @@ export default function OptionRow({
           <span className={styles.title}>{option.title}</span>
           {isChosen && <Check size={14} className={styles.chosenMark} aria-label="결정됨" />}
         </button>
-        <span className={styles.avg}>
-          {option.avgScore != null ? `평균 ${option.avgScore.toFixed(1)} (${option.ratingCount})` : '평가 없음'}
-        </span>
         <button
           type="button"
           className={iVoted ? `${styles.vote} ${styles.voteOn}` : styles.vote}
@@ -64,18 +56,6 @@ export default function OptionRow({
       {open && (
         <div className={styles.body}>
           {option.description && <p className={styles.desc}>{option.description}</p>}
-          <RatingControl key={myRating ? 'rated' : 'unrated'} myRating={myRating} busy={busy || locked} onRate={onRate} onClear={onClearRating} />
-          {others.length > 0 && (
-            <ul className={styles.others}>
-              {others.map((r) => (
-                <li key={r.userId} className={styles.otherLine}>
-                  <span className={styles.otherName}>{nameOf(r.userId)}</span>
-                  <span className={styles.otherScore}>{r.score}</span>
-                  {r.comment && <span className={styles.otherComment}>{r.comment}</span>}
-                </li>
-              ))}
-            </ul>
-          )}
           {option.voterUserIds.length > 0 && (
             <p className={styles.voters}>투표: {option.voterUserIds.map(nameOf).join(', ')}</p>
           )}

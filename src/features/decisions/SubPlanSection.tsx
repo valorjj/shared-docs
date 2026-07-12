@@ -1,10 +1,9 @@
-import { Plus, Pencil, Trash2, Link2, GitFork } from 'lucide-react'
+import { Pencil, Trash2, Link2, ChevronDown, ChevronRight } from 'lucide-react'
 import DeadlineChip from './DeadlineChip'
-import { useMemo, type ReactNode } from 'react'
-import { Button, IconButton, Badge } from '../../components/ui'
-import OptionRow from './OptionRow'
+import { useState, type ReactNode } from 'react'
+import { IconButton, Badge } from '../../components/ui'
 import styles from './SubPlanSection.module.css'
-import type { OptionNode, SubPlanNode, VoteSnapshotEntry } from './types'
+import type { SubPlanNode } from './types'
 
 const STATUS_LABEL: Record<SubPlanNode['status'], string> = {
   EMPTY: '대기', IN_PROGRESS: '진행 중', DECIDED: '결정됨',
@@ -20,22 +19,10 @@ type Props = {
   onJumpToSubPlan?: (id: number) => void
   highlight?: SubPlanHighlight
   onHoverChange?: (hovered: boolean) => void
-  myUserId: number
-  nameOf: (userId: number) => string
-  busy?: boolean
+  onOpen: () => void
   onEdit: () => void
   onDelete: () => void
-  onAddOption: () => void
-  onEditOption: (o: OptionNode) => void
-  onDeleteOption: (o: OptionNode) => void
-  onRate: (optionId: number, score: number, comment: string | undefined) => void
-  onClearRating: (optionId: number) => void
-  onDecide: () => void
-  onReopen: () => void
-  onVote: (option: OptionNode) => void
-  onRetractVote: (option: OptionNode) => void
   onOpenConnect?: () => void
-  onPromote?: () => void
   index: number
   dragHandle?: ReactNode
   locked?: boolean
@@ -45,20 +32,12 @@ type Props = {
 }
 
 export default function SubPlanSection({
-  subPlan, links, onJumpToSubPlan, highlight = 'normal', onHoverChange, myUserId, nameOf, busy, onEdit, onDelete, onAddOption,
-  onEditOption, onDeleteOption, onRate, onClearRating, onDecide, onReopen, onVote, onRetractVote, onOpenConnect, onPromote, index, dragHandle, locked,
-  onSetDeadline, onClearDeadline, deadlineBusy,
+  subPlan, links, onJumpToSubPlan, highlight = 'normal', onHoverChange, onOpen, onEdit, onDelete, onOpenConnect, index,
+  dragHandle, locked, onSetDeadline, onClearDeadline, deadlineBusy,
 }: Props) {
   const { decision } = subPlan
-  const chosen = decision ? subPlan.options.find((o) => o.id === decision.chosenOptionId) ?? null : null
   const hasLinks = links != null && (links.outgoing.length > 0 || links.incoming.length > 0)
-
-  const snapshot: VoteSnapshotEntry[] | null = useMemo(() => {
-    if (!decision?.voteSnapshot) return null
-    try { return JSON.parse(decision.voteSnapshot) as VoteSnapshotEntry[] } catch { return null }
-  }, [decision])
-  const chosenTally = snapshot?.find((e) => e.optionId === decision?.chosenOptionId)
-  const totalVotes = snapshot?.reduce((n, e) => n + e.count, 0) ?? 0
+  const [subOpen, setSubOpen] = useState(false)
 
   return (
     <section
@@ -87,11 +66,6 @@ export default function SubPlanSection({
             {dragHandle}
             {onOpenConnect && (
               <IconButton variant="ghost" size="sm" label="안건 연결" onClick={onOpenConnect}><Link2 size={14} /></IconButton>
-            )}
-            {onPromote && decision == null && (
-              <IconButton variant="ghost" size="sm" label="하위결정으로 전환" onClick={onPromote}>
-                <GitFork size={14} />
-              </IconButton>
             )}
             <IconButton variant="ghost" size="sm" label="안건 수정" onClick={onEdit}><Pencil size={14} /></IconButton>
             <IconButton variant="ghost" size="sm" label="안건 삭제" onClick={onDelete}><Trash2 size={14} /></IconButton>
@@ -124,52 +98,24 @@ export default function SubPlanSection({
         </div>
       )}
 
-      {subPlan.description && <p className={styles.desc}>{subPlan.description}</p>}
+      <button type="button" className={styles.body} onClick={onOpen}>
+        {subPlan.description && <p className={styles.desc}>{subPlan.description}</p>}
+        <span className={styles.optionCount}>선택지 {subPlan.options.length}</span>
+      </button>
 
-      {decision && chosen && (
-        <div className={styles.banner}>
-          <span className={styles.bannerTag}>결정됨</span>
-          <span className={styles.bannerBody}>
-            <strong>{chosen.title}</strong> · {decision.reason}
-            {snapshot && <span className={styles.bannerVotes}> · {totalVotes}표 중 {chosenTally?.count ?? 0}표</span>}
-          </span>
-          {!locked && <Button variant="ghost" size="sm" onClick={onReopen} disabled={busy}>다시 열기</Button>}
-        </div>
-      )}
-
-      {subPlan.options.length === 0 ? (
-        <p className={styles.empty}>선택지를 추가해 결정을 시작하세요.</p>
-      ) : (
-        <div className={styles.options}>
-          {subPlan.options.map((o) => (
-            <OptionRow
-              key={o.id}
-              option={o}
-              myUserId={myUserId}
-              isChosen={decision?.chosenOptionId === o.id}
-              decided={decision != null}
-              nameOf={nameOf}
-              busy={busy}
-              onRate={(score, comment) => onRate(o.id, score, comment)}
-              onClearRating={() => onClearRating(o.id)}
-              onEdit={() => onEditOption(o)}
-              onDelete={() => onDeleteOption(o)}
-              onVote={() => onVote(o)}
-              onRetractVote={() => onRetractVote(o)}
-              locked={locked}
-            />
-          ))}
-        </div>
-      )}
-
-      {!locked && (
-        <div className={styles.footer}>
-          <Button variant="outline" size="sm" leading={<Plus size={14} />} onClick={onAddOption}>선택지 추가</Button>
-          {!decision && subPlan.options.length > 0 && (
-            <Button variant="soft" onClick={onDecide} disabled={busy}>
-              {subPlan.options.some((o) => o.voterUserIds.length > 0) ? '결과 확정하기' : '결정하기'}
-            </Button>
-          )}
+      {subPlan.childSubPlanCount > 0 && (
+        <div className={styles.subSection}>
+          <button
+            type="button"
+            className={styles.subToggle}
+            onClick={() => setSubOpen((v) => !v)}
+            aria-expanded={subOpen}
+          >
+            {subOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+            <span>서브안건 {subPlan.childSubPlanCount}</span>
+          </button>
+          {/* Placeholder — the foldable 서브안건 tree itself lands in Task 7. */}
+          {subOpen && <div className={styles.subPlaceholder}>서브안건 목록은 곧 표시돼요.</div>}
         </div>
       )}
     </section>

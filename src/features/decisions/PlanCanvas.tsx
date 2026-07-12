@@ -1,5 +1,4 @@
 import { useCallback, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import {
   ReactFlow, ReactFlowProvider, Background, Controls, MarkerType,
   useNodesState, useEdgesState, useReactFlow, addEdge,
@@ -9,15 +8,14 @@ import '@xyflow/react/dist/style.css'
 import { Plus } from 'lucide-react'
 import { EmptyState, Button } from '../../components/ui'
 import SubPlanCanvasNode, { type SubPlanCanvasNodeType } from './SubPlanCanvasNode'
-import SubDecisionCanvasNode, { type SubDecisionCanvasNodeType, type SubDecisionCanvasNodeData } from './SubDecisionCanvasNode'
 import DeletableEdge, { type DeletableEdgeType } from './DeletableEdge'
 import TitleDescModal from './TitleDescModal'
-import { useMoveSubPlan, useMovePlan, useCreateEdge, useDeleteEdge, useAddSubPlanOnCanvas } from './api'
+import { useMoveSubPlan, useCreateEdge, useDeleteEdge, useAddSubPlanOnCanvas } from './api'
 import { useSettings } from '../settings/settingsContext'
 import styles from './PlanCanvas.module.css'
-import type { PlanTree, SubPlanNode, PlanHierarchyNode } from './types'
+import type { PlanTree, SubPlanNode } from './types'
 
-const nodeTypes = { subplan: SubPlanCanvasNode, subdecision: SubDecisionCanvasNode }
+const nodeTypes = { subplan: SubPlanCanvasNode }
 const edgeTypes = { deletable: DeletableEdge }
 const NODE_W = 260
 const GAP_X = 64
@@ -32,16 +30,7 @@ function toNode(sp: SubPlanNode, i: number): SubPlanCanvasNodeType {
   return { id: String(sp.id), type: 'subplan', position: nodePosition(sp, i), data: { subPlan: sp } }
 }
 
-type CanvasNode = SubPlanCanvasNodeType | SubDecisionCanvasNodeType
-
-function toChildNode(p: PlanHierarchyNode, i: number): SubDecisionCanvasNodeType {
-  return {
-    id: `plan-${p.id}`,
-    type: 'subdecision',
-    position: { x: p.canvasX ?? i * (220 + 48), y: p.canvasY ?? 340 },
-    data: { plan: p },
-  }
-}
+type CanvasNode = SubPlanCanvasNodeType
 
 function toEdge(e: PlanTree['edges'][number]): DeletableEdgeType {
   return {
@@ -53,19 +42,19 @@ function toEdge(e: PlanTree['edges'][number]): DeletableEdgeType {
   }
 }
 
-type Props = { tree: PlanTree; childPlans: PlanHierarchyNode[]; locked: boolean }
+type Props = { tree: PlanTree; locked: boolean }
 
-export default function PlanCanvas({ tree, childPlans, locked }: Props) {
+export default function PlanCanvas({ tree, locked }: Props) {
   if (tree.subPlans.length === 0) {
     return (
       <div className={`${styles.canvas} ${styles.canvasEmpty}`}>
-        <CanvasEmpty tree={tree} childPlans={childPlans} locked={locked} />
+        <CanvasEmpty tree={tree} locked={locked} />
       </div>
     )
   }
   return (
     <ReactFlowProvider>
-      <Flow tree={tree} childPlans={childPlans} locked={locked} />
+      <Flow tree={tree} locked={locked} />
     </ReactFlowProvider>
   )
 }
@@ -92,23 +81,18 @@ function CanvasEmpty({ tree, locked }: Props) {
   )
 }
 
-function Flow({ tree, childPlans, locked }: Props) {
+function Flow({ tree, locked }: Props) {
   // Seed controlled state ONCE from the initial tree (React reads an initializer
   // only on first render). Later tree refetches are intentionally ignored — the
   // canvas owns its state while mounted; the next mount re-reads fresh data.
-  const [nodes, setNodes, onNodesChange] = useNodesState<CanvasNode>([
-    ...tree.subPlans.map(toNode),
-    ...childPlans.map(toChildNode),
-  ])
+  const [nodes, setNodes, onNodesChange] = useNodesState<CanvasNode>(tree.subPlans.map(toNode))
   const [edges, setEdges, onEdgesChange] = useEdgesState<DeletableEdgeType>(tree.edges.map(toEdge))
   const [adding, setAdding] = useState(false)
 
   const { theme } = useSettings()
   const colorMode = theme === 'light' ? 'light' : 'dark'
 
-  const navigate = useNavigate()
   const move = useMoveSubPlan()
-  const movePlan = useMovePlan()
   const createEdgeM = useCreateEdge(tree.id)
   const deleteEdgeM = useDeleteEdge()
   const addSubPlanM = useAddSubPlanOnCanvas(tree.id)
@@ -123,14 +107,10 @@ function Flow({ tree, childPlans, locked }: Props) {
     const existing = timers.get(node.id)
     if (existing) clearTimeout(existing)
     timers.set(node.id, setTimeout(() => {
-      if (node.type === 'subdecision') {
-        movePlan.mutate({ id: (node.data as SubDecisionCanvasNodeData).plan.id, canvasX: node.position.x, canvasY: node.position.y })
-      } else {
-        move.mutate({ id: Number(node.id), payload: { canvasX: node.position.x, canvasY: node.position.y } })
-      }
+      move.mutate({ id: Number(node.id), payload: { canvasX: node.position.x, canvasY: node.position.y } })
       timers.delete(node.id)
     }, DRAG_SAVE_MS))
-  }, [move, movePlan])
+  }, [move])
 
   const onConnect = useCallback((c: Connection) => {
     if (!c.source || !c.target || c.source === c.target) return
@@ -177,9 +157,6 @@ function Flow({ tree, childPlans, locked }: Props) {
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onNodeDragStop={onNodeDragStop}
-        onNodeClick={(_, node) => {
-          if (node.type === 'subdecision') navigate(`/decisions/${(node.data as SubDecisionCanvasNodeData).plan.id}`)
-        }}
         onConnect={onConnect}
         onEdgesDelete={onEdgesDelete}
         nodeTypes={nodeTypes}

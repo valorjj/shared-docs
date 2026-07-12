@@ -46,7 +46,6 @@ export default function SubPlanCanvasNode({ data }: NodeProps<SubPlanCanvasNodeT
                 {o.id === chosenId && <Check size={12} className={styles.check} aria-label="결정됨" />}
                 <span className={styles.optionTitle}>{o.title}</span>
                 {o.voterUserIds.length > 0 && <span className={styles.optionVotes}>{o.voterUserIds.length}표</span>}
-                <span className={styles.optionAvg}>{o.avgScore != null ? o.avgScore.toFixed(1) : '–'}</span>
               </div>
             ))
           )}
