@@ -2,11 +2,11 @@ import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { GripVertical } from 'lucide-react'
 import { type ComponentProps } from 'react'
-import SubPlanSection from './SubPlanSection'
-import sectionStyles from './SubPlanSection.module.css'
+import SubPlanCard from './SubPlanCard'
+import sectionStyles from './SubPlanCard.module.css'
 import styles from './PlanDetail.module.css'
 
-type Props = ComponentProps<typeof SubPlanSection> & {
+type Props = ComponentProps<typeof SubPlanCard> & {
   showSpine: boolean
   spineActive: boolean
 }
@@ -32,7 +32,7 @@ export default function SortableSubPlanSection({ showSpine, spineActive, ...sect
   return (
     <div ref={setNodeRef} style={style} className={isDragging ? sectionStyles.dragging : undefined}>
       {showSpine && <div className={[styles.spine, spineActive && styles.active].filter(Boolean).join(' ')} aria-hidden="true" />}
-      <SubPlanSection {...sectionProps} dragHandle={handle} />
+      <SubPlanCard {...sectionProps} dragHandle={handle} />
     </div>
   )
 }

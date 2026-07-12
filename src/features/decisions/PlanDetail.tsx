@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { useParams, useSearchParams } from 'react-router-dom'
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { Plus, Lock, LockOpen, CheckCircle2, RotateCcw, MessagesSquare } from 'lucide-react'
@@ -35,7 +35,6 @@ export default function PlanDetail() {
   const { activeId } = useActiveWorkspace()
 
   const { data: tree, isLoading, isError, error, refetch } = usePlanTree(planId)
-  const navigate = useNavigate()
   const { data: members } = useMembers(activeId)
   const nameOf = (uid: number) =>
     uid === myUserId ? '나' : members?.find((m) => m.userId === uid)?.name ?? '알 수 없음'
@@ -226,11 +225,11 @@ export default function PlanDetail() {
       showSpine={i > 0}
       spineActive={i > 0 && spineActive(tree!.subPlans[i - 1].id, sp.id)}
       subPlan={sp}
+      planId={planId}
       links={linksBySubPlan.get(sp.id)}
       onJumpToSubPlan={jumpToSubPlan}
       highlight={highlightOf(sp.id)}
       onHoverChange={(hovered) => setHoveredSubPlanId(hovered ? sp.id : null)}
-      onOpen={() => navigate(`/decisions/${planId}/subplans/${sp.id}`)}
       onEdit={() => setEditingSubPlan(sp)}
       onDelete={() => { if (window.confirm('삭제할까요? 되돌릴 수 없어요.')) deleteSubPlan.mutate(sp.id) }}
       onOpenConnect={() => setConnectingFor(sp)}
