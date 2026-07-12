@@ -1,0 +1,173 @@
+.breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-1);
+  font-size: var(--fs-sm);
+  color: var(--c-text-subtle);
+  margin-bottom: var(--sp-2);
+}
+
+.breadcrumb a {
+  color: var(--c-text-subtle);
+}
+.breadcrumb a:hover {
+  color: var(--c-text);
+  text-decoration: underline;
+}
+
+.crumbSep {
+  color: var(--c-text-subtle);
+}
+
+.crumbCurrent {
+  color: var(--c-text);
+  font-weight: var(--fw-medium);
+}
+
+.upLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: var(--sp-2);
+  padding: 2px 8px;
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-pill);
+  color: var(--c-text-muted);
+  text-decoration: none;
+  font-size: var(--fs-xs);
+}
+.upLink:hover {
+  background: var(--c-surface-tint);
+  color: var(--c-text);
+  text-decoration: none;
+}
+
+.headerRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.headerMain {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.subtitle {
+  font-size: var(--fs-base);
+  color: var(--c-text-muted);
+  margin: 0;
+}
+
+.metaRow {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.section {
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  background: var(--c-surface);
+  padding: var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  margin-top: var(--sp-4);
+}
+
+.heading {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semi);
+  color: var(--c-text-muted);
+  margin: 0;
+}
+
+.banner {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--c-primary);
+  border-radius: var(--r-sm);
+  background: var(--c-primary-soft);
+  font-size: var(--fs-sm);
+}
+
+.bannerTag {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semi);
+  color: var(--c-primary);
+}
+
+.bannerBody {
+  flex: 1;
+  color: var(--c-text);
+}
+
+.empty {
+  font-size: var(--fs-sm);
+  color: var(--c-text-subtle);
+  margin: 0;
+}
+
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.footer {
+  display: flex;
+  gap: var(--sp-2);
+}
+
+.childList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.commentsSection {
+  margin-top: var(--sp-6);
+}
+
+/* Comments.tsx ships its own global (non-module) Comments.css styled as a
+ * standalone centered card (max-width/margin/border/background) — this
+ * :global() override strips the card chrome so it reads as a plain in-flow
+ * section, matching the 선택지/서브안건 sections above it. */
+.commentsSection :global(.comments) {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 0;
+}
+
+.commentsSection :global(.comments__title) {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semi);
+  color: var(--c-text-muted);
+  margin: 0 0 var(--sp-3);
+}
+
+@media (max-width: 767px) {
+  .footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
