@@ -91,7 +91,7 @@ function ProConColumn({
             onChange={(e) => setDraft(e.target.value)}
             placeholder={addLabel}
             aria-label={addLabel}
-            maxLength={200}
+            maxLength={500}
           />
           <IconButton variant="ghost" size="sm" label={addLabel} type="submit" disabled={!draft.trim() || addProCon.isPending}>
             <Plus size={13} />

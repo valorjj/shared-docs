@@ -18,7 +18,7 @@ import TitleDescModal from './TitleDescModal'
 import DecisionModal from './DecisionModal'
 import Comments from '../../components/Comments'
 import styles from './SubPlanDetail.module.css'
-import type { OptionNode } from './types'
+import type { OptionNode, VoteSnapshotEntry } from './types'
 
 const STATUS_LABEL: Record<'EMPTY' | 'IN_PROGRESS' | 'DECIDED', string> = {
   EMPTY: '대기', IN_PROGRESS: '진행 중', DECIDED: '결정됨',
@@ -57,6 +57,14 @@ export default function SubPlanDetail() {
   const locked = detail?.locked ?? false
   const decision = detail?.decision ?? null
   const chosen = decision ? (detail?.options.find((o) => o.id === decision.chosenOptionId) ?? null) : null
+
+  // frozen-at-확정 vote tally (this detail page is the only surface that shows options)
+  const snapshot: VoteSnapshotEntry[] | null = (() => {
+    if (!decision?.voteSnapshot) return null
+    try { return JSON.parse(decision.voteSnapshot) as VoteSnapshotEntry[] } catch { return null }
+  })()
+  const totalVotes = snapshot?.reduce((n, e) => n + e.count, 0) ?? 0
+  const chosenTally = snapshot?.find((e) => e.optionId === decision?.chosenOptionId)
 
   const busy = addOption.isPending || updateOption.isPending || deleteOption.isPending
     || castVote.isPending || retractVote.isPending || lock.isPending || reopen.isPending
@@ -119,6 +127,7 @@ export default function SubPlanDetail() {
                 <span className={styles.bannerTag}>결정됨</span>
                 <span className={styles.bannerBody}>
                   <strong>{chosen.title}</strong> · {decision.reason}
+                  {snapshot && <span className={styles.bannerVotes}> · {totalVotes}표 중 {chosenTally?.count ?? 0}표</span>}
                 </span>
                 {!locked && <Button variant="ghost" size="sm" onClick={() => { if (window.confirm('이 결정을 다시 열까요? 기록은 남아요.')) reopen.mutate(subPlanId) }} disabled={busy}>다시 열기</Button>}
               </div>
