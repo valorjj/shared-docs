@@ -276,7 +276,7 @@ export default function PlanDetail() {
       {isError && <ErrorState error={error} onRetry={() => refetch()} />}
 
       {tree && (
-        <div key={planId} className={`${discussionOpen ? styles.split : styles.mainWrap} ${styles.zoomEnter}`}>
+        <div key={planId} className={discussionOpen ? styles.split : styles.mainWrap}>
           <div className={styles.main}>
           <div ref={sentinelRef} aria-hidden="true" className={styles.sentinel} />
           <div className={`${styles.controlStrip}${scrolled ? ' ' + styles.stuck : ''}`}>

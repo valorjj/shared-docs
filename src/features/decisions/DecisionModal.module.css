@@ -26,11 +26,6 @@
   color: var(--c-text);
 }
 
-.optionAvg {
-  font-size: var(--fs-xs);
-  color: var(--c-text-muted);
-}
-
 .optionVotes {
   font-size: var(--fs-xs);
   color: var(--c-primary);

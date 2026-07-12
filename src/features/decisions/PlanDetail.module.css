@@ -195,65 +195,8 @@
   }
 }
 
-.breadcrumb {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--sp-1);
-  font-size: var(--fs-sm);
-  color: var(--c-text-subtle);
-  margin-bottom: var(--sp-2);
-}
-
-.breadcrumb a {
-  color: var(--c-text-muted);
-  text-decoration: none;
-}
-
-.breadcrumb a:hover {
-  color: var(--c-text);
-  text-decoration: underline;
-}
-
-.crumbSep {
-  color: var(--c-text-placeholder);
-  padding: 0 2px;
-}
-
-.crumbEllipsis {
-  color: var(--c-text-placeholder);
-}
-
-.crumbCurrent {
-  color: var(--c-text);
-  font-weight: var(--fw-medium);
-}
-
 .mainWrap {
-  /* hook class so zoomEnter can always ride alongside split */
-}
-
-.zoomEnter {
-  animation: zoom-enter var(--t-base);
-}
-
-@keyframes zoom-enter {
-  from {
-    opacity: 0;
-    transform: scale(0.975);
-  }
-}
-
-@media (max-width: 767px) {
-  .breadcrumb {
-    display: none; /* BackLink covers mobile */
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .zoomEnter {
-    animation: none;
-  }
+  /* layout hook mirroring .split for the non-discussion column */
 }
 
 .commentsSection {
