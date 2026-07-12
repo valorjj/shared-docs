@@ -9,10 +9,8 @@ export type PlanSummary = {
   canvasX: number | null
   canvasY: number | null
   groupLabel: string | null
-  parentPlanId: number | null
   subPlanCount: number
   decidedCount: number
-  childCount: number
   createdByUserId: number
   createdAt: string
   lockedAt: string | null
@@ -21,8 +19,6 @@ export type PlanSummary = {
   deadline: string | null
   completedAt: string | null
 }
-
-export type Rating = { userId: number; score: number; comment: string | null }
 
 export type DecisionInfo = {
   id: number
@@ -33,14 +29,15 @@ export type DecisionInfo = {
   voteSnapshot: string | null
 }
 
+export type ProConKind = 'PRO' | 'CON'
+export type ProCon = { id: number; kind: ProConKind; content: string; createdByUserId: number }
+
 export type OptionNode = {
   id: number
   title: string
   description: string | null
   sortOrder: number
-  avgScore: number | null
-  ratingCount: number
-  ratings: Rating[]
+  proCons: ProCon[]
   voterUserIds: number[]
 }
 
@@ -57,6 +54,8 @@ export type SubPlanNode = {
   status: SubPlanStatus
   options: OptionNode[]
   decision: DecisionInfo | null
+  parentSubPlanId: number | null
+  childSubPlanCount: number
 }
 
 export type SubPlanEdge = {
@@ -73,7 +72,6 @@ export type PlanTree = {
   canvasX: number | null
   canvasY: number | null
   groupLabel: string | null
-  parentPlanId: number | null
   createdByUserId: number
   createdAt: string
   lockedAt: string | null
@@ -84,34 +82,29 @@ export type PlanTree = {
   edges: SubPlanEdge[]
 }
 
-export type PlanHierarchyNode = {
+export type SubPlanDetail = {
   id: number
-  parentPlanId: number | null
+  planId: number
+  parentSubPlanId: number | null
   title: string
-  status: PlanStatus
+  description: string | null
   deadline: string | null
-  completedAt: string | null
-  lockedAt: string | null
-  canvasX: number | null
-  canvasY: number | null
-  subPlanCount: number
-  decidedCount: number
-  childCount: number
-  createdAt: string
-}
-
-export type PlanHierarchy = {
-  rootId: number
+  status: SubPlanStatus
+  options: OptionNode[]
+  decision: DecisionInfo | null
+  children: SubPlanNode[]
   ancestorIds: number[]
-  nodes: PlanHierarchyNode[]
+  planTitle: string
+  locked: boolean
 }
 
 // ── Payloads ──
-export type CreatePlanPayload = { title: string; description?: string; groupLabel?: string; parentPlanId?: number }
+export type CreatePlanPayload = { title: string; description?: string; groupLabel?: string }
 export type SetDeadlinePayload = { deadline: string }   // YYYY-MM-DD
 export type UpdatePlanPayload = { title?: string; description?: string; groupLabel?: string }
 export type TitleDescPayload = { title: string; description?: string }
-export type RatePayload = { score: number; comment?: string }
+export type CreateSubPlanPayload = { title: string; description?: string; parentSubPlanId?: number }
+export type CreateProConPayload = { kind: ProConKind; content: string }
 export type LockDecisionPayload = { chosenOptionId: number; reason: string }
 export type CanvasPositionPayload = { canvasX: number; canvasY: number }
 export type CreateEdgePayload = { sourceSubPlanId: number; targetSubPlanId: number }
@@ -122,7 +115,7 @@ export type PlanEventType =
   | 'PLAN_LOCKED' | 'PLAN_UNLOCKED'
   | 'PLAN_COMPLETED' | 'PLAN_UNCOMPLETED'
   | 'DEADLINE_SET' | 'DEADLINE_CLEARED'
-  | 'SUBDECISION_ADDED' | 'SUBDECISION_REMOVED' | 'SUBPLAN_PROMOTED'
+  | 'PROCON_ADDED' | 'PROCON_REMOVED'
   | 'RESOURCE_ADDED' | 'RESOURCE_REMOVED'
 
 export type PlanEvent = {
