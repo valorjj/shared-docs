@@ -105,12 +105,6 @@
   white-space: nowrap;
 }
 
-.optionAvg {
-  font-size: var(--fs-xs);
-  color: var(--c-text-muted);
-  white-space: nowrap;
-}
-
 .empty {
   font-size: var(--fs-sm);
   color: var(--c-text-subtle);

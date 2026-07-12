@@ -48,7 +48,7 @@ export default function StoryView({ plans, onOpen }: Props) {
 
 function StoryCard({ plan, onOpen }: { plan: PlanSummary; onOpen: (id: number) => void }) {
   const done = plan.status === 'COMPLETED'
-  const dotCount = Math.min(plan.childCount, MAX_DOTS)
+  const dotCount = Math.min(plan.subPlanCount, MAX_DOTS)
   return (
     <button type="button" className={styles.card} onClick={() => onOpen(plan.id)}>
       <span className={styles.cardHead}>
@@ -61,7 +61,7 @@ function StoryCard({ plan, onOpen }: { plan: PlanSummary; onOpen: (id: number) =
           editable={false}
         />
       </span>
-      {plan.childCount > 0 && (
+      {plan.subPlanCount > 0 && (
         <span className={styles.cluster}>
           <GitFork size={12} aria-hidden />
           <span className={styles.dots} aria-hidden>
@@ -69,7 +69,7 @@ function StoryCard({ plan, onOpen }: { plan: PlanSummary; onOpen: (id: number) =
               <span key={i} className={styles.dot} />
             ))}
           </span>
-          <span className={styles.clusterCount}>하위결정 {plan.childCount}</span>
+          <span className={styles.clusterCount}>안건 {plan.subPlanCount}</span>
         </span>
       )}
     </button>

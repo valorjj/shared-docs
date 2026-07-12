@@ -49,7 +49,6 @@ function DecisionModalInner({ open, onClose, options, currentChosenId, busy, onS
                      checked={chosenOptionId === o.id}
                      onChange={() => setChosenOptionId(o.id)} />
               <span className={styles.optionTitle}>{o.title}</span>
-              {o.avgScore != null && <span className={styles.optionAvg}>평균 {o.avgScore.toFixed(1)}</span>}
               {o.voterUserIds.length > 0 && <span className={styles.optionVotes}>{o.voterUserIds.length}표</span>}
             </label>
           ))}

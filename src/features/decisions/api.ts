@@ -2,9 +2,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '../../api/client'
 import { useActiveWorkspace } from '../../auth/useActiveWorkspace'
 import type {
-  CanvasPositionPayload, CreateEdgePayload, CreateLinkResourcePayload, CreatePlanPayload, LockDecisionPayload,
-  OptionNode, PlanEvent, PlanHierarchy, PlanResource, PlanSummary, PlanTree, Rating, RatePayload, ReorderSubPlansPayload,
-  SubPlanEdge, SubPlanNode, TitleDescPayload, UpdatePlanPayload, UpdateResourceTitlePayload,
+  CanvasPositionPayload, CreateEdgePayload, CreateLinkResourcePayload, CreatePlanPayload, CreateProConPayload,
+  CreateSubPlanPayload, LockDecisionPayload, OptionNode, PlanEvent, PlanResource, PlanSummary, PlanTree,
+  ReorderSubPlansPayload, SubPlanDetail, SubPlanEdge, SubPlanNode, TitleDescPayload, UpdatePlanPayload,
+  UpdateResourceTitlePayload,
 } from './types'
 import type { Note } from '../notes/types'
 
@@ -16,7 +17,7 @@ export const decisionKeys = {
   tree: (wsId: number | null, planId: number) => ['decisions', wsId, 'tree', planId] as const,
   timeline: (wsId: number | null, planId: number) => ['decisions', wsId, 'timeline', planId] as const,
   feed: (wsId: number | null) => ['decisions', wsId, 'feed'] as const,
-  hierarchy: (wsId: number | null, planId: number) => ['decisions', wsId, 'hierarchy', planId] as const,
+  subPlanDetail: (wsId: number | null, subPlanId: number) => ['decisions', wsId, 'subplan', subPlanId] as const,
   resources: (wsId: number | null, planId: number) => ['decisions', wsId, 'resources', planId] as const,
 }
 
@@ -65,12 +66,12 @@ export function useTimeline(planId: number, enabled = true) {
   })
 }
 
-export function usePlanHierarchy(planId: number) {
+export function useSubPlanDetail(subPlanId: number) {
   const { activeId } = useActiveWorkspace()
   return useQuery({
-    queryKey: decisionKeys.hierarchy(activeId, planId),
-    queryFn: async () => (await apiClient.get<PlanHierarchy>(`/api/plans/${planId}/hierarchy`)).data,
-    enabled: activeId != null && Number.isFinite(planId),
+    queryKey: decisionKeys.subPlanDetail(activeId, subPlanId),
+    queryFn: async () => (await apiClient.get<SubPlanDetail>(`/api/subplans/${subPlanId}`)).data,
+    enabled: activeId != null && Number.isFinite(subPlanId),
   })
 }
 
@@ -169,7 +170,7 @@ export function useClearPlanDeadline() {
 export function useAddSubPlan(planId: number) {
   const qc = useQueryClient(); const { activeId } = useActiveWorkspace()
   return useMutation({
-    mutationFn: async (p: TitleDescPayload) =>
+    mutationFn: async (p: CreateSubPlanPayload) =>
       (await apiClient.post<SubPlanNode>(`/api/plans/${planId}/subplans`, p)).data,
     onSuccess: () => qc.invalidateQueries({ queryKey: decisionKeys.scope(activeId) }),
   })
@@ -205,16 +206,6 @@ export function useClearSubPlanDeadline() {
     onSuccess: () => qc.invalidateQueries({ queryKey: decisionKeys.scope(activeId) }),
   })
 }
-export function usePromoteSubPlan() {
-  const qc = useQueryClient()
-  const { activeId } = useActiveWorkspace()
-  return useMutation({
-    mutationFn: async (subPlanId: number) =>
-      (await apiClient.post<PlanSummary>(`/api/subplans/${subPlanId}/promote`)).data,
-    onSuccess: () => qc.invalidateQueries({ queryKey: decisionKeys.scope(activeId) }),
-  })
-}
-
 // ── Option (선택지) mutations ──
 export function useAddOption() {
   const qc = useQueryClient(); const { activeId } = useActiveWorkspace()
@@ -240,19 +231,19 @@ export function useDeleteOption() {
   })
 }
 
-// ── Rating (평가) mutations ──
-export function useRateOption() {
+// ── ProCon (장단점) mutations ──
+export function useAddProCon() {
   const qc = useQueryClient(); const { activeId } = useActiveWorkspace()
   return useMutation({
-    mutationFn: async (v: { optionId: number; payload: RatePayload }) =>
-      (await apiClient.put<Rating>(`/api/options/${v.optionId}/rating`, v.payload)).data,
+    mutationFn: async (v: { optionId: number; payload: CreateProConPayload }) =>
+      (await apiClient.post(`/api/options/${v.optionId}/procons`, v.payload)).data,
     onSuccess: () => qc.invalidateQueries({ queryKey: decisionKeys.scope(activeId) }),
   })
 }
-export function useDeleteRating() {
+export function useDeleteProCon() {
   const qc = useQueryClient(); const { activeId } = useActiveWorkspace()
   return useMutation({
-    mutationFn: async (optionId: number) => { await apiClient.delete(`/api/options/${optionId}/rating`) },
+    mutationFn: async (id: number) => { await apiClient.delete(`/api/procons/${id}`) },
     onSuccess: () => qc.invalidateQueries({ queryKey: decisionKeys.scope(activeId) }),
   })
 }
@@ -302,17 +293,6 @@ export function useMoveSubPlan() {
     mutationFn: async (v: { id: number; payload: CanvasPositionPayload }) => {
       await apiClient.patch(`/api/subplans/${v.id}`, v.payload)
     },
-  })
-}
-
-/** Position-only persist for a sub-decision node on the parent canvas. Mirrors
- *  useMoveSubPlan above: canvas state is seeded once by the mounted canvas and
- *  the next mount reads the persisted value, so this does NOT invalidate any
- *  query — fire-and-forget, same as useMoveSubPlan. */
-export function useMovePlan() {
-  return useMutation({
-    mutationFn: async (p: { id: number } & CanvasPositionPayload) =>
-      (await apiClient.patch<PlanSummary>(`/api/plans/${p.id}`, { canvasX: p.canvasX, canvasY: p.canvasY })).data,
   })
 }
 

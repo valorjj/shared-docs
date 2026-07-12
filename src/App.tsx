@@ -21,6 +21,7 @@ const CalendarPage     = lazy(() => import('./pages/CalendarPage'))
 const CalcWorkspace    = lazy(() => import('./features/calc/CalcWorkspace'))
 const DecisionList     = lazy(() => import('./features/decisions/DecisionList'))
 const PlanDetail       = lazy(() => import('./features/decisions/PlanDetail'))
+const SubPlanDetail    = lazy(() => import('./features/decisions/SubPlanDetail'))
 const DecisionsCollabBoundary = lazy(() => import('./features/decisions/collab/DecisionsCollabBoundary'))
 const SharedItemList   = lazy(() => import('./features/shares/SharedItemList'))
 const Admin            = lazy(() => import('./pages/Admin'))
@@ -74,6 +75,7 @@ function App() {
             <Route element={<DecisionsCollabBoundary />}>
               <Route path="/decisions" element={<DecisionList />} />
               <Route path="/decisions/:planId" element={<PlanDetail />} />
+              <Route path="/decisions/:planId/subplans/:subPlanId" element={<SubPlanDetail />} />
             </Route>
             <Route path="/shared" element={<SharedItemList />} />
             <Route path="/shared/:noteId" element={<SharedItemList />} />

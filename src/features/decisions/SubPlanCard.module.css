@@ -9,6 +9,17 @@
   transition: opacity .15s, border-color .15s, box-shadow .15s;
 }
 
+/* Nested (서브안건) cards, rendered inside the foldable block one level deep —
+   quieter surface, tighter rhythm, no lift. */
+.nested {
+  padding: var(--sp-3);
+  gap: var(--sp-2);
+  background: var(--c-surface-tint);
+}
+.nested .titleButton {
+  font-size: var(--fs-md);
+}
+
 .qno {
   font-size: var(--fs-xs);
   color: var(--c-text-subtle);
@@ -26,15 +37,24 @@
   display: flex;
   align-items: center;
   gap: var(--sp-2);
+  min-width: 0;
 }
 
-.title {
+.titleButton {
   font-family: var(--font-serif);
   font-size: var(--fs-lg);
   font-weight: var(--fw-semi);
   color: var(--c-text);
+  background: none;
+  border: none;
   margin: 0;
+  padding: 2px 4px;
+  text-align: left;
+  cursor: pointer;
+  border-radius: var(--r-sm);
 }
+.titleButton:hover { background: var(--c-surface-tint); text-decoration: underline; }
+.titleButton:focus-visible { outline: none; box-shadow: var(--ring-focus); }
 
 /* 안건 connections surfaced from the canvas edges — quiet dashed connector. */
 .links {
@@ -83,48 +103,71 @@
   margin: 0;
 }
 
-.banner {
+.body {
   display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-  padding: var(--sp-2) var(--sp-3);
-  border: 1px solid var(--c-primary);
-  border-radius: var(--r-sm);
-  background: var(--c-primary-soft);
-  font-size: var(--fs-sm);
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-1);
+  width: 100%;
 }
 
-.bannerTag {
+.optionCount {
   font-size: var(--fs-xs);
-  font-weight: var(--fw-semi);
-  color: var(--c-primary);
-}
-
-.bannerBody {
-  flex: 1;
-  color: var(--c-text);
-}
-
-.bannerVotes {
-  color: var(--c-text-muted);
-  font-size: var(--fs-xs);
-}
-
-.empty {
-  font-size: var(--fs-sm);
   color: var(--c-text-subtle);
-  margin: 0;
 }
 
-.options {
+.subSection {
+  border-top: 1px solid var(--c-border);
+  padding-top: var(--sp-2);
   display: flex;
   flex-direction: column;
   gap: var(--sp-2);
 }
 
-.footer {
+.subControls {
   display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.subToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-size: var(--fs-sm);
+  color: var(--c-text-muted);
+  cursor: pointer;
+}
+.subToggle:hover { color: var(--c-text); }
+.subToggle:focus-visible { outline: none; box-shadow: var(--ring-focus); }
+
+.addChildBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-size: var(--fs-sm);
+  color: var(--c-accent);
+  cursor: pointer;
+  border-radius: var(--r-sm);
+}
+.addChildBtn:hover { text-decoration: underline; }
+.addChildBtn:focus-visible { outline: none; box-shadow: var(--ring-focus); }
+
+/* Foldable 서브안건 list — dashed indented block, matching the 연결-chips idiom. */
+.childList {
+  display: flex;
+  flex-direction: column;
   gap: var(--sp-2);
+  padding-left: var(--sp-4);
+  border-left: 1px dashed var(--c-border-strong);
 }
 
 /* Hover-highlight: source card hovered → accent ring; its linked 안건 → soft
@@ -147,10 +190,3 @@
 .dragHandle:focus-visible { outline: none; box-shadow: var(--ring-focus); }
 .dragHandle:active { cursor: grabbing; }
 .dragging { opacity: .6; }
-
-@media (max-width: 767px) {
-  .footer {
-    flex-direction: column;
-    align-items: stretch;
-  }
-}
