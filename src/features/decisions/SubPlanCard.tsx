@@ -15,10 +15,18 @@ import {
   useSetSubPlanDeadline, useClearSubPlanDeadline, useSetAppearance,
 } from './api'
 import styles from './SubPlanCard.module.css'
-import { ACCENT_COLORS, ACCENT_ICONS, type AccentIcon, type SubPlanNode } from './types'
+import { ACCENT_COLORS, ACCENT_ICONS, type AccentColor, type AccentIcon, type SubPlanNode } from './types'
 
 const ICON_MAP: Record<AccentIcon, LucideIcon> = {
   Flag, Star, AlertTriangle, Home, Car, Heart, Briefcase, Clock,
+}
+
+const COLOR_LABEL: Record<AccentColor, string> = {
+  red: '빨강', amber: '노랑', green: '초록', blue: '파랑', purple: '보라', gray: '회색',
+}
+
+const ICON_LABEL: Record<AccentIcon, string> = {
+  Flag: '깃발', Star: '별', AlertTriangle: '주의', Home: '집', Car: '자동차', Heart: '하트', Briefcase: '업무', Clock: '시간',
 }
 
 const STATUS_LABEL: Record<SubPlanNode['status'], string> = {
@@ -227,20 +235,22 @@ export default function SubPlanCard({
                   ))}
                 </div>
               )}
-
-              <TitleDescModal
-                open={addingChild}
-                onClose={() => setAddingChild(false)}
-                entityLabel="서브안건"
-                busy={addChild.isPending}
-                onSubmit={(payload) => addChild.mutate(
-                  { ...payload, parentSubPlanId: subPlan.id },
-                  { onSuccess: () => setAddingChild(false) },
-                )}
-              />
             </div>
           )}
         </>
+      )}
+
+      {!nested && (
+        <TitleDescModal
+          open={addingChild}
+          onClose={() => setAddingChild(false)}
+          entityLabel="서브안건"
+          busy={addChild.isPending}
+          onSubmit={(payload) => addChild.mutate(
+            { ...payload, parentSubPlanId: subPlan.id },
+            { onSuccess: () => setAddingChild(false) },
+          )}
+        />
       )}
 
       {!onEdit && (
@@ -271,7 +281,7 @@ export default function SubPlanCard({
               type="button"
               className={`${styles.swatch} ${subPlan.accentColor === c ? styles.swatchOn : ''}`}
               style={{ background: `var(--c-tag-${c})` }}
-              aria-label={c}
+              aria-label={COLOR_LABEL[c]}
               onClick={() => setAppearance.mutate({ id: subPlan.id, accentColor: c, icon: subPlan.icon })}
             />
           ))}
@@ -290,7 +300,7 @@ export default function SubPlanCard({
                 key={name}
                 type="button"
                 className={`${styles.iconChip} ${subPlan.icon === name ? styles.iconChipOn : ''}`}
-                aria-label={name}
+                aria-label={ICON_LABEL[name]}
                 onClick={() => setAppearance.mutate({ id: subPlan.id, accentColor: subPlan.accentColor, icon: name })}
               >
                 <Ico size={15} />
