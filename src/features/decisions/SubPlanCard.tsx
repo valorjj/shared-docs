@@ -146,6 +146,15 @@ export default function SubPlanCard({
       {...menu.triggerProps}
     >
       <header className={styles.head}>
+        <button
+          type="button"
+          className={styles.foldBtn}
+          onClick={toggleCollapsed}
+          aria-expanded={!collapsed}
+          aria-label={collapsed ? `${eyebrowLabel} 펼치기` : `${eyebrowLabel} 접기`}
+        >
+          {collapsed ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
+        </button>
         <div className={styles.titleGroup}>
           <span className={styles.qno}>
             {subPlan.accentColor && <span className={styles.colorDot} aria-hidden="true" />}

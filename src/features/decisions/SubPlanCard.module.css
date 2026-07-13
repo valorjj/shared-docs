@@ -10,16 +10,20 @@
   transition: opacity .15s, border-color .15s, box-shadow .15s;
 }
 
-/* accent bar — no layout shift (absolute), only when a color is set */
+/* accent tag — a soft full-card wash (low-opacity overlay, so it layers over
+   both the normal surface and the nested tint without a hard stripe) plus a
+   faint tint on the hairline border. Only when a color is set. */
 .accented::before {
   content: '';
   position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 3px;
-  border-radius: var(--r-md) 0 0 var(--r-md);
+  inset: 0;
+  border-radius: inherit;
   background: var(--card-accent);
+  opacity: .07;
+  pointer-events: none;
+}
+.accented {
+  border-color: color-mix(in srgb, var(--card-accent) 30%, var(--c-border));
 }
 
 .colorDot {
@@ -92,10 +96,30 @@
   gap: var(--sp-2);
 }
 
+/* Disclosure chevron — always visible so a card can be folded in one click and
+   an already-folded card shows how to reopen. Quiet by default. */
+.foldBtn {
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-left: calc(-1 * var(--sp-1));
+  padding: 2px;
+  color: var(--c-text-subtle);
+  background: none;
+  border: none;
+  cursor: pointer;
+  border-radius: var(--r-sm);
+}
+.foldBtn:hover { color: var(--c-text); background: var(--c-surface-tint); }
+.foldBtn:focus-visible { outline: none; box-shadow: var(--ring-focus); }
+
 .titleGroup {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  flex: 1;
 }
 
 .qno {
