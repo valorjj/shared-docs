@@ -43,6 +43,12 @@ export type OptionNode = {
 
 export type VoteSnapshotEntry = { optionId: number; title: string; count: number; voters: string[] }
 
+export const ACCENT_COLORS = ['red', 'amber', 'green', 'blue', 'purple', 'gray'] as const
+export type AccentColor = typeof ACCENT_COLORS[number]
+
+export const ACCENT_ICONS = ['Flag', 'Star', 'AlertTriangle', 'Home', 'Car', 'Heart', 'Briefcase', 'Clock'] as const
+export type AccentIcon = typeof ACCENT_ICONS[number]
+
 export type SubPlanNode = {
   id: number
   title: string
@@ -55,6 +61,8 @@ export type SubPlanNode = {
   options: OptionNode[]
   decision: DecisionInfo | null
   parentSubPlanId: number | null
+  accentColor: string | null
+  icon: string | null
   childSubPlanCount: number
 }
 
@@ -86,6 +94,8 @@ export type SubPlanDetail = {
   id: number
   planId: number
   parentSubPlanId: number | null
+  accentColor: string | null
+  icon: string | null
   title: string
   description: string | null
   deadline: string | null

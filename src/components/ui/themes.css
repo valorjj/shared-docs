@@ -30,6 +30,13 @@
   --c-accent-soft: rgba(255, 97, 104, 0.16);
   --c-accent-soft-strong: rgba(255, 97, 104, 0.24);
 
+  --c-tag-red: #ff6b6b;
+  --c-tag-amber: #e0a44a;
+  --c-tag-green: #4fbf82;
+  --c-tag-blue: #5b9bd8;
+  --c-tag-purple: #a98fe0;
+  --c-tag-gray: #9aa0ab;
+
   --c-danger: #ff7c75;
   --c-danger-soft: rgba(255, 124, 117, 0.14);
   --c-danger-border: #6b3c39;
@@ -72,6 +79,13 @@
   --c-accent-soft: rgba(255, 121, 198, 0.16);
   --c-accent-soft-strong: rgba(255, 121, 198, 0.26);
 
+  --c-tag-red: #ff5555;
+  --c-tag-amber: #ffb86c;
+  --c-tag-green: #50fa7b;
+  --c-tag-blue: #8be9fd;
+  --c-tag-purple: #bd93f9;
+  --c-tag-gray: #6272a4;
+
   --c-danger: #ff5555;
   --c-danger-soft: rgba(255, 85, 85, 0.14);
   --c-danger-border: #6b3232;
@@ -113,6 +127,13 @@
   --c-accent-hover: #fa4a8b;
   --c-accent-soft: rgba(249, 38, 114, 0.14);
   --c-accent-soft-strong: rgba(249, 38, 114, 0.24);
+
+  --c-tag-red: #f92672;
+  --c-tag-amber: #fd971f;
+  --c-tag-green: #a6e22e;
+  --c-tag-blue: #66d9ef;
+  --c-tag-purple: #ae81ff;
+  --c-tag-gray: #75715e;
 
   --c-danger: #f92672;
   --c-danger-soft: rgba(249, 38, 114, 0.14);

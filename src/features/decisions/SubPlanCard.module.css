@@ -1,4 +1,5 @@
 .section {
+  position: relative;
   border: 1px solid var(--c-border);
   border-radius: var(--r-md);
   background: var(--c-surface);
@@ -8,6 +9,67 @@
   gap: var(--sp-3);
   transition: opacity .15s, border-color .15s, box-shadow .15s;
 }
+
+/* accent bar — no layout shift (absolute), only when a color is set */
+.accented::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  border-radius: var(--r-md) 0 0 var(--r-md);
+  background: var(--card-accent);
+}
+
+.colorDot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: var(--sp-1);
+  border-radius: var(--r-pill);
+  background: var(--card-accent);
+  vertical-align: middle;
+}
+
+.titleIcon {
+  margin-right: var(--sp-1);
+  vertical-align: -2px;
+  color: var(--c-text-muted);
+}
+
+.collapsed { gap: 0; }
+
+/* menu pickers */
+.swatch {
+  width: 20px;
+  height: 20px;
+  border-radius: var(--r-pill);
+  border: 2px solid transparent;
+  cursor: pointer;
+  padding: 0;
+}
+.swatchOn { border-color: var(--c-text); }
+.swatchClear {
+  background: var(--c-surface);
+  border: 1px dashed var(--c-border-strong);
+  position: relative;
+}
+
+.iconChip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--r-sm);
+  border: 1px solid transparent;
+  background: none;
+  color: var(--c-text-muted);
+  cursor: pointer;
+}
+.iconChip:hover { background: var(--c-surface-tint); color: var(--c-text); }
+.iconChipOn { border-color: var(--c-text); color: var(--c-text); }
 
 /* Nested (서브안건) cards, rendered inside the foldable block one level deep —
    quieter surface, tighter rhythm, no lift. */

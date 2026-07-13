@@ -90,7 +90,10 @@ type ContextMenuItemProps = {
   onSelect: () => void
   icon?: ReactNode
   children: ReactNode
+  /** @deprecated use `danger` — kept for existing callers. */
   destructive?: boolean
+  /** Styles the item as a destructive action (red). Alias of `destructive`. */
+  danger?: boolean
   disabled?: boolean
 }
 
@@ -99,8 +102,10 @@ export function ContextMenuItem({
   icon,
   children,
   destructive = false,
+  danger = false,
   disabled = false,
 }: ContextMenuItemProps) {
+  const isDanger = destructive || danger
   const handle = useCallback(
     (e: React.MouseEvent) => {
       if (disabled) return
@@ -115,7 +120,7 @@ export function ContextMenuItem({
       type="button"
       role="menuitem"
       disabled={disabled}
-      className={`${styles.item}${destructive ? ` ${styles.destructive}` : ''}`}
+      className={`${styles.item}${isDanger ? ` ${styles.destructive}` : ''}`}
       onMouseDown={handle}
     >
       {icon && (
@@ -130,4 +135,18 @@ export function ContextMenuItem({
 
 export function ContextMenuSeparator() {
   return <div className={styles.separator} role="separator" aria-hidden="true" />
+}
+
+/** Alias of `ContextMenuSeparator` — matches the naming used by newer callers. */
+export function ContextMenuDivider() {
+  return <div className={styles.separator} role="separator" aria-hidden="true" />
+}
+
+export function ContextMenuGroup({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className={styles.group}>
+      <span className={styles.groupLabel}>{label}</span>
+      <div className={styles.groupBody}>{children}</div>
+    </div>
+  )
 }

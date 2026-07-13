@@ -30,6 +30,14 @@
   --c-accent-soft: rgba(232, 67, 74, 0.08);
   --c-accent-soft-strong: rgba(232, 67, 74, 0.14);
 
+  /* Tag palette — small accents (dot + 3px bar) for 안건 color tags. Base = light. */
+  --c-tag-red: #d64545;
+  --c-tag-amber: #c98a1a;
+  --c-tag-green: #2f8a57;
+  --c-tag-blue: #2f6fb0;
+  --c-tag-purple: #7c5cbf;
+  --c-tag-gray: #8a8f98;
+
   --c-danger: #b3261e;
   --c-danger-soft: rgba(179, 38, 30, 0.08);
   --c-danger-border: #f1a8a3;

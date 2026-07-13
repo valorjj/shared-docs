@@ -206,6 +206,14 @@ export function useClearSubPlanDeadline() {
     onSuccess: () => qc.invalidateQueries({ queryKey: decisionKeys.scope(activeId) }),
   })
 }
+export function useSetAppearance() {
+  const qc = useQueryClient(); const { activeId } = useActiveWorkspace()
+  return useMutation({
+    mutationFn: async (v: { id: number; accentColor: string | null; icon: string | null }) =>
+      (await apiClient.patch<SubPlanNode>(`/api/subplans/${v.id}/appearance`, { accentColor: v.accentColor, icon: v.icon })).data,
+    onSuccess: () => qc.invalidateQueries({ queryKey: decisionKeys.scope(activeId) }),
+  })
+}
 // ── Option (선택지) mutations ──
 export function useAddOption() {
   const qc = useQueryClient(); const { activeId } = useActiveWorkspace()
