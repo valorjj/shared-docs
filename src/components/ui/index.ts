@@ -19,4 +19,11 @@ export { Skeleton } from './Skeleton'
 export { Spinner } from './Spinner'
 export { EmptyState } from './EmptyState'
 export { ErrorState } from './ErrorState'
-export { ContextMenu, ContextMenuItem, ContextMenuSeparator } from './ContextMenu'
+export {
+  ContextMenu,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuDivider,
+  ContextMenuGroup,
+} from './ContextMenu'
+export { useContextMenu } from './useContextMenu'
