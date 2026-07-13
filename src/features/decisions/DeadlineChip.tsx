@@ -56,7 +56,7 @@ export default function DeadlineChip({ deadline, settledAt, settledNoun = 'ê²°ì 
   )
 }
 
-function DeadlineModal({ current, busy, onClose, onSet, onClear }: {
+export function DeadlineModal({ current, busy, onClose, onSet, onClear }: {
   current: string | null; busy?: boolean; onClose: () => void; onSet: (d: string) => void; onClear: () => void
 }) {
   const [value, setValue] = useState(current ?? '')

@@ -1,12 +1,13 @@
 import {
-  Pencil, Trash2, Link2, ChevronDown, ChevronRight, Plus,
+  MoreHorizontal, ChevronDown, ChevronRight, Plus,
   Flag, Star, AlertTriangle, Home, Car, Heart, Briefcase, Clock, X, type LucideIcon,
 } from 'lucide-react'
-import DeadlineChip from './DeadlineChip'
-import { useState, type ReactNode } from 'react'
+import { DeadlineModal } from './DeadlineChip'
+import { deadlineLabel, settledDeadlineLabel, toLocalDateString } from './deadlineLabel'
+import { useState, type MouseEvent, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  IconButton, Badge, Skeleton,
+  IconButton, Skeleton,
   ContextMenu, ContextMenuItem, ContextMenuDivider, ContextMenuGroup, useContextMenu,
 } from '../../components/ui'
 import TitleDescModal from './TitleDescModal'
@@ -114,6 +115,21 @@ export default function SubPlanCard({
 
   const eyebrowLabel = nested ? '서브안건' : '안건'
 
+  const [deadlineOpen, setDeadlineOpen] = useState(false)
+  const deadlineEditable = !locked && decision == null
+  const deadlineText = subPlan.deadline
+    ? (decision?.decidedAt
+        ? settledDeadlineLabel(subPlan.deadline, decision.decidedAt, '결정').text
+        : deadlineLabel(subPlan.deadline, toLocalDateString(new Date())).text)
+    : null
+
+  // The ⋯ button opens the same menu as right-click / long-press. Anchor it to
+  // the button's rect (not the click coords) so keyboard activation works too.
+  const openMenuFromButton = (e: MouseEvent) => {
+    const r = e.currentTarget.getBoundingClientRect()
+    menu.openAt(r.right, r.bottom)
+  }
+
   return (
     <section
       id={`subplan-${subPlan.id}`}
@@ -144,34 +160,17 @@ export default function SubPlanCard({
             {subPlan.title}
           </button>
         </div>
-        {collapsed && <Badge>{STATUS_LABEL[subPlan.status]}</Badge>}
-        {!locked && (
-          <div className={styles.actions}>
-            {dragHandle}
-            {onOpenConnect && (
-              <IconButton variant="ghost" size="sm" label="안건 연결" onClick={onOpenConnect}><Link2 size={14} /></IconButton>
-            )}
-            <IconButton variant="ghost" size="sm" label={`${eyebrowLabel} 수정`} onClick={handleEdit}><Pencil size={14} /></IconButton>
-            <IconButton variant="ghost" size="sm" label={`${eyebrowLabel} 삭제`} onClick={handleDelete}><Trash2 size={14} /></IconButton>
-          </div>
-        )}
+        {collapsed && <span className={styles.headStatus}>{STATUS_LABEL[subPlan.status]}</span>}
+        <div className={styles.actions}>
+          {!locked && dragHandle}
+          <IconButton variant="ghost" size="sm" label={`${eyebrowLabel} 메뉴`} onClick={openMenuFromButton}>
+            <MoreHorizontal size={16} />
+          </IconButton>
+        </div>
       </header>
 
       {!collapsed && (
         <>
-          <div className={styles.metaRow}>
-            <Badge>{STATUS_LABEL[subPlan.status]}</Badge>
-            <DeadlineChip
-              deadline={subPlan.deadline}
-              settledAt={decision?.decidedAt ?? null}
-              settledNoun="결정"
-              editable={!locked && decision == null}
-              busy={deadlineBusyResolved}
-              onSet={handleSetDeadline}
-              onClear={handleClearDeadline}
-            />
-          </div>
-
           {hasLinks && (
             <div className={styles.links}>
               {links!.outgoing.length > 0 && (
@@ -200,7 +199,11 @@ export default function SubPlanCard({
           <button type="button" className={styles.openBody} onClick={openDetail} aria-label={`${subPlan.title} 열기`}>
             {subPlan.description && <span className={styles.desc}>{subPlan.description}</span>}
             <span className={styles.openRow}>
-              <span className={styles.optionCount}>선택지 {subPlan.options.length}</span>
+              <span className={styles.footMeta}>
+                <span>{STATUS_LABEL[subPlan.status]}</span>
+                <span>선택지 {subPlan.options.length}</span>
+                {deadlineText && <span>{deadlineText}</span>}
+              </span>
               <span className={styles.openHint}>열기<ChevronRight size={14} /></span>
             </span>
           </button>
@@ -267,11 +270,24 @@ export default function SubPlanCard({
         />
       )}
 
+      {deadlineOpen && (
+        <DeadlineModal
+          current={subPlan.deadline}
+          busy={deadlineBusyResolved}
+          onClose={() => setDeadlineOpen(false)}
+          onSet={(d) => { handleSetDeadline(d); setDeadlineOpen(false) }}
+          onClear={() => { handleClearDeadline(); setDeadlineOpen(false) }}
+        />
+      )}
+
       <ContextMenu open={menu.open} position={menu.position} onClose={menu.close}>
         <ContextMenuItem onSelect={() => { menu.close(); openDetail() }}>열기</ContextMenuItem>
         {!locked && <ContextMenuItem onSelect={() => { menu.close(); handleEdit() }}>수정</ContextMenuItem>}
         {!locked && onOpenConnect && (
           <ContextMenuItem onSelect={() => { menu.close(); onOpenConnect() }}>연결</ContextMenuItem>
+        )}
+        {deadlineEditable && (
+          <ContextMenuItem onSelect={() => { menu.close(); setDeadlineOpen(true) }}>기한</ContextMenuItem>
         )}
         <ContextMenuDivider />
         <ContextMenuGroup label="색">

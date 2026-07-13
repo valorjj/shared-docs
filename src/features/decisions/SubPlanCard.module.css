@@ -104,11 +104,10 @@
   letter-spacing: var(--tracking-tight);
 }
 
-.metaRow {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--sp-2);
+.headStatus {
+  font-size: var(--fs-xs);
+  color: var(--c-text-subtle);
+  white-space: nowrap;
 }
 
 .titleButton {
@@ -166,7 +165,22 @@
 
 .actions {
   display: flex;
+  align-items: center;
   gap: var(--sp-1);
+}
+
+/* Where hover exists, the ⋯ / drag cluster stays hidden until the card is
+   hovered or something inside it is focused — the card rests quiet. On touch
+   (no hover) it stays visible, and long-press still opens the same menu. */
+@media (hover: hover) {
+  .actions {
+    opacity: 0;
+    transition: opacity .12s;
+  }
+  .section:hover .actions,
+  .section:focus-within .actions {
+    opacity: 1;
+  }
 }
 
 .desc {
@@ -201,9 +215,19 @@
   gap: var(--sp-2);
 }
 
-.optionCount {
+/* Status · 선택지 N · 기한 — glanceable metadata folded into the footer as
+   quiet text so it never competes with the title or the 열기 affordance. */
+.footMeta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
   font-size: var(--fs-xs);
   color: var(--c-text-subtle);
+}
+.footMeta > span + span::before {
+  content: '·';
+  margin-right: var(--sp-2);
 }
 
 .openHint {

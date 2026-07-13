@@ -34,6 +34,10 @@ export function useContextMenu() {
     open: position != null,
     position,
     close: () => setPosition(null),
+    /** Open the menu at explicit viewport coords — for a click trigger (e.g. a
+     *  ⋯ button) that isn't a right-click. Pair with the button's bounding rect
+     *  so it also works for keyboard activation, where clientX/Y would be 0. */
+    openAt: (x: number, y: number) => setPosition({ x, y }),
     triggerProps: {
       onContextMenu,
       onPointerDown,
