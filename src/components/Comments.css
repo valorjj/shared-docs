@@ -73,6 +73,25 @@
   flex: 1;
 }
 
+.comments__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+/* Density at rest, affordances on hover (Notion baseline). On touch devices,
+   which have no hover, actions stay visible. focus-within keeps them keyboard-reachable. */
+@media (hover: hover) {
+  .comments__actions {
+    opacity: 0;
+    transition: opacity var(--t-fast);
+  }
+  .comments__item:hover .comments__actions,
+  .comments__item:focus-within .comments__actions {
+    opacity: 1;
+  }
+}
+
 .comments__delete {
   background: transparent;
   border: none;
