@@ -87,9 +87,9 @@ export default function SubPlanCard({
       onMouseEnter={() => onHoverChange?.(true)}
       onMouseLeave={() => onHoverChange?.(false)}
     >
-      <div className={styles.qno}>{eyebrowLabel} {index}</div>
       <header className={styles.head}>
-        <div className={styles.titleWrap}>
+        <div className={styles.titleGroup}>
+          <span className={styles.qno}>{eyebrowLabel} {index}</span>
           <button
             type="button"
             className={styles.titleButton}
@@ -97,16 +97,6 @@ export default function SubPlanCard({
           >
             {subPlan.title}
           </button>
-          <Badge>{STATUS_LABEL[subPlan.status]}</Badge>
-          <DeadlineChip
-            deadline={subPlan.deadline}
-            settledAt={decision?.decidedAt ?? null}
-            settledNoun="결정"
-            editable={!locked && decision == null}
-            busy={deadlineBusyResolved}
-            onSet={handleSetDeadline}
-            onClear={handleClearDeadline}
-          />
         </div>
         {!locked && (
           <div className={styles.actions}>
@@ -119,6 +109,19 @@ export default function SubPlanCard({
           </div>
         )}
       </header>
+
+      <div className={styles.metaRow}>
+        <Badge>{STATUS_LABEL[subPlan.status]}</Badge>
+        <DeadlineChip
+          deadline={subPlan.deadline}
+          settledAt={decision?.decidedAt ?? null}
+          settledNoun="결정"
+          editable={!locked && decision == null}
+          busy={deadlineBusyResolved}
+          onSet={handleSetDeadline}
+          onClear={handleClearDeadline}
+        />
+      </div>
 
       {hasLinks && (
         <div className={styles.links}>

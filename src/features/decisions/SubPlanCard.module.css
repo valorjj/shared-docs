@@ -15,29 +15,38 @@
   padding: var(--sp-3);
   gap: var(--sp-2);
   background: var(--c-surface-tint);
+  /* the tint fill groups the child on its own — drop the border so nested
+     cards don't stack hairline-on-rail-on-border into visual noise. */
+  border-color: transparent;
 }
 .nested .titleButton {
   font-size: var(--fs-md);
 }
 
-.qno {
-  font-size: var(--fs-xs);
-  color: var(--c-text-subtle);
-  margin-bottom: 2px;
-}
-
 .head {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: var(--sp-2);
 }
 
-.titleWrap {
+.titleGroup {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.qno {
+  font-size: var(--fs-xs);
+  color: var(--c-text-subtle);
+  letter-spacing: var(--tracking-tight);
+}
+
+.metaRow {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: var(--sp-2);
-  min-width: 0;
 }
 
 .titleButton {
@@ -47,8 +56,9 @@
   color: var(--c-text);
   background: none;
   border: none;
-  margin: 0;
+  margin: 0 0 0 calc(-1 * var(--sp-1));
   padding: 2px 4px;
+  min-width: 0;
   text-align: left;
   cursor: pointer;
   border-radius: var(--r-sm);
@@ -187,13 +197,14 @@
 .addChildBtn:hover { text-decoration: underline; }
 .addChildBtn:focus-visible { outline: none; box-shadow: var(--ring-focus); }
 
-/* Foldable 서브안건 list — dashed indented block, matching the 연결-chips idiom. */
+/* Foldable 서브안건 list — quiet dashed rail, shallow indent so a few levels
+   of nesting don't march the content off the right edge. */
 .childList {
   display: flex;
   flex-direction: column;
   gap: var(--sp-2);
-  padding-left: var(--sp-4);
-  border-left: 1px dashed var(--c-border-strong);
+  padding-left: var(--sp-3);
+  border-left: 1px dashed var(--c-border);
 }
 
 /* Hover-highlight: source card hovered → accent ring; its linked 안건 → soft
