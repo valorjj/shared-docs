@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { Plus, ListChecks, ListTree, CornerLeftUp } from 'lucide-react'
+import { Plus, ListChecks, ListTree, CornerLeftUp, CheckCircle2 } from 'lucide-react'
 import { Page, PageHeader, PageTitle, BackLink, Button, Badge, EmptyState, ErrorState, Skeleton } from '../../components/ui'
 import { useAuth } from '../../auth/useAuth'
 import { useActiveWorkspace } from '../../auth/useActiveWorkspace'
@@ -124,7 +124,7 @@ export default function SubPlanDetail() {
 
             {decision && chosen && (
               <div className={styles.banner}>
-                <span className={styles.bannerTag}>결정됨</span>
+                <span className={styles.bannerTag}><CheckCircle2 size={13} aria-hidden="true" /> 결정됨</span>
                 <span className={styles.bannerBody}>
                   <strong>{chosen.title}</strong> · {decision.reason}
                   {snapshot && <span className={styles.bannerVotes}> · {totalVotes}표 중 {chosenTally?.count ?? 0}표</span>}

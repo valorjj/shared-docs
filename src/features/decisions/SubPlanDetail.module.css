@@ -108,6 +108,10 @@
 }
 
 .bannerTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
   font-size: var(--fs-xs);
   font-weight: var(--fw-semi);
   color: var(--c-primary);

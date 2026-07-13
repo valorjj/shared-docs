@@ -60,7 +60,10 @@ function ProConColumn({
 
   return (
     <div className={styles.column}>
-      <h4 className={styles.columnTitle}>{label}</h4>
+      <h4 className={styles.columnTitle}>
+        <span>{label}</span>
+        {lines.length > 0 && <span className={styles.columnCount}>{lines.length}</span>}
+      </h4>
       {lines.length === 0 ? (
         <p className={styles.empty}>없음</p>
       ) : (
