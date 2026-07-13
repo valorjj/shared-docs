@@ -54,7 +54,7 @@ export default function Comments({ pageId, title = '댓글' }: CommentsProps) {
       )}
 
       {comments && comments.length === 0 && (
-        <p className="comments__status">아직 댓글이 없습니다.</p>
+        <p className="comments__status">아직 댓글이 없어요.</p>
       )}
 
       {comments && comments.length > 0 && (
@@ -155,20 +155,24 @@ function CommentRow({
           {formatTime(comment.createdAt)}
           {edited && ' (수정됨)'}
         </time>
-        {canEdit && !editing && (
-          <button type="button" className="comments__edit" onClick={() => setEditing(true)}>
-            수정
-          </button>
-        )}
-        {canDelete && !editing && (
-          <button
-            type="button"
-            className="comments__delete"
-            onClick={onDelete}
-            disabled={deleting}
-          >
-            {deleting ? '삭제 중…' : '삭제'}
-          </button>
+        {(canEdit || canDelete) && !editing && (
+          <div className="comments__actions">
+            {canEdit && (
+              <button type="button" className="comments__edit" onClick={() => setEditing(true)}>
+                수정
+              </button>
+            )}
+            {canDelete && (
+              <button
+                type="button"
+                className="comments__delete"
+                onClick={onDelete}
+                disabled={deleting}
+              >
+                {deleting ? '삭제 중…' : '삭제'}
+              </button>
+            )}
+          </div>
         )}
       </div>
       {editing ? (
