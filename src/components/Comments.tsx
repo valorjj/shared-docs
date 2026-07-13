@@ -3,6 +3,7 @@ import { useAuth } from '../auth/useAuth'
 import {
   useComments,
   useCreateComment,
+  useUpdateComment,
   useDeleteComment,
   type Comment,
 } from '../api/comments'
@@ -20,6 +21,7 @@ export default function Comments({ pageId, title = '댓글' }: CommentsProps) {
 
   const { data: comments, isLoading, isError, error, refetch } = useComments(pageId)
   const createMutation = useCreateComment(pageId)
+  const updateMutation = useUpdateComment(pageId)
   const deleteMutation = useDeleteComment(pageId)
 
   const [content, setContent] = useState('')
@@ -58,14 +60,16 @@ export default function Comments({ pageId, title = '댓글' }: CommentsProps) {
       {comments && comments.length > 0 && (
         <ul className="comments__list">
           {comments.map((c) => {
-            const canDelete =
-              (c.author.userId != null && c.author.userId === user?.userId) || isAdmin
+            const isAuthor = c.author.userId != null && c.author.userId === user?.userId
             return (
               <CommentRow
                 key={c.id}
                 comment={c}
-                canDelete={canDelete}
+                canEdit={isAuthor}
+                canDelete={isAuthor || isAdmin}
+                onUpdate={(content, onSuccess) => updateMutation.mutate({ id: c.id, content }, { onSuccess })}
                 onDelete={() => deleteMutation.mutate(c.id)}
+                updating={updateMutation.isPending && updateMutation.variables?.id === c.id}
                 deleting={deleteMutation.isPending && deleteMutation.variables === c.id}
               />
             )
@@ -117,15 +121,25 @@ export default function Comments({ pageId, title = '댓글' }: CommentsProps) {
 
 function CommentRow({
   comment,
+  canEdit,
   canDelete,
+  onUpdate,
   onDelete,
+  updating,
   deleting,
 }: {
   comment: Comment
+  canEdit: boolean
   canDelete: boolean
+  onUpdate: (content: string, onSuccess: () => void) => void
   onDelete: () => void
+  updating: boolean
   deleting: boolean
 }) {
+  const [editing, setEditing] = useState(false)
+
+  const edited = comment.updatedAt !== comment.createdAt
+
   return (
     <li className="comments__item">
       <div className="comments__meta">
@@ -139,8 +153,14 @@ function CommentRow({
         <span className="comments__author-name">{comment.author.name}</span>
         <time className="comments__time" dateTime={comment.createdAt}>
           {formatTime(comment.createdAt)}
+          {edited && ' (수정됨)'}
         </time>
-        {canDelete && (
+        {canEdit && !editing && (
+          <button type="button" className="comments__edit" onClick={() => setEditing(true)}>
+            수정
+          </button>
+        )}
+        {canDelete && !editing && (
           <button
             type="button"
             className="comments__delete"
@@ -151,8 +171,67 @@ function CommentRow({
           </button>
         )}
       </div>
-      <p className="comments__body">{comment.content}</p>
+      {editing ? (
+        <CommentEditor
+          initial={comment.content}
+          busy={updating}
+          onCancel={() => setEditing(false)}
+          onSave={(content) => onUpdate(content, () => setEditing(false))}
+        />
+      ) : (
+        <p className="comments__body">{comment.content}</p>
+      )}
     </li>
+  )
+}
+
+function CommentEditor({
+  initial,
+  busy,
+  onCancel,
+  onSave,
+}: {
+  initial: string
+  busy: boolean
+  onCancel: () => void
+  onSave: (content: string) => void
+}) {
+  const [draft, setDraft] = useState(initial)
+  const trimmed = draft.trim()
+  const dirty = trimmed !== initial.trim()
+
+  const handleSave = () => {
+    if (!trimmed || !dirty) {
+      onCancel()
+      return
+    }
+    onSave(trimmed)
+  }
+
+  return (
+    <div className="comments__edit-form">
+      <textarea
+        className="comments__content"
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        maxLength={2000}
+        rows={3}
+        autoFocus
+      />
+      <div className="comments__edit-actions">
+        <button type="button" className="comments__edit-cancel" onClick={onCancel} disabled={busy}>
+          취소
+        </button>
+        <button
+          type="button"
+          className="comments__submit"
+          onClick={handleSave}
+          disabled={busy || !trimmed}
+        >
+          {busy ? '저장 중…' : '저장'}
+        </button>
+      </div>
+    </div>
   )
 }
 
