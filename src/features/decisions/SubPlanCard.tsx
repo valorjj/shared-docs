@@ -50,6 +50,8 @@ export default function SubPlanCard({
   onEdit, onDelete, onOpenConnect, dragHandle, locked, onSetDeadline, onClearDeadline, deadlineBusy,
 }: Props) {
   const navigate = useNavigate()
+  const detailPath = `/decisions/${planId}/subplans/${subPlan.id}`
+  const openDetail = () => navigate(detailPath)
   const { decision } = subPlan
   const hasLinks = links != null && (links.outgoing.length > 0 || links.incoming.length > 0)
 
@@ -91,7 +93,7 @@ export default function SubPlanCard({
           <button
             type="button"
             className={styles.titleButton}
-            onClick={() => navigate(`/decisions/${planId}/subplans/${subPlan.id}`)}
+            onClick={openDetail}
           >
             {subPlan.title}
           </button>
@@ -143,10 +145,13 @@ export default function SubPlanCard({
         </div>
       )}
 
-      <div className={styles.body}>
-        {subPlan.description && <p className={styles.desc}>{subPlan.description}</p>}
-        <span className={styles.optionCount}>선택지 {subPlan.options.length}</span>
-      </div>
+      <button type="button" className={styles.openBody} onClick={openDetail} aria-label={`${subPlan.title} 열기`}>
+        {subPlan.description && <span className={styles.desc}>{subPlan.description}</span>}
+        <span className={styles.openRow}>
+          <span className={styles.optionCount}>선택지 {subPlan.options.length}</span>
+          <span className={styles.openHint}>열기<ChevronRight size={14} /></span>
+        </span>
+      </button>
 
       {!nested && (
         <div className={styles.subSection}>
