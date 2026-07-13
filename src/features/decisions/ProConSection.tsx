@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { Plus, X } from 'lucide-react'
-import { IconButton } from '../../components/ui'
+import { IconButton, Modal, Field, Label, Textarea, Button } from '../../components/ui'
 import { useAddProCon, useDeleteProCon } from './api'
 import styles from './ProConSection.module.css'
 import type { ProCon, ProConKind } from './types'
@@ -44,19 +44,9 @@ function ProConColumn({
   lines: ProCon[]
   locked: boolean
 }) {
-  const [draft, setDraft] = useState('')
+  const [adding, setAdding] = useState(false)
   const addProCon = useAddProCon()
   const deleteProCon = useDeleteProCon()
-
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    const trimmed = draft.trim()
-    if (!trimmed) return
-    addProCon.mutate(
-      { optionId, payload: { kind, content: trimmed } },
-      { onSuccess: () => setDraft('') },
-    )
-  }
 
   return (
     <div className={styles.column}>
@@ -87,20 +77,71 @@ function ProConColumn({
         </ul>
       )}
       {!locked && (
-        <form className={styles.addForm} onSubmit={handleSubmit}>
-          <input
-            className={styles.addInput}
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            placeholder={addLabel}
-            aria-label={addLabel}
-            maxLength={500}
-          />
-          <IconButton variant="ghost" size="sm" label={addLabel} type="submit" disabled={!draft.trim() || addProCon.isPending}>
-            <Plus size={13} />
-          </IconButton>
-        </form>
+        <button type="button" className={styles.addBtn} onClick={() => setAdding(true)}>
+          <Plus size={13} />
+          <span>{addLabel}</span>
+        </button>
+      )}
+      {adding && (
+        <ProConModal
+          addLabel={addLabel}
+          label={label}
+          busy={addProCon.isPending}
+          onClose={() => setAdding(false)}
+          onSubmit={(content) => addProCon.mutate(
+            { optionId, payload: { kind, content } },
+            { onSuccess: () => setAdding(false) },
+          )}
+        />
       )}
     </div>
+  )
+}
+
+function ProConModal({ addLabel, label, busy, onClose, onSubmit }: {
+  addLabel: string
+  label: string
+  busy: boolean
+  onClose: () => void
+  onSubmit: (content: string) => void
+}) {
+  const [content, setContent] = useState('')
+
+  const submit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    const trimmed = content.trim()
+    if (!trimmed) return
+    onSubmit(trimmed)
+  }
+
+  return (
+    <Modal
+      open
+      onClose={onClose}
+      title={addLabel}
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose} disabled={busy}>취소</Button>
+          <Button variant="primary" type="submit" form="procon-form" disabled={busy || !content.trim()}>
+            {busy ? '저장 중…' : '저장'}
+          </Button>
+        </>
+      }
+    >
+      <form id="procon-form" onSubmit={submit}>
+        <Field>
+          <Label htmlFor="procon-content">{label}</Label>
+          <Textarea
+            id="procon-content"
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            maxLength={500}
+            rows={3}
+            autoFocus
+            placeholder={`${label} 내용을 입력하세요`}
+          />
+        </Field>
+      </form>
+    </Modal>
   )
 }

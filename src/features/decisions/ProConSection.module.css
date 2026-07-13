@@ -71,29 +71,22 @@
   word-break: break-word;
 }
 
-.addForm {
-  display: flex;
+.addBtn {
+  display: inline-flex;
   align-items: center;
   gap: var(--sp-1);
+  align-self: flex-start;
   margin-top: 2px;
-}
-
-.addInput {
-  flex: 1;
-  min-width: 0;
-  border: none;
-  border-bottom: 1px solid var(--c-border);
+  padding: 2px 4px;
+  margin-inline: calc(-1 * 4px);
   background: none;
+  border: none;
+  font: inherit;
   font-size: var(--fs-sm);
-  color: var(--c-text);
-  padding: 2px 0;
+  color: var(--c-accent);
+  cursor: pointer;
+  border-radius: var(--r-sm);
 }
 
-.addInput:focus {
-  outline: none;
-  border-color: var(--c-primary);
-}
-
-.addInput::placeholder {
-  color: var(--c-text-subtle);
-}
+.addBtn:hover { background: var(--c-surface-tint); }
+.addBtn:focus-visible { outline: none; box-shadow: var(--ring-focus); }
