@@ -1,8 +1,9 @@
 import { useState, type MouseEvent } from 'react'
-import { ChevronDown, ChevronRight, Check, Vote, ListChecks, MoreHorizontal } from 'lucide-react'
+import { ChevronDown, ChevronRight, Check, Vote, ListChecks, MoreHorizontal, Paperclip } from 'lucide-react'
 import { IconButton, ContextMenu, ContextMenuItem, useContextMenu } from '../../components/ui'
 import Comments from '../../components/Comments'
 import ProConSection from './ProConSection'
+import OptionResourceSection from './OptionResourceSection'
 import styles from './OptionRow.module.css'
 import type { OptionNode } from './types'
 
@@ -50,6 +51,11 @@ export default function OptionRow({
             <ListChecks size={13} /> 장단점 {option.proCons.length}
           </span>
         )}
+        {option.resources.length > 0 && (
+          <span className={styles.proConCount}>
+            <Paperclip size={13} /> 자료 {option.resources.length}
+          </span>
+        )}
         <button
           type="button"
           className={iVoted ? `${styles.vote} ${styles.voteOn}` : styles.vote}
@@ -81,6 +87,7 @@ export default function OptionRow({
       {open && (
         <div className={styles.body}>
           {option.description && <p className={styles.desc}>{option.description}</p>}
+          <OptionResourceSection optionId={option.id} resources={option.resources} locked={!!locked} />
           <ProConSection optionId={option.id} proCons={option.proCons} locked={!!locked} />
           {option.voterUserIds.length > 0 && (
             <p className={styles.voters}>투표: {option.voterUserIds.map(nameOf).join(', ')}</p>
