@@ -27,3 +27,4 @@ export {
   ContextMenuGroup,
 } from './ContextMenu'
 export { useContextMenu } from './useContextMenu'
+export { default as ImageLightbox } from './ImageLightbox'
