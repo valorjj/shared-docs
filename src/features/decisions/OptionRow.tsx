@@ -1,6 +1,6 @@
-import { useState } from 'react'
-import { ChevronDown, ChevronRight, Pencil, Trash2, Check, Vote, ListChecks } from 'lucide-react'
-import { IconButton } from '../../components/ui'
+import { useState, type MouseEvent } from 'react'
+import { ChevronDown, ChevronRight, Check, Vote, ListChecks, MoreHorizontal } from 'lucide-react'
+import { IconButton, ContextMenu, ContextMenuItem, useContextMenu } from '../../components/ui'
 import Comments from '../../components/Comments'
 import ProConSection from './ProConSection'
 import styles from './OptionRow.module.css'
@@ -26,15 +26,30 @@ export default function OptionRow({
   const [open, setOpen] = useState(false)
   const iVoted = option.voterUserIds.includes(myUserId)
   const frozen = !!locked || decided
+  const menu = useContextMenu()
+
+  // ⋯ opens the same menu as right-click; anchor to the button's rect so
+  // keyboard activation works too (mirrors SubPlanCard).
+  const openMenuFromButton = (e: MouseEvent) => {
+    const r = e.currentTarget.getBoundingClientRect()
+    menu.openAt(r.right, r.bottom)
+  }
 
   return (
     <div className={isChosen ? `${styles.row} ${styles.rowChosen}` : styles.row}>
-      <div className={styles.head}>
+      {/* triggerProps on the head only — right-click inside the expanded body
+          (comment box, pro/con inputs) stays native. */}
+      <div className={styles.head} {...(locked ? {} : menu.triggerProps)}>
         <button type="button" className={styles.toggle} onClick={() => setOpen((v) => !v)} aria-expanded={open}>
           {open ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
           <span className={styles.title}>{option.title}</span>
           {isChosen && <Check size={14} className={styles.chosenMark} aria-label="결정됨" />}
         </button>
+        {option.proCons.length > 0 && (
+          <span className={styles.proConCount}>
+            <ListChecks size={13} /> 장단점 {option.proCons.length}
+          </span>
+        )}
         <button
           type="button"
           className={iVoted ? `${styles.vote} ${styles.voteOn}` : styles.vote}
@@ -47,18 +62,21 @@ export default function OptionRow({
           <Vote size={13} />
           {option.voterUserIds.length > 0 && <span>{option.voterUserIds.length}</span>}
         </button>
-        {option.proCons.length > 0 && (
-          <span className={styles.proConCount}>
-            <ListChecks size={13} /> 장단점 {option.proCons.length}
-          </span>
-        )}
         {!locked && (
           <div className={styles.actions}>
-            <IconButton variant="ghost" size="sm" label="선택지 수정" onClick={onEdit}><Pencil size={14} /></IconButton>
-            <IconButton variant="ghost" size="sm" label="선택지 삭제" onClick={onDelete}><Trash2 size={14} /></IconButton>
+            <IconButton variant="ghost" size="sm" label="선택지 메뉴" onClick={openMenuFromButton}>
+              <MoreHorizontal size={16} />
+            </IconButton>
           </div>
         )}
       </div>
+
+      {!locked && (
+        <ContextMenu open={menu.open} position={menu.position} onClose={menu.close}>
+          <ContextMenuItem onSelect={() => { menu.close(); onEdit() }}>수정</ContextMenuItem>
+          <ContextMenuItem danger onSelect={() => { menu.close(); onDelete() }}>삭제</ContextMenuItem>
+        </ContextMenu>
+      )}
 
       {open && (
         <div className={styles.body}>

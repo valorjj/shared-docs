@@ -45,7 +45,21 @@
 
 .actions {
   display: flex;
+  align-items: center;
   gap: var(--sp-1);
+}
+
+/* Where hover exists, the ⋯ stays hidden until the row is hovered or focused —
+   the row rests quiet. On touch it stays visible; long-press opens the menu. */
+@media (hover: hover) {
+  .actions {
+    opacity: 0;
+    transition: opacity .12s;
+  }
+  .row:hover .actions,
+  .row:focus-within .actions {
+    opacity: 1;
+  }
 }
 
 .body {
