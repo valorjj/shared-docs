@@ -87,7 +87,7 @@ export default function OptionRow({
       {open && (
         <div className={styles.body}>
           {option.description && <p className={styles.desc}>{option.description}</p>}
-          <OptionResourceSection optionId={option.id} resources={option.resources} locked={!!locked} />
+          <OptionResourceSection optionId={option.id} resources={option.resources} />
           <ProConSection optionId={option.id} proCons={option.proCons} locked={!!locked} />
           {option.voterUserIds.length > 0 && (
             <p className={styles.voters}>투표: {option.voterUserIds.map(nameOf).join(', ')}</p>

@@ -10,7 +10,7 @@ import LinkResourceModal from './LinkResourceModal'
 import type { OptionResource } from './types'
 import styles from './OptionResourceSection.module.css'
 
-type Props = { optionId: number; resources: OptionResource[]; locked: boolean }
+type Props = { optionId: number; resources: OptionResource[] }
 
 const isImage = (r: OptionResource) => (r.contentType ?? '').startsWith('image/')
 
