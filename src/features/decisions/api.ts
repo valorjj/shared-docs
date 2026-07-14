@@ -256,6 +256,35 @@ export function useDeleteProCon() {
   })
 }
 
+// ── Option 자료 (per-candidate sources) mutations ──
+export function useAddOptionLinkResource(optionId: number) {
+  const qc = useQueryClient(); const { activeId } = useActiveWorkspace()
+  return useMutation({
+    mutationFn: async (payload: CreateLinkResourcePayload) =>
+      (await apiClient.post(`/api/options/${optionId}/resources`, payload)).data,
+    onSuccess: () => qc.invalidateQueries({ queryKey: decisionKeys.scope(activeId) }),
+  })
+}
+export function useUploadOptionResourceFile(optionId: number) {
+  const qc = useQueryClient(); const { activeId } = useActiveWorkspace()
+  return useMutation({
+    mutationFn: async (file: File) => {
+      const form = new FormData()
+      form.append('file', file)
+      return (await apiClient.post(`/api/options/${optionId}/resources/file`, form,
+        { headers: { 'Content-Type': 'multipart/form-data' } })).data
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: decisionKeys.scope(activeId) }),
+  })
+}
+export function useDeleteOptionResource() {
+  const qc = useQueryClient(); const { activeId } = useActiveWorkspace()
+  return useMutation({
+    mutationFn: async (id: number) => { await apiClient.delete(`/api/option-resources/${id}`) },
+    onSuccess: () => qc.invalidateQueries({ queryKey: decisionKeys.scope(activeId) }),
+  })
+}
+
 // ── Vote (투표) mutations ──
 export function useCastVote() {
   const qc = useQueryClient(); const { activeId } = useActiveWorkspace()

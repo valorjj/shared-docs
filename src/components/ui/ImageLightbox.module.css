@@ -1,0 +1,32 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-6);
+  background: rgba(0, 0, 0, .72);
+}
+.image {
+  max-width: 92vw;
+  max-height: 90vh;
+  object-fit: contain;
+  border-radius: var(--r-sm);
+}
+.close {
+  position: fixed;
+  top: var(--sp-4);
+  right: var(--sp-4);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: var(--r-pill);
+  background: rgba(0, 0, 0, .5);
+  color: #fff;
+  cursor: pointer;
+}
+.close:hover { background: rgba(0, 0, 0, .75); }

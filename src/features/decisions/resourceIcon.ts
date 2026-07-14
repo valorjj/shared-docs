@@ -8,6 +8,8 @@ export type ResourceIconSpec = {
   colorVar: string
 }
 
+type ResourceLike = Pick<PlanResource, 'kind' | 'url' | 'originalFilename' | 'contentType'>
+
 const YOUTUBE_HOSTS = new Set(['youtube.com', 'www.youtube.com', 'm.youtube.com', 'youtu.be'])
 
 function hostOf(url: string): string | null {
@@ -24,7 +26,7 @@ function hostOf(url: string): string | null {
  * within FILE: filename hints (영수증/계약) beat content-type, since a
  * scanned receipt is still a PDF/JPEG at the content-type level.
  */
-export function resourceIconSpec(resource: PlanResource): ResourceIconSpec {
+export function resourceIconSpec(resource: ResourceLike): ResourceIconSpec {
   if (resource.kind === 'LINK') {
     const host = resource.url ? hostOf(resource.url) : null
     if (host && YOUTUBE_HOSTS.has(host)) {

@@ -39,6 +39,7 @@ export type OptionNode = {
   sortOrder: number
   proCons: ProCon[]
   voterUserIds: number[]
+  resources: OptionResource[]
 }
 
 export type VoteSnapshotEntry = { optionId: number; title: string; count: number; voters: string[] }
@@ -159,3 +160,18 @@ export type PlanResource = {
 
 export type CreateLinkResourcePayload = { url: string; title?: string }
 export type UpdateResourceTitlePayload = { title?: string }
+
+export type OptionResource = {
+  id: number
+  optionId: number
+  kind: PlanResourceKind
+  url: string | null
+  title: string | null
+  attachmentId: number | null
+  originalFilename: string | null
+  contentType: string | null
+  sizeBytes: number | null
+  fileUrl: string | null
+  createdByUserId: number
+  createdAt: string
+}
