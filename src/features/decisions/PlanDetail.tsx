@@ -3,7 +3,7 @@ import { useParams, useSearchParams } from 'react-router-dom'
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { Plus, Lock, LockOpen, CheckCircle2, RotateCcw, MessagesSquare } from 'lucide-react'
-import { Page, PageHeader, PageTitle, BackLink, Button, IconButton, Fab, EmptyState, ErrorState, Skeleton, Tabs } from '../../components/ui'
+import { Page, PageHeader, PageTitle, BackLink, Button, IconButton, Fab, EmptyState, ErrorState, Skeleton, Tabs, Panel } from '../../components/ui'
 import { useAuth } from '../../auth/useAuth'
 import { useActiveWorkspace } from '../../auth/useActiveWorkspace'
 import { useMembers } from '../workspaces/membersApi'
@@ -19,6 +19,8 @@ import SortableSubPlanSection from './SortableSubPlanSection'
 import ResourceSection from './ResourceSection'
 import Comments from '../../components/Comments'
 import PlanCanvas from './PlanCanvas'
+import OptionPanel from './OptionPanel'
+import SubPlanPanel from './SubPlanPanel'
 import Timeline from './Timeline'
 import TitleDescModal from './TitleDescModal'
 import ConnectModal, { type ConnectCandidate } from './ConnectModal'
@@ -75,6 +77,7 @@ export default function PlanDetail() {
   const [editingSubPlan, setEditingSubPlan] = useState<SubPlanNode | null>(null)
   const [view, setView] = useState<'list' | 'canvas' | 'timeline'>('list')
   const [connectingFor, setConnectingFor] = useState<SubPlanNode | null>(null)
+  const [selectedNode, setSelectedNode] = useState<{ kind: 'sp' | 'opt'; id: number } | null>(null)
 
   const [discussionOpen, setDiscussionOpen] = useState(
     () => localStorage.getItem(`discussion-open-${planId}`) === '1',
@@ -88,6 +91,17 @@ export default function PlanDetail() {
   const { data: timeline, isLoading: timelineLoading } = useTimeline(planId, view === 'timeline')
   const locked = tree?.lockedAt != null
   const completed = tree?.status === 'COMPLETED'
+
+  const selectedOption = useMemo(() => {
+    if (selectedNode?.kind !== 'opt' || !tree) return null
+    const match = tree.subPlans
+      .map((sp) => {
+        const o = sp.options.find((op) => op.id === selectedNode.id)
+        return o ? { option: o, subPlan: sp } : null
+      })
+      .find((m) => m != null)
+    return match ?? null
+  }, [selectedNode, tree])
 
   const [scrolled, setScrolled] = useState(false)
   const sentinelRef = useRef<HTMLDivElement>(null)
@@ -306,7 +320,7 @@ export default function PlanDetail() {
             </div>
           )}
 
-          {view === 'canvas' && <PlanCanvas tree={tree} locked={locked} />}
+          {view === 'canvas' && <PlanCanvas tree={tree} locked={locked} onNodeSelect={setSelectedNode} />}
 
           {view === 'timeline' && (
             timelineLoading
@@ -383,6 +397,27 @@ export default function PlanDetail() {
         }}
         onDisconnect={(edgeId) => deleteEdge.mutate(edgeId)}
       />
+
+      {selectedNode?.kind === 'opt' && selectedOption && (
+        <Panel open onClose={() => setSelectedNode(null)} title={selectedOption.option.title}>
+          <OptionPanel
+            option={selectedOption.option}
+            isChosen={selectedOption.subPlan.decision?.chosenOptionId === selectedOption.option.id}
+            decided={selectedOption.subPlan.decision != null}
+            locked={locked}
+          />
+        </Panel>
+      )}
+      {selectedNode?.kind === 'sp' && (
+        <Panel open onClose={() => setSelectedNode(null)} title="안건">
+          <SubPlanPanel
+            subPlanId={selectedNode.id}
+            planId={planId}
+            locked={locked}
+            onOpenSubPlan={(id) => setSelectedNode({ kind: 'sp', id })}
+          />
+        </Panel>
+      )}
     </Page>
   )
 }
