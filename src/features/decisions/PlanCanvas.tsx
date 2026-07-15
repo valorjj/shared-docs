@@ -12,13 +12,14 @@ import {
 } from '../../components/ui'
 import SubPlanCanvasNode, { type SubPlanCanvasNodeType } from './SubPlanCanvasNode'
 import OptionCanvasNode, { type OptionCanvasNodeType } from './OptionCanvasNode'
+import CommentPinNode, { type CommentPinNodeType } from './CommentPinNode'
 import DeletableEdge, { type DeletableEdgeType } from './DeletableEdge'
 import OwnershipEdge, { type OwnershipEdgeType } from './OwnershipEdge'
 import TitleDescModal from './TitleDescModal'
 import { layoutPositions } from './canvasLayout'
 import {
   useMoveSubPlan, useMoveOption, useAddFlowEdge, useDeleteFlowEdge, useDeleteEdge, useAddSubPlanOnCanvas,
-  useDeleteSubPlan, useDeleteOption, useSetAppearance,
+  useDeleteSubPlan, useDeleteOption, useSetAppearance, useMoveCommentPin,
 } from './api'
 import { useSettings } from '../settings/settingsContext'
 import { usePlanPresence } from './collab/usePlanPresence'
@@ -39,7 +40,7 @@ const ICON_LABEL: Record<AccentIcon, string> = {
   Flag: '깃발', Star: '별', AlertTriangle: '주의', Home: '집', Car: '자동차', Heart: '하트', Briefcase: '업무', Clock: '시간',
 }
 
-const nodeTypes = { subplan: SubPlanCanvasNode, option: OptionCanvasNode }
+const nodeTypes = { subplan: SubPlanCanvasNode, option: OptionCanvasNode, pin: CommentPinNode }
 const edgeTypes = { deletable: DeletableEdge, ownership: OwnershipEdge }
 
 const OPT_OFFSET_X = 320    // options placed to the right of their 안건 (last-ditch fallback)
@@ -48,12 +49,13 @@ const DRAG_SAVE_MS = 400
 
 const spId = (id: number) => `sp:${id}`
 const optId = (id: number) => `opt:${id}`
-const parseNodeId = (nid: string): { kind: 'sp' | 'opt'; id: number } => {
+const pinId = (id: number) => `pin:${id}`
+const parseNodeId = (nid: string): { kind: 'sp' | 'opt' | 'pin'; id: number } => {
   const [k, n] = nid.split(':')
-  return { kind: k as 'sp' | 'opt', id: Number(n) }
+  return { kind: k as 'sp' | 'opt' | 'pin', id: Number(n) }
 }
 
-type CanvasNode = SubPlanCanvasNodeType | OptionCanvasNodeType
+type CanvasNode = SubPlanCanvasNodeType | OptionCanvasNodeType | CommentPinNodeType
 type CanvasEdge = DeletableEdgeType | OwnershipEdgeType
 
 /** Per-option decision state for the canvas. A decided 안건's chosen option is
@@ -93,6 +95,9 @@ function buildNodes(tree: PlanTree): CanvasNode[] {
         data: { option: o, chosen: st === 'chosen', dimmed: st === 'dimmed' },
       })
     })
+  })
+  tree.commentPins.forEach((p) => {
+    nodes.push({ id: pinId(p.id), type: 'pin', position: { x: p.x, y: p.y }, data: { pin: p } })
   })
   return nodes
 }
@@ -135,7 +140,7 @@ function buildEdges(tree: PlanTree): CanvasEdge[] {
 type Props = {
   tree: PlanTree
   locked: boolean
-  onNodeSelect?: (sel: { kind: 'sp' | 'opt'; id: number }) => void
+  onNodeSelect?: (sel: { kind: 'sp' | 'opt' | 'pin'; id: number }) => void
   focusNodeId?: string
 }
 
@@ -183,10 +188,11 @@ function Flow({ tree, locked, onNodeSelect, focusNodeId }: Props) {
   const [nodes, setNodes, onNodesChange] = useNodesState<CanvasNode>(buildNodes(tree))
   const [edges, setEdges, onEdgesChange] = useEdgesState<CanvasEdge>(buildEdges(tree))
   const [adding, setAdding] = useState(false)
+  const [showResolved, setShowResolved] = useState(false)
 
   const paneMenu = useContextMenu()
   const nodeMenu = useContextMenu()
-  const [menuNode, setMenuNode] = useState<{ kind: 'sp' | 'opt'; id: number } | null>(null)
+  const [menuNode, setMenuNode] = useState<{ kind: 'sp' | 'opt' | 'pin'; id: number } | null>(null)
   const [paneFlowPos, setPaneFlowPos] = useState<{ x: number; y: number } | null>(null)
   const [composerAt, setComposerAt] = useState<{ x: number; y: number } | null>(null)   // consumed in Task 10
   const deleteSubPlan = useDeleteSubPlan()
@@ -221,6 +227,37 @@ function Flow({ tree, locked, onNodeSelect, focusNodeId }: Props) {
     )
   }, [smoothed, setNodes])
 
+  // The canvas seeds nodes once from the initial tree (see buildNodes), so this
+  // effect is what keeps `pin:` nodes live — new/removed/resolved pins from peers,
+  // and the 해결된 댓글 표시 toggle — without touching sp/opt nodes. It also runs on
+  // mount (tree.commentPins/showResolved are both deps), so resolved pins start
+  // hidden even though buildNodes seeded all of them. Never clobbers the position
+  // of the pin the local user is currently dragging (localDragId guard).
+  useEffect(() => {
+    setNodes((ns) => {
+      const pinNodes = ns.filter((n) => n.id.startsWith('pin:'))
+      const byId = new Map(pinNodes.map((n) => [n.id, n]))
+      const want = tree.commentPins.filter((p) => showResolved || !p.resolved)
+      const wantIds = new Set(want.map((p) => pinId(p.id)))
+      // drop removed / now-hidden pins
+      let next = ns.filter((n) => !n.id.startsWith('pin:') || wantIds.has(n.id))
+      // add new + refresh data (keep position for the pin the user is dragging)
+      for (const p of want) {
+        const key = pinId(p.id)
+        const existing = byId.get(key)
+        if (!existing) {
+          const pinNode: CommentPinNodeType = { id: key, type: 'pin', position: { x: p.x, y: p.y }, data: { pin: p } }
+          next = next.concat(pinNode)
+        } else if (key !== localDragId.current) {
+          next = next.map((n): CanvasNode => n.id === key
+            ? { ...(n as CommentPinNodeType), position: { x: p.x, y: p.y }, data: { pin: p } }
+            : n)
+        }
+      }
+      return next
+    })
+  }, [tree.commentPins, showResolved, setNodes])
+
   // Best-effort focus target from ?focus=sp:{id}/opt:{id} (e.g. the 캔버스에서 보기
   // link on the 안건 detail page). No-ops if the node isn't on this canvas (e.g.
   // a nested 안건) — the user just lands on canvas, per spec.
@@ -236,6 +273,7 @@ function Flow({ tree, locked, onNodeSelect, focusNodeId }: Props) {
 
   const moveSubPlan = useMoveSubPlan()
   const moveOption = useMoveOption()
+  const moveCommentPin = useMoveCommentPin()
   const addFlowEdge = useAddFlowEdge(tree.id)
   const deleteFlowEdge = useDeleteFlowEdge()
   const deleteRelatedEdge = useDeleteEdge()
@@ -271,7 +309,8 @@ function Flow({ tree, locked, onNodeSelect, focusNodeId }: Props) {
     timers.set(node.id, setTimeout(() => {
       const payload = { canvasX: node.position.x, canvasY: node.position.y }
       if (kind === 'sp') moveSubPlan.mutate({ id, payload })
-      else moveOption.mutate({ id, payload })
+      else if (kind === 'opt') moveOption.mutate({ id, payload })
+      else if (kind === 'pin') moveCommentPin.mutate({ id, payload: { x: node.position.x, y: node.position.y } })
       timers.delete(node.id)
     }, DRAG_SAVE_MS))
 
@@ -286,7 +325,7 @@ function Flow({ tree, locked, onNodeSelect, focusNodeId }: Props) {
       dragClearTimer.current = null
     }, 250)
     localDragId.current = null
-  }, [moveSubPlan, moveOption, setDrag])
+  }, [moveSubPlan, moveOption, moveCommentPin, setDrag])
 
   // Clear local presence on unmount — otherwise switching views/plans leaves a
   // frozen cursor (and any pending drag-settle timer) visible to peers.
@@ -389,6 +428,9 @@ function Flow({ tree, locked, onNodeSelect, focusNodeId }: Props) {
               else if (kind === 'opt') moveOption.mutate({ id: dbId, payload: { canvasX: p.x, canvasY: p.y } })
             })
           }}>정렬</Button>
+          <Button variant="ghost" size="sm" onClick={() => setShowResolved((v) => !v)}>
+            {showResolved ? '해결된 댓글 숨기기' : '해결된 댓글 표시'}
+          </Button>
         </div>
       )}
       <ReactFlow

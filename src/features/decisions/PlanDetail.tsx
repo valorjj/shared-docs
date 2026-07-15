@@ -78,7 +78,7 @@ export default function PlanDetail() {
   const [editingSubPlan, setEditingSubPlan] = useState<SubPlanNode | null>(null)
   const [view, setView] = useState<'list' | 'canvas' | 'timeline'>('canvas')
   const [connectingFor, setConnectingFor] = useState<SubPlanNode | null>(null)
-  const [selectedNode, setSelectedNode] = useState<{ kind: 'sp' | 'opt'; id: number } | null>(null)
+  const [selectedNode, setSelectedNode] = useState<{ kind: 'sp' | 'opt' | 'pin'; id: number } | null>(null)
 
   const [discussionOpen, setDiscussionOpen] = useState(
     () => localStorage.getItem(`discussion-open-${planId}`) === '1',
