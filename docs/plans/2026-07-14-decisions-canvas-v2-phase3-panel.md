@@ -545,6 +545,7 @@ On the running app, 캔버스 tab, a plan with ≥1 안건 that has options + at
 5. **Focus trap:** with the panel open, Tab cycles only within the panel; on close, focus returns to roughly where it was.
 6. **Live refresh:** add a 장점 or vote in the panel → the count/section updates without reopening (tree refetch flows through).
 7. **Lightbox a11y (retrofit):** open an image in the 자료 lightbox → Tab stays trapped; Esc closes and returns focus.
+7b. **Nested overlay Esc (regression guard):** with the option panel open, open a 자료 image → press Esc → **only the image closes, the panel stays open** (the lightbox absorbs Esc via capture-phase + stopPropagation). Then Esc again closes the panel.
 8. **Lock:** on a locked plan, the panel still opens (read + comment), but vote is disabled and section add-controls are gated as before.
 
 ## Not in Phase 3 (Phase 4)
