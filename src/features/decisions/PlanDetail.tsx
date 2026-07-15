@@ -76,10 +76,7 @@ export default function PlanDetail() {
   // modal state
   const [addingSubPlan, setAddingSubPlan] = useState(false)
   const [editingSubPlan, setEditingSubPlan] = useState<SubPlanNode | null>(null)
-  const [view, setView] = useState<'list' | 'canvas' | 'timeline'>(() => {
-    const saved = localStorage.getItem(`plan-view-${planId}`)
-    return saved === 'list' || saved === 'canvas' || saved === 'timeline' ? saved : 'canvas'
-  })
+  const [view, setView] = useState<'list' | 'canvas' | 'timeline'>('canvas')
   const [connectingFor, setConnectingFor] = useState<SubPlanNode | null>(null)
   const [selectedNode, setSelectedNode] = useState<{ kind: 'sp' | 'opt'; id: number } | null>(null)
 
@@ -91,8 +88,6 @@ export default function PlanDetail() {
       localStorage.setItem(`discussion-open-${planId}`, v ? '0' : '1')
       return !v
     })
-
-  useEffect(() => { localStorage.setItem(`plan-view-${planId}`, view) }, [view, planId])
 
   const { data: timeline, isLoading: timelineLoading } = useTimeline(planId, view === 'timeline')
   const locked = tree?.lockedAt != null
