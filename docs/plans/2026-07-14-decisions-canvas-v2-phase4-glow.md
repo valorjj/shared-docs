@@ -207,11 +207,12 @@ git commit -m "feat(decisions-canvas): canvas is the default plan view (remember
 ## Manual Smoke Checklist (behavioral gate — owed to the user)
 
 1. **Default view:** open a plan → it lands on the **캔버스** tab (not 목록). Switch to 목록, reload the plan → it remembers 목록. Switch back to 캔버스, reload → remembers 캔버스.
+1b. **Cross-plan view memory (regression guard):** set plan A to 목록 and plan B to 캔버스. Navigate A→B **in-app** (e.g. via a note entity-link chip or the search palette, without a full reload). B must still show 캔버스, and going back to A must still show 목록 — neither plan's saved view is overwritten by the other. (Fixed by remounting PlanDetail per `planId` via a keyed route wrapper.)
 2. **Glow/dim on decide:** on an 안건 with ≥2 options and a flow edge from each, **결정하기** (choose one). The chosen 선택지 node stays full/emphasized (primary border + soft bg + ✓); the unchosen option nodes **dim** (~0.4 opacity). The chosen option's outgoing flow edge is emphasized (primary stroke); unchosen options' flow edges go faint.
 3. **Trail across steps:** in a chain (A→choose X→B→choose Y→C), the chosen path reads as a continuous emphasized trail while the abandoned branches recede.
 4. **Reopen:** 다시 열기 on a decided 안건 → all its options + edges return to normal (no dim, no emphasis).
 5. **Undecided untouched:** 안건 with no decision render exactly as before (no dimming).
-6. **Realtime:** decide in one browser → the other browser's canvas reflects the glow/dim on refetch (tab switch / remount).
+6. **Realtime / liveness:** the glow/dim appears on the next **canvas mount**, not instantly on an already-mounted canvas (the canvas seeds its node state once by design). In practice the acting user always remounts — you can't 결정하기 from the canvas (the panel links out to the full detail route to decide), so returning to the canvas shows the glow. In a **second browser**, flip the view/tab (or reopen) to see the decided-trail after the other user decides.
 
 ## Not in Phase 4 (deferred — P5)
 - Live presence/cursors on the canvas + comments pinned to canvas coordinates.
