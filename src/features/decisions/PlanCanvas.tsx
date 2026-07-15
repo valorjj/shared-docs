@@ -15,6 +15,7 @@ import OptionCanvasNode, { type OptionCanvasNodeType } from './OptionCanvasNode'
 import DeletableEdge, { type DeletableEdgeType } from './DeletableEdge'
 import OwnershipEdge, { type OwnershipEdgeType } from './OwnershipEdge'
 import TitleDescModal from './TitleDescModal'
+import { layoutPositions } from './canvasLayout'
 import {
   useMoveSubPlan, useMoveOption, useAddFlowEdge, useDeleteFlowEdge, useDeleteEdge, useAddSubPlanOnCanvas,
   useDeleteSubPlan, useDeleteOption, useSetAppearance,
@@ -41,9 +42,7 @@ const ICON_LABEL: Record<AccentIcon, string> = {
 const nodeTypes = { subplan: SubPlanCanvasNode, option: OptionCanvasNode }
 const edgeTypes = { deletable: DeletableEdge, ownership: OwnershipEdge }
 
-const CLUSTER_GAP_X = 520   // horizontal gap between 안건 clusters (auto-layout)
-const OPT_OFFSET_X = 320    // options placed to the right of their 안건
-const OPT_GAP_Y = 84        // vertical gap between sibling option nodes
+const OPT_OFFSET_X = 320    // options placed to the right of their 안건 (last-ditch fallback)
 const SNAP = 16
 const DRAG_SAVE_MS = 400
 
@@ -73,17 +72,21 @@ function optionStates(tree: PlanTree): Map<number, 'chosen' | 'dimmed' | 'normal
 }
 
 /** 안건 nodes + their option nodes. Saved canvasX/Y win; nulls fall back to a
- *  left→right cluster fan-out (안건, then its options stacked to the right). */
+ *  dagre left→right layered layout (see canvasLayout.ts) so downstream 안건 land
+ *  in the next rank instead of on top of the upstream option column. */
 function buildNodes(tree: PlanTree): CanvasNode[] {
   const states = optionStates(tree)
+  const auto = layoutPositions(tree)   // dagre fallback
   const nodes: CanvasNode[] = []
-  tree.subPlans.forEach((sp, i) => {
-    const baseX = sp.canvasX ?? i * CLUSTER_GAP_X
-    const baseY = sp.canvasY ?? 0
+  tree.subPlans.forEach((sp) => {
+    const a = auto.get(spId(sp.id)) ?? { x: 0, y: 0 }
+    const baseX = sp.canvasX ?? a.x
+    const baseY = sp.canvasY ?? a.y
     nodes.push({ id: spId(sp.id), type: 'subplan', position: { x: baseX, y: baseY }, data: { subPlan: sp } })
-    sp.options.forEach((o, j) => {
-      const ox = o.canvasX ?? baseX + OPT_OFFSET_X
-      const oy = o.canvasY ?? baseY + (j - (sp.options.length - 1) / 2) * OPT_GAP_Y
+    sp.options.forEach((o) => {
+      const oa = auto.get(optId(o.id)) ?? { x: baseX + OPT_OFFSET_X, y: baseY }
+      const ox = o.canvasX ?? oa.x
+      const oy = o.canvasY ?? oa.y
       const st = states.get(o.id)
       nodes.push({
         id: optId(o.id), type: 'option', position: { x: ox, y: oy },
@@ -374,6 +377,18 @@ function Flow({ tree, locked, onNodeSelect, focusNodeId }: Props) {
       {!locked && (
         <div className={styles.toolbar}>
           <Button variant="outline" size="sm" leading={<Plus size={14} />} onClick={() => setAdding(true)}>안건 추가</Button>
+          <Button variant="outline" size="sm" onClick={() => {
+            const auto = layoutPositions(tree)
+            setNodes((ns) => ns.map((n) => {
+              const p = auto.get(n.id)
+              return p ? { ...n, position: p } : n
+            }))
+            auto.forEach((p, id) => {
+              const { kind, id: dbId } = parseNodeId(id)
+              if (kind === 'sp') moveSubPlan.mutate({ id: dbId, payload: { canvasX: p.x, canvasY: p.y } })
+              else if (kind === 'opt') moveOption.mutate({ id: dbId, payload: { canvasX: p.x, canvasY: p.y } })
+            })
+          }}>정렬</Button>
         </div>
       )}
       <ReactFlow
