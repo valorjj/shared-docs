@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   ReactFlow, ReactFlowProvider, Background, Controls, MiniMap, MarkerType,
   useNodesState, useEdgesState, useReactFlow, addEdge,
@@ -186,8 +186,15 @@ function Flow({ tree, locked, onNodeSelect, focusNodeId }: Props) {
   // Seed controlled state ONCE from the initial tree (React reads an initializer
   // only on first render). Later tree refetches are intentionally ignored — the
   // canvas owns its state while mounted; the next mount re-reads fresh data.
-  const [nodes, setNodes, onNodesChange] = useNodesState<CanvasNode>(buildNodes(tree))
-  const [edges, setEdges, onEdgesChange] = useEdgesState<CanvasEdge>(buildEdges(tree))
+  // buildNodes/buildEdges now run a dagre layout — memoize the seed so it's
+  // computed once per mount, not re-evaluated (and discarded) on every render
+  // as a call-expression argument (P5a presence re-renders Flow up to 60fps).
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const initialNodes = useMemo(() => buildNodes(tree), [])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const initialEdges = useMemo(() => buildEdges(tree), [])
+  const [nodes, setNodes, onNodesChange] = useNodesState<CanvasNode>(initialNodes)
+  const [edges, setEdges, onEdgesChange] = useEdgesState<CanvasEdge>(initialEdges)
   const [adding, setAdding] = useState(false)
   const [showResolved, setShowResolved] = useState(false)
 
@@ -415,26 +422,30 @@ function Flow({ tree, locked, onNodeSelect, focusNodeId }: Props) {
 
   return (
     <div className={styles.canvas} ref={wrapRef} onMouseMove={onCanvasMouseMove} onMouseLeave={onCanvasMouseLeave}>
-      {!locked && (
-        <div className={styles.toolbar}>
-          <Button variant="outline" size="sm" leading={<Plus size={14} />} onClick={() => setAdding(true)}>안건 추가</Button>
-          <Button variant="outline" size="sm" onClick={() => {
-            const auto = layoutPositions(tree)
-            setNodes((ns) => ns.map((n) => {
-              const p = auto.get(n.id)
-              return p ? { ...n, position: p } : n
-            }))
-            auto.forEach((p, id) => {
-              const { kind, id: dbId } = parseNodeId(id)
-              if (kind === 'sp') moveSubPlan.mutate({ id: dbId, payload: { canvasX: p.x, canvasY: p.y } })
-              else if (kind === 'opt') moveOption.mutate({ id: dbId, payload: { canvasX: p.x, canvasY: p.y } })
-            })
-          }}>정렬</Button>
-          <Button variant="ghost" size="sm" onClick={() => setShowResolved((v) => !v)}>
-            {showResolved ? '해결된 댓글 숨기기' : '해결된 댓글 표시'}
-          </Button>
-        </div>
-      )}
+      <div className={styles.toolbar}>
+        {!locked && (
+          <>
+            <Button variant="outline" size="sm" leading={<Plus size={14} />} onClick={() => setAdding(true)}>안건 추가</Button>
+            <Button variant="outline" size="sm" onClick={() => {
+              const auto = layoutPositions(tree)
+              setNodes((ns) => ns.map((n) => {
+                const p = auto.get(n.id)
+                return p ? { ...n, position: p } : n
+              }))
+              auto.forEach((p, id) => {
+                const { kind, id: dbId } = parseNodeId(id)
+                if (kind === 'sp') moveSubPlan.mutate({ id: dbId, payload: { canvasX: p.x, canvasY: p.y } })
+                else if (kind === 'opt') moveOption.mutate({ id: dbId, payload: { canvasX: p.x, canvasY: p.y } })
+              })
+            }}>정렬</Button>
+          </>
+        )}
+        {/* Pins aren't lock-gated (a resolved pin on a locked plan must stay
+            reachable), so this toggle renders regardless of lock state. */}
+        <Button variant="ghost" size="sm" onClick={() => setShowResolved((v) => !v)}>
+          {showResolved ? '해결된 댓글 숨기기' : '해결된 댓글 표시'}
+        </Button>
+      </div>
       <ReactFlow
         nodes={nodes}
         edges={edges}
