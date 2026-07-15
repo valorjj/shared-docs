@@ -16,10 +16,11 @@ import CommentPinNode, { type CommentPinNodeType } from './CommentPinNode'
 import DeletableEdge, { type DeletableEdgeType } from './DeletableEdge'
 import OwnershipEdge, { type OwnershipEdgeType } from './OwnershipEdge'
 import TitleDescModal from './TitleDescModal'
+import PinComposer from './PinComposer'
 import { layoutPositions } from './canvasLayout'
 import {
   useMoveSubPlan, useMoveOption, useAddFlowEdge, useDeleteFlowEdge, useDeleteEdge, useAddSubPlanOnCanvas,
-  useDeleteSubPlan, useDeleteOption, useSetAppearance, useMoveCommentPin,
+  useDeleteSubPlan, useDeleteOption, useSetAppearance, useMoveCommentPin, useCreateCommentPin,
 } from './api'
 import { useSettings } from '../settings/settingsContext'
 import { usePlanPresence } from './collab/usePlanPresence'
@@ -194,14 +195,15 @@ function Flow({ tree, locked, onNodeSelect, focusNodeId }: Props) {
   const nodeMenu = useContextMenu()
   const [menuNode, setMenuNode] = useState<{ kind: 'sp' | 'opt' | 'pin'; id: number } | null>(null)
   const [paneFlowPos, setPaneFlowPos] = useState<{ x: number; y: number } | null>(null)
-  const [composerAt, setComposerAt] = useState<{ x: number; y: number } | null>(null)   // consumed in Task 10
+  const [composerAt, setComposerAt] = useState<{ x: number; y: number } | null>(null)
   const deleteSubPlan = useDeleteSubPlan()
   const deleteOption = useDeleteOption()
   const setAppearance = useSetAppearance()
+  const createPin = useCreateCommentPin(tree.id)
 
   const { theme } = useSettings()
   const colorMode = theme === 'light' ? 'light' : 'dark'
-  const { screenToFlowPosition, setCenter } = useReactFlow()
+  const { screenToFlowPosition, setCenter, flowToScreenPosition } = useReactFlow()
   const { peers, setCursor, setDrag } = usePlanPresence()
   const smoothed = useSmoothedPresence(peers)
   const lastCursorSent = useRef(0)
@@ -544,7 +546,22 @@ function Flow({ tree, locked, onNodeSelect, focusNodeId }: Props) {
           )}
         </ContextMenu>
       )}
-      {composerAt && null /* Task 10 renders the 댓글 composer at this flow position */}
+      {composerAt && (() => {
+        const s = flowToScreenPosition(composerAt)
+        const rect = wrapRef.current?.getBoundingClientRect()
+        const left = s.x - (rect?.left ?? 0)
+        const top = s.y - (rect?.top ?? 0)
+        return (
+          <PinComposer
+            screenX={left} screenY={top} busy={createPin.isPending}
+            onSubmit={(content) => createPin.mutate(
+              { x: composerAt.x, y: composerAt.y, content },
+              { onSuccess: () => setComposerAt(null) },
+            )}
+            onCancel={() => setComposerAt(null)}
+          />
+        )
+      })()}
     </div>
   )
 }
