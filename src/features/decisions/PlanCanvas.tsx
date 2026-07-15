@@ -113,9 +113,14 @@ function buildEdges(tree: PlanTree): CanvasEdge[] {
   return edges
 }
 
-type Props = { tree: PlanTree; locked: boolean; onNodeSelect?: (sel: { kind: 'sp' | 'opt'; id: number }) => void }
+type Props = {
+  tree: PlanTree
+  locked: boolean
+  onNodeSelect?: (sel: { kind: 'sp' | 'opt'; id: number }) => void
+  focusNodeId?: string
+}
 
-export default function PlanCanvas({ tree, locked, onNodeSelect }: Props) {
+export default function PlanCanvas({ tree, locked, onNodeSelect, focusNodeId }: Props) {
   if (tree.subPlans.length === 0) {
     return (
       <div className={`${styles.canvas} ${styles.canvasEmpty}`}>
@@ -125,7 +130,7 @@ export default function PlanCanvas({ tree, locked, onNodeSelect }: Props) {
   }
   return (
     <ReactFlowProvider>
-      <Flow tree={tree} locked={locked} onNodeSelect={onNodeSelect} />
+      <Flow tree={tree} locked={locked} onNodeSelect={onNodeSelect} focusNodeId={focusNodeId} />
     </ReactFlowProvider>
   )
 }
@@ -152,7 +157,7 @@ function CanvasEmpty({ tree, locked }: Props) {
   )
 }
 
-function Flow({ tree, locked, onNodeSelect }: Props) {
+function Flow({ tree, locked, onNodeSelect, focusNodeId }: Props) {
   // Seed controlled state ONCE from the initial tree (React reads an initializer
   // only on first render). Later tree refetches are intentionally ignored — the
   // canvas owns its state while mounted; the next mount re-reads fresh data.
@@ -162,7 +167,7 @@ function Flow({ tree, locked, onNodeSelect }: Props) {
 
   const { theme } = useSettings()
   const colorMode = theme === 'light' ? 'light' : 'dark'
-  const { screenToFlowPosition } = useReactFlow()
+  const { screenToFlowPosition, setCenter } = useReactFlow()
   const { peers, setCursor, setDrag } = usePlanPresence()
   const smoothed = useSmoothedPresence(peers)
   const lastCursorSent = useRef(0)
@@ -187,6 +192,19 @@ function Flow({ tree, locked, onNodeSelect }: Props) {
       }),
     )
   }, [smoothed, setNodes])
+
+  // Best-effort focus target from ?focus=sp:{id}/opt:{id} (e.g. the 캔버스에서 보기
+  // link on the 안건 detail page). No-ops if the node isn't on this canvas (e.g.
+  // a nested 안건) — the user just lands on canvas, per spec.
+  useEffect(() => {
+    if (!focusNodeId) return
+    const n = nodes.find((x) => x.id === focusNodeId)
+    if (!n) return
+    setCenter(n.position.x, n.position.y, { zoom: 1, duration: 400 })
+    onNodeSelect?.(parseNodeId(focusNodeId))
+    // run once on mount for this focus target
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusNodeId])
 
   const moveSubPlan = useMoveSubPlan()
   const moveOption = useMoveOption()

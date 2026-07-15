@@ -165,6 +165,7 @@ export default function PlanDetail() {
   const [hoveredSubPlanId, setHoveredSubPlanId] = useState<number | null>(null)
 
   const [searchParams] = useSearchParams()
+  const focusNodeId = searchParams.get('focus') ?? undefined
   const jumpedRef = useRef<string | null>(null)
   useEffect(() => {
     if (!tree) return
@@ -322,7 +323,7 @@ export default function PlanDetail() {
             </div>
           )}
 
-          {view === 'canvas' && <PlanCanvas tree={tree} locked={locked} onNodeSelect={setSelectedNode} />}
+          {view === 'canvas' && <PlanCanvas tree={tree} locked={locked} onNodeSelect={setSelectedNode} focusNodeId={focusNodeId} />}
 
           {view === 'timeline' && (
             timelineLoading
