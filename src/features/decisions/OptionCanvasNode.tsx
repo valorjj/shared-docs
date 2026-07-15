@@ -3,13 +3,14 @@ import { Check, Vote, ListChecks, Paperclip } from 'lucide-react'
 import styles from './OptionCanvasNode.module.css'
 import type { OptionNode } from './types'
 
-export type OptionCanvasNodeData = { option: OptionNode; chosen: boolean }
+export type OptionCanvasNodeData = { option: OptionNode; chosen: boolean; dimmed: boolean }
 export type OptionCanvasNodeType = Node<OptionCanvasNodeData, 'option'>
 
 export default function OptionCanvasNode({ data }: NodeProps<OptionCanvasNodeType>) {
-  const { option, chosen } = data
+  const { option, chosen, dimmed } = data
+  const cls = [styles.node, chosen ? styles.chosen : '', dimmed ? styles.dimmed : ''].filter(Boolean).join(' ')
   return (
-    <div className={chosen ? `${styles.node} ${styles.chosen}` : styles.node}>
+    <div className={cls}>
       {/* ownership in (from its 안건) on the left; flow out (to a downstream 안건) on the right */}
       <Handle type="target" position={Position.Left} className={styles.handle} isConnectable={false} />
       <Handle type="source" position={Position.Right} className={styles.handle} />

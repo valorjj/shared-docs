@@ -1,5 +1,5 @@
 import { Suspense, lazy } from 'react'
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, useParams } from 'react-router-dom'
 import Login from './pages/Login'
 import AuthCallback from './pages/AuthCallback'
 import DataLayout from './pages/DataLayout'
@@ -29,6 +29,11 @@ const SettingsCategories = lazy(() => import('./pages/SettingsCategories'))
 const SettingsMembers  = lazy(() => import('./pages/SettingsMembers'))
 const InviteClaim      = lazy(() => import('./pages/InviteClaim'))
 const LegalPage        = lazy(() => import('./pages/legal/LegalPage'))
+
+function PlanDetailRoute() {
+  const { planId } = useParams()
+  return <PlanDetail key={planId} />
+}
 
 function RouteFallback() {
   return (
@@ -74,7 +79,7 @@ function App() {
             <Route path="/calc" element={<CalcWorkspace />} />
             <Route element={<DecisionsCollabBoundary />}>
               <Route path="/decisions" element={<DecisionList />} />
-              <Route path="/decisions/:planId" element={<PlanDetail />} />
+              <Route path="/decisions/:planId" element={<PlanDetailRoute />} />
               <Route path="/decisions/:planId/subplans/:subPlanId" element={<SubPlanDetail />} />
             </Route>
             <Route path="/shared" element={<SharedItemList />} />
