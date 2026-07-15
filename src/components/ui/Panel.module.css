@@ -1,0 +1,39 @@
+.backdrop {
+  position: fixed; inset: 0;
+  background: var(--c-overlay);
+  z-index: 300;
+  animation: fadeIn 0.15s ease;
+}
+.panel {
+  position: fixed; top: 0; right: 0; bottom: 0;
+  width: min(480px, 92vw);
+  background: var(--c-surface);
+  color: var(--c-text);
+  box-shadow: var(--shadow-lg);
+  z-index: 310;
+  display: flex; flex-direction: column;
+  animation: slideInRight 0.2s ease;
+  outline: none;
+}
+.header {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+  border-bottom: 1px solid var(--c-border);
+  flex: none;
+}
+.title {
+  font-size: var(--fs-base); font-weight: var(--fw-semi);
+  margin: 0; color: var(--c-text);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.close {
+  flex: none; display: inline-flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; border: none; background: transparent;
+  color: var(--c-text-secondary); border-radius: var(--r-md); cursor: pointer;
+}
+.close:hover { background: var(--c-surface-tint); color: var(--c-text); }
+.body { flex: 1; overflow-y: auto; padding: var(--sp-4); }
+@keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+@keyframes slideInRight { from { transform: translateX(100%) } to { transform: translateX(0) } }
+@media (max-width: 767px) { .panel { width: 100vw; } }

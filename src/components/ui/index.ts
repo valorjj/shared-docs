@@ -28,3 +28,5 @@ export {
 } from './ContextMenu'
 export { useContextMenu } from './useContextMenu'
 export { default as ImageLightbox } from './ImageLightbox'
+export { Panel } from './Panel'
+export { useFocusTrap } from './useFocusTrap'
