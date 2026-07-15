@@ -27,9 +27,21 @@ import TitleDescModal from './TitleDescModal'
 import ConnectModal, { type ConnectCandidate } from './ConnectModal'
 import DiscussionPane from './DiscussionPane'
 import DecisionPresenceStack from './collab/DecisionPresenceStack'
-import { PlanPresenceProvider } from './collab/usePlanPresence'
+import { PlanPresenceProvider, usePlanPresence } from './collab/usePlanPresence'
 import styles from './PlanDetail.module.css'
 import type { SubPlanNode } from './types'
+
+/** Broadcasts which node this user has open (their `selectedNode`) as presence
+ *  `focus`, so peers see a ring on it. Lives inside PlanPresenceProvider because
+ *  PlanDetail's own body sits above the provider and can't read the context. */
+function FocusBroadcaster({ nodeId }: { nodeId: string | null }) {
+  const { setFocus } = usePlanPresence()
+  useEffect(() => {
+    setFocus(nodeId)
+    return () => setFocus(null)
+  }, [nodeId, setFocus])
+  return null
+}
 
 export default function PlanDetail() {
   const { planId: planIdParam } = useParams()
@@ -298,6 +310,7 @@ export default function PlanDetail() {
 
       {tree && (
         <PlanPresenceProvider planId={planId}>
+        <FocusBroadcaster nodeId={selectedNode ? `${selectedNode.kind}:${selectedNode.id}` : null} />
         <div key={planId} className={discussionOpen ? styles.split : styles.mainWrap}>
           <div className={styles.main}>
           <div ref={sentinelRef} aria-hidden="true" className={styles.sentinel} />

@@ -26,6 +26,7 @@ import { useSettings } from '../settings/settingsContext'
 import { usePlanPresence } from './collab/usePlanPresence'
 import { useSmoothedPresence } from './collab/useSmoothedPresence'
 import PresenceCursors from './PresenceCursors'
+import PresenceHalos from './PresenceHalos'
 import styles from './PlanCanvas.module.css'
 import { ACCENT_COLORS, ACCENT_ICONS, type AccentColor, type AccentIcon, type PlanTree } from './types'
 
@@ -218,7 +219,7 @@ function Flow({ tree, locked, onNodeSelect, focusNodeId }: Props) {
   const { theme } = useSettings()
   const colorMode = theme === 'light' ? 'light' : 'dark'
   const { screenToFlowPosition, setCenter, flowToScreenPosition } = useReactFlow()
-  const { peers, setCursor, setDrag } = usePlanPresence()
+  const { peers, setCursor, setDrag, setHover } = usePlanPresence()
   const smoothed = useSmoothedPresence(peers)
   const lastCursorSent = useRef(0)
   const lastDragSent = useRef(0)
@@ -348,11 +349,12 @@ function Flow({ tree, locked, onNodeSelect, focusNodeId }: Props) {
   useEffect(() => () => {
     setCursor(null)
     setDrag(null)
+    setHover(null)
     if (dragClearTimer.current) {
       clearTimeout(dragClearTimer.current)
       dragClearTimer.current = null
     }
-  }, [setCursor, setDrag])
+  }, [setCursor, setDrag, setHover])
 
   const isValidConnection = useCallback((c: Connection | Edge) => {
     if (!c.source || !c.target || c.source === c.target) return false
@@ -410,7 +412,10 @@ function Flow({ tree, locked, onNodeSelect, focusNodeId }: Props) {
     setCursor(pos)
   }, [screenToFlowPosition, setCursor])
 
-  const onCanvasMouseLeave = useCallback(() => setCursor(null), [setCursor])
+  const onCanvasMouseLeave = useCallback(() => { setCursor(null); setHover(null) }, [setCursor, setHover])
+
+  const onNodeMouseEnter = useCallback((_e: React.MouseEvent, node: CanvasNode) => setHover(node.id), [setHover])
+  const onNodeMouseLeave = useCallback(() => setHover(null), [setHover])
 
   const onPaneContextMenu = useCallback((e: React.MouseEvent | MouseEvent) => {
     e.preventDefault()
@@ -462,6 +467,8 @@ function Flow({ tree, locked, onNodeSelect, focusNodeId }: Props) {
         onNodeDrag={onNodeDrag}
         onNodeDragStop={onNodeDragStop}
         onNodeClick={(_, n) => onNodeSelect?.(parseNodeId(n.id))}
+        onNodeMouseEnter={onNodeMouseEnter}
+        onNodeMouseLeave={onNodeMouseLeave}
         onPaneContextMenu={onPaneContextMenu}
         onNodeContextMenu={onNodeContextMenu}
         onConnect={onConnect}
@@ -486,6 +493,7 @@ function Flow({ tree, locked, onNodeSelect, focusNodeId }: Props) {
         <MiniMap pannable zoomable ariaLabel="미니맵" />
         <Controls showInteractive={false} />
       </ReactFlow>
+      <PresenceHalos peers={smoothed} />
       <PresenceCursors peers={smoothed} />
       <TitleDescModal
         open={adding} onClose={() => setAdding(false)} entityLabel="안건" busy={addSubPlanM.isPending}
