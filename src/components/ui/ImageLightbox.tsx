@@ -12,9 +12,17 @@ export default function ImageLightbox({ src, alt, onClose }: Props) {
   useFocusTrap(ref, true)
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
+    // Capture phase on window: fires before Panel's bubble-phase `document`
+    // listener, so stopPropagation() here keeps Esc from also closing an
+    // ancestor Panel underneath this lightbox.
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return
+      e.preventDefault()
+      e.stopPropagation()
+      onClose()
+    }
+    window.addEventListener('keydown', onKey, true)
+    return () => window.removeEventListener('keydown', onKey, true)
   }, [onClose])
 
   return createPortal(
