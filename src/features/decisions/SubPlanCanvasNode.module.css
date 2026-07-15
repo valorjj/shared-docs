@@ -66,49 +66,19 @@
   font-weight: var(--fw-semi);
 }
 
-.options {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-1);
-  border-top: 1px solid var(--c-border);
-  padding-top: var(--sp-2);
-}
+.icon { color: var(--c-text-muted); flex: none; }
+.deadline { color: var(--c-text-subtle); }
 
-.option {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-  font-size: var(--fs-sm);
-  color: var(--c-text);
-}
-
-.optionChosen {
-  font-weight: var(--fw-semi);
-  color: var(--c-primary);
-}
-
-.check {
-  color: var(--c-primary);
-  flex-shrink: 0;
-}
-
-.optionTitle {
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.optionVotes {
-  font-size: var(--fs-xs);
-  color: var(--c-primary);
-  white-space: nowrap;
-}
-
-.empty {
-  font-size: var(--fs-sm);
-  color: var(--c-text-subtle);
-  margin: 0;
+/* Soft full-card accent wash + border tint (ported from SubPlanCard). */
+.accented { position: relative; border-color: color-mix(in srgb, var(--card-accent) 30%, var(--c-border)); }
+.accented::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--card-accent);
+  opacity: 0.07;
+  border-radius: inherit;
+  pointer-events: none;
 }
 
 /* Connection handles — quiet at rest but always visible (touch has no hover),

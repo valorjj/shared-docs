@@ -40,6 +40,8 @@ export type OptionNode = {
   proCons: ProCon[]
   voterUserIds: number[]
   resources: OptionResource[]
+  canvasX: number | null
+  canvasY: number | null
 }
 
 export type VoteSnapshotEntry = { optionId: number; title: string; count: number; voters: string[] }
@@ -73,6 +75,13 @@ export type SubPlanEdge = {
   targetSubPlanId: number
 }
 
+/** An option-sourced flow edge: 선택지 → downstream 안건 ("choosing this leads there"). */
+export type FlowEdge = {
+  id: number
+  sourceOptionId: number
+  targetSubPlanId: number
+}
+
 export type PlanTree = {
   id: number
   title: string
@@ -89,6 +98,7 @@ export type PlanTree = {
   completedAt: string | null
   subPlans: SubPlanNode[]
   edges: SubPlanEdge[]
+  optionFlowEdges: FlowEdge[]
 }
 
 export type SubPlanDetail = {
@@ -119,6 +129,7 @@ export type CreateProConPayload = { kind: ProConKind; content: string }
 export type LockDecisionPayload = { chosenOptionId: number; reason: string }
 export type CanvasPositionPayload = { canvasX: number; canvasY: number }
 export type CreateEdgePayload = { sourceSubPlanId: number; targetSubPlanId: number }
+export type CreateFlowEdgePayload = { sourceOptionId: number; targetSubPlanId: number }
 
 export type PlanEventType =
   | 'PLAN_CREATED' | 'SUBPLAN_ADDED' | 'OPTION_ADDED'

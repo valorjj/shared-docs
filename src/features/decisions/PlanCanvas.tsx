@@ -1,45 +1,91 @@
 import { useCallback, useRef, useState } from 'react'
 import {
-  ReactFlow, ReactFlowProvider, Background, Controls, MarkerType,
+  ReactFlow, ReactFlowProvider, Background, Controls, MiniMap, MarkerType,
   useNodesState, useEdgesState, useReactFlow, addEdge,
-  type Connection, type OnNodeDrag,
+  type Connection, type Edge, type OnNodeDrag,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { Plus } from 'lucide-react'
 import { EmptyState, Button } from '../../components/ui'
 import SubPlanCanvasNode, { type SubPlanCanvasNodeType } from './SubPlanCanvasNode'
+import OptionCanvasNode, { type OptionCanvasNodeType } from './OptionCanvasNode'
 import DeletableEdge, { type DeletableEdgeType } from './DeletableEdge'
+import OwnershipEdge, { type OwnershipEdgeType } from './OwnershipEdge'
 import TitleDescModal from './TitleDescModal'
-import { useMoveSubPlan, useCreateEdge, useDeleteEdge, useAddSubPlanOnCanvas } from './api'
+import {
+  useMoveSubPlan, useMoveOption, useAddFlowEdge, useDeleteFlowEdge, useDeleteEdge, useAddSubPlanOnCanvas,
+} from './api'
 import { useSettings } from '../settings/settingsContext'
 import styles from './PlanCanvas.module.css'
-import type { PlanTree, SubPlanNode } from './types'
+import type { PlanTree } from './types'
 
-const nodeTypes = { subplan: SubPlanCanvasNode }
-const edgeTypes = { deletable: DeletableEdge }
-const NODE_W = 260
-const GAP_X = 64
+const nodeTypes = { subplan: SubPlanCanvasNode, option: OptionCanvasNode }
+const edgeTypes = { deletable: DeletableEdge, ownership: OwnershipEdge }
+
+const CLUSTER_GAP_X = 520   // horizontal gap between 안건 clusters (auto-layout)
+const OPT_OFFSET_X = 320    // options placed to the right of their 안건
+const OPT_GAP_Y = 84        // vertical gap between sibling option nodes
+const SNAP = 16
 const DRAG_SAVE_MS = 400
 
-/** Auto-layout fallback for nodes never dragged (canvasX/Y null) — the D2 row. */
-function nodePosition(sp: SubPlanNode, i: number) {
-  return { x: sp.canvasX ?? i * (NODE_W + GAP_X), y: sp.canvasY ?? 0 }
+const spId = (id: number) => `sp:${id}`
+const optId = (id: number) => `opt:${id}`
+const parseNodeId = (nid: string): { kind: 'sp' | 'opt'; id: number } => {
+  const [k, n] = nid.split(':')
+  return { kind: k as 'sp' | 'opt', id: Number(n) }
 }
 
-function toNode(sp: SubPlanNode, i: number): SubPlanCanvasNodeType {
-  return { id: String(sp.id), type: 'subplan', position: nodePosition(sp, i), data: { subPlan: sp } }
+type CanvasNode = SubPlanCanvasNodeType | OptionCanvasNodeType
+type CanvasEdge = DeletableEdgeType | OwnershipEdgeType
+
+/** 안건 nodes + their option nodes. Saved canvasX/Y win; nulls fall back to a
+ *  left→right cluster fan-out (안건, then its options stacked to the right). */
+function buildNodes(tree: PlanTree): CanvasNode[] {
+  const nodes: CanvasNode[] = []
+  tree.subPlans.forEach((sp, i) => {
+    const baseX = sp.canvasX ?? i * CLUSTER_GAP_X
+    const baseY = sp.canvasY ?? 0
+    nodes.push({ id: spId(sp.id), type: 'subplan', position: { x: baseX, y: baseY }, data: { subPlan: sp } })
+    const chosenId = sp.decision?.chosenOptionId ?? null
+    sp.options.forEach((o, j) => {
+      const ox = o.canvasX ?? baseX + OPT_OFFSET_X
+      const oy = o.canvasY ?? baseY + (j - (sp.options.length - 1) / 2) * OPT_GAP_Y
+      nodes.push({ id: optId(o.id), type: 'option', position: { x: ox, y: oy }, data: { option: o, chosen: o.id === chosenId } })
+    })
+  })
+  return nodes
 }
 
-type CanvasNode = SubPlanCanvasNodeType
-
-function toEdge(e: PlanTree['edges'][number]): DeletableEdgeType {
-  return {
-    id: String(e.id),
-    source: String(e.sourceSubPlanId),
-    target: String(e.targetSubPlanId),
-    type: 'deletable',
-    markerEnd: { type: MarkerType.ArrowClosed },
-  }
+/** Ownership (안건→option, auto), flow (option→안건, from tree.optionFlowEdges),
+ *  and legacy 관련 (안건→안건, from tree.edges). Dangling edges — any endpoint not
+ *  rendered as a node — are skipped. */
+function buildEdges(tree: PlanTree): CanvasEdge[] {
+  const spSet = new Set(tree.subPlans.map((s) => s.id))
+  const optSet = new Set(tree.subPlans.flatMap((s) => s.options.map((o) => o.id)))
+  const edges: CanvasEdge[] = []
+  tree.subPlans.forEach((sp) => {
+    sp.options.forEach((o) => {
+      edges.push({
+        id: `own:${sp.id}-${o.id}`, source: spId(sp.id), target: optId(o.id),
+        type: 'ownership', selectable: false, deletable: false, focusable: false,
+      })
+    })
+  })
+  tree.optionFlowEdges.forEach((e) => {
+    if (!optSet.has(e.sourceOptionId) || !spSet.has(e.targetSubPlanId)) return
+    edges.push({
+      id: `flow:${e.id}`, source: optId(e.sourceOptionId), target: spId(e.targetSubPlanId),
+      type: 'deletable', data: { kind: 'flow' }, markerEnd: { type: MarkerType.ArrowClosed },
+    })
+  })
+  tree.edges.forEach((e) => {
+    if (!spSet.has(e.sourceSubPlanId) || !spSet.has(e.targetSubPlanId)) return
+    edges.push({
+      id: `rel:${e.id}`, source: spId(e.sourceSubPlanId), target: spId(e.targetSubPlanId),
+      type: 'deletable', data: { kind: 'related' }, markerEnd: { type: MarkerType.ArrowClosed },
+    })
+  })
+  return edges
 }
 
 type Props = { tree: PlanTree; locked: boolean }
@@ -85,49 +131,70 @@ function Flow({ tree, locked }: Props) {
   // Seed controlled state ONCE from the initial tree (React reads an initializer
   // only on first render). Later tree refetches are intentionally ignored — the
   // canvas owns its state while mounted; the next mount re-reads fresh data.
-  const [nodes, setNodes, onNodesChange] = useNodesState<CanvasNode>(tree.subPlans.map(toNode))
-  const [edges, setEdges, onEdgesChange] = useEdgesState<DeletableEdgeType>(tree.edges.map(toEdge))
+  const [nodes, setNodes, onNodesChange] = useNodesState<CanvasNode>(buildNodes(tree))
+  const [edges, setEdges, onEdgesChange] = useEdgesState<CanvasEdge>(buildEdges(tree))
   const [adding, setAdding] = useState(false)
 
   const { theme } = useSettings()
   const colorMode = theme === 'light' ? 'light' : 'dark'
+  const { screenToFlowPosition } = useReactFlow()
 
-  const move = useMoveSubPlan()
-  const createEdgeM = useCreateEdge(tree.id)
-  const deleteEdgeM = useDeleteEdge()
+  const moveSubPlan = useMoveSubPlan()
+  const moveOption = useMoveOption()
+  const addFlowEdge = useAddFlowEdge(tree.id)
+  const deleteFlowEdge = useDeleteFlowEdge()
+  const deleteRelatedEdge = useDeleteEdge()
   const addSubPlanM = useAddSubPlanOnCanvas(tree.id)
 
-  const { screenToFlowPosition } = useReactFlow()
   const wrapRef = useRef<HTMLDivElement>(null)
 
   // Persist each node's final position, debounced per node id.
   const saveTimers = useRef(new Map<string, ReturnType<typeof setTimeout>>())
   const onNodeDragStop = useCallback<OnNodeDrag<CanvasNode>>((_e, node) => {
+    const { kind, id } = parseNodeId(node.id)
     const timers = saveTimers.current
     const existing = timers.get(node.id)
     if (existing) clearTimeout(existing)
     timers.set(node.id, setTimeout(() => {
-      move.mutate({ id: Number(node.id), payload: { canvasX: node.position.x, canvasY: node.position.y } })
+      const payload = { canvasX: node.position.x, canvasY: node.position.y }
+      if (kind === 'sp') moveSubPlan.mutate({ id, payload })
+      else moveOption.mutate({ id, payload })
       timers.delete(node.id)
     }, DRAG_SAVE_MS))
-  }, [move])
+  }, [moveSubPlan, moveOption])
+
+  const isValidConnection = useCallback((c: Connection | Edge) => {
+    if (!c.source || !c.target || c.source === c.target) return false
+    return parseNodeId(c.source).kind === 'opt' && parseNodeId(c.target).kind === 'sp'
+  }, [])
 
   const onConnect = useCallback((c: Connection) => {
-    if (!c.source || !c.target || c.source === c.target) return
-    createEdgeM.mutate(
-      { sourceSubPlanId: Number(c.source), targetSubPlanId: Number(c.target) },
+    if (!c.source || !c.target) return
+    const s = parseNodeId(c.source)
+    const t = parseNodeId(c.target)
+    if (s.kind !== 'opt' || t.kind !== 'sp') return
+    addFlowEdge.mutate(
+      { sourceOptionId: s.id, targetSubPlanId: t.id },
       {
-        onSuccess: (edge) => setEdges((es) => addEdge(toEdge(edge), es)),
+        onSuccess: (edge) => setEdges((es) => addEdge({
+          id: `flow:${edge.id}`, source: optId(edge.sourceOptionId), target: spId(edge.targetSubPlanId),
+          type: 'deletable', data: { kind: 'flow' }, markerEnd: { type: MarkerType.ArrowClosed },
+        }, es)),
         onError: (err) => window.alert((err as { body?: { detail?: string } }).body?.detail ?? '연결할 수 없어요.'),
       },
     )
-  }, [createEdgeM, setEdges])
+  }, [addFlowEdge, setEdges])
 
   // ✕ on a selected edge (and the Delete key) call React Flow's deleteElements,
   // which removes the edge locally and fires this — we persist the removal here.
-  const onEdgesDelete = useCallback((deleted: DeletableEdgeType[]) => {
-    deleted.forEach((e) => deleteEdgeM.mutate(Number(e.id)))
-  }, [deleteEdgeM])
+  const onEdgesDelete = useCallback((deleted: CanvasEdge[]) => {
+    deleted.forEach((e) => {
+      const kind = (e.data as { kind?: string } | undefined)?.kind
+      const dbId = Number(e.id.split(':')[1])
+      if (kind === 'flow') deleteFlowEdge.mutate(dbId)
+      else if (kind === 'related') deleteRelatedEdge.mutate(dbId)
+    })
+  }, [deleteFlowEdge, deleteRelatedEdge])
 
   // "+ 안건" spawns at the canvas viewport center, then persists that position.
   const addAtCenter = useCallback((payload: { title: string; description?: string }, done: () => void) => {
@@ -137,12 +204,12 @@ function Flow({ tree, locked }: Props) {
       : { x: 0, y: 0 }
     addSubPlanM.mutate(payload, {
       onSuccess: (sp) => {
-        move.mutate({ id: sp.id, payload: { canvasX: center.x, canvasY: center.y } })
-        setNodes((ns) => ns.concat({ id: String(sp.id), type: 'subplan', position: center, data: { subPlan: sp } }))
+        moveSubPlan.mutate({ id: sp.id, payload: { canvasX: center.x, canvasY: center.y } })
+        setNodes((ns) => ns.concat({ id: spId(sp.id), type: 'subplan', position: center, data: { subPlan: sp } }))
         done()
       },
     })
-  }, [addSubPlanM, move, screenToFlowPosition, setNodes])
+  }, [addSubPlanM, moveSubPlan, screenToFlowPosition, setNodes])
 
   return (
     <div className={styles.canvas} ref={wrapRef}>
@@ -158,6 +225,7 @@ function Flow({ tree, locked }: Props) {
         onEdgesChange={onEdgesChange}
         onNodeDragStop={onNodeDragStop}
         onConnect={onConnect}
+        isValidConnection={isValidConnection}
         onEdgesDelete={onEdgesDelete}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
@@ -166,6 +234,8 @@ function Flow({ tree, locked }: Props) {
         fitViewOptions={{ padding: 0.2 }}
         minZoom={0.3}
         maxZoom={1.5}
+        snapToGrid
+        snapGrid={[SNAP, SNAP]}
         nodesDraggable={!locked}
         nodesConnectable={!locked}
         elementsSelectable={!locked}
@@ -173,6 +243,7 @@ function Flow({ tree, locked }: Props) {
         deleteKeyCode={locked ? null : undefined}
       >
         <Background />
+        <MiniMap pannable zoomable ariaLabel="미니맵" />
         <Controls showInteractive={false} />
       </ReactFlow>
       <TitleDescModal
