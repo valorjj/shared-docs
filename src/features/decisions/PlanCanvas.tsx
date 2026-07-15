@@ -38,19 +38,38 @@ const parseNodeId = (nid: string): { kind: 'sp' | 'opt'; id: number } => {
 type CanvasNode = SubPlanCanvasNodeType | OptionCanvasNodeType
 type CanvasEdge = DeletableEdgeType | OwnershipEdgeType
 
+/** Per-option decision state for the canvas. A decided 안건's chosen option is
+ *  'chosen' (emphasized); its other options are 'dimmed'; anything under an
+ *  undecided 안건 is 'normal'. Drives the glow/dim collapse-to-trail visual. */
+function optionStates(tree: PlanTree): Map<number, 'chosen' | 'dimmed' | 'normal'> {
+  const states = new Map<number, 'chosen' | 'dimmed' | 'normal'>()
+  for (const sp of tree.subPlans) {
+    const decided = sp.decision != null
+    const chosenId = sp.decision?.chosenOptionId ?? null
+    for (const o of sp.options) {
+      states.set(o.id, !decided ? 'normal' : o.id === chosenId ? 'chosen' : 'dimmed')
+    }
+  }
+  return states
+}
+
 /** 안건 nodes + their option nodes. Saved canvasX/Y win; nulls fall back to a
  *  left→right cluster fan-out (안건, then its options stacked to the right). */
 function buildNodes(tree: PlanTree): CanvasNode[] {
+  const states = optionStates(tree)
   const nodes: CanvasNode[] = []
   tree.subPlans.forEach((sp, i) => {
     const baseX = sp.canvasX ?? i * CLUSTER_GAP_X
     const baseY = sp.canvasY ?? 0
     nodes.push({ id: spId(sp.id), type: 'subplan', position: { x: baseX, y: baseY }, data: { subPlan: sp } })
-    const chosenId = sp.decision?.chosenOptionId ?? null
     sp.options.forEach((o, j) => {
       const ox = o.canvasX ?? baseX + OPT_OFFSET_X
       const oy = o.canvasY ?? baseY + (j - (sp.options.length - 1) / 2) * OPT_GAP_Y
-      nodes.push({ id: optId(o.id), type: 'option', position: { x: ox, y: oy }, data: { option: o, chosen: o.id === chosenId } })
+      const st = states.get(o.id)
+      nodes.push({
+        id: optId(o.id), type: 'option', position: { x: ox, y: oy },
+        data: { option: o, chosen: st === 'chosen', dimmed: st === 'dimmed' },
+      })
     })
   })
   return nodes
@@ -60,6 +79,7 @@ function buildNodes(tree: PlanTree): CanvasNode[] {
  *  and legacy 관련 (안건→안건, from tree.edges). Dangling edges — any endpoint not
  *  rendered as a node — are skipped. */
 function buildEdges(tree: PlanTree): CanvasEdge[] {
+  const states = optionStates(tree)
   const spSet = new Set(tree.subPlans.map((s) => s.id))
   const optSet = new Set(tree.subPlans.flatMap((s) => s.options.map((o) => o.id)))
   const edges: CanvasEdge[] = []
@@ -73,9 +93,11 @@ function buildEdges(tree: PlanTree): CanvasEdge[] {
   })
   tree.optionFlowEdges.forEach((e) => {
     if (!optSet.has(e.sourceOptionId) || !spSet.has(e.targetSubPlanId)) return
+    const st = states.get(e.sourceOptionId)
     edges.push({
       id: `flow:${e.id}`, source: optId(e.sourceOptionId), target: spId(e.targetSubPlanId),
-      type: 'deletable', data: { kind: 'flow' }, markerEnd: { type: MarkerType.ArrowClosed },
+      type: 'deletable', data: { kind: 'flow', dimmed: st === 'dimmed', chosen: st === 'chosen' },
+      markerEnd: { type: MarkerType.ArrowClosed },
     })
   })
   tree.edges.forEach((e) => {
