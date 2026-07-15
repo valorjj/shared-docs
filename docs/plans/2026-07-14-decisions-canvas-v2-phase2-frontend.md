@@ -622,7 +622,8 @@ git commit -m "feat(decisions-canvas): render 안건+선택지 nodes, flow edges
 
 `npm run build` is the automated gate; the canvas has no unit harness, so verify these by hand on the running app (a plan with ≥2 안건, each with options):
 
-1. **Nodes render:** 캔버스 tab shows each 안건 as a node with its options as separate nodes to the right, joined by dashed ownership links. Chosen option shows a ✓; vote/장단점/자료 counts show.
+1. **Nodes render:** 캔버스 tab shows each 안건 as a node with its options as separate nodes to the right, joined by dashed ownership links. Chosen option shows a ✓; vote/장단점/자료 counts show. The MiniMap renders (bottom-right).
+1b. **안건 node decorations:** an 안건 with a **color + icon tag** and a **deadline** shows the accent wash (soft `--c-tag-*` tint), the Lucide glyph before the title, and a `기한 …` chip — these are the new render paths (accent/icon/deadline) most likely to silently break.
 2. **Drag persists:** drag a 안건 and an option; reload the plan → positions retained (both `sub_plans` and `options` persisted). Nodes snap to the 16px grid.
 3. **Draw flow:** drag from an option's right handle to a downstream 안건's left handle → a solid arrow appears; reload → it persists. Verify you CANNOT draw 안건→안건, 안건→option, or option→option (invalid connections are refused).
 4. **Cycle rejected:** attempt to draw a flow that would loop back (e.g. B's option → A when A already flows to B) → alerted with the backend's Korean message, no edge created.
