@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import * as Y from 'yjs'
 import { WebsocketProvider } from 'y-websocket'
 import { getToken } from '../../../auth/tokenStorage'
@@ -79,11 +79,21 @@ export function PlanPresenceProvider({ planId, children }: { planId: number; chi
     }
   }, [planId, user])
 
+  // Stable identities — these only read providerRef.current, never peers — so
+  // downstream useCallbacks (e.g. onNodeDrag, onCanvasMouseMove) don't churn
+  // on every awareness packet (~20/sec).
+  const setCursor = useCallback((pos: { x: number; y: number } | null) => {
+    providerRef.current?.awareness.setLocalStateField('cursor', pos)
+  }, [])
+  const setDrag = useCallback((d: PeerDrag) => {
+    providerRef.current?.awareness.setLocalStateField('drag', d)
+  }, [])
+
   const value = useMemo<PlanPresence>(() => ({
     peers,
-    setCursor: (pos) => providerRef.current?.awareness.setLocalStateField('cursor', pos),
-    setDrag: (d) => providerRef.current?.awareness.setLocalStateField('drag', d),
-  }), [peers])
+    setCursor,
+    setDrag,
+  }), [peers, setCursor, setDrag])
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }

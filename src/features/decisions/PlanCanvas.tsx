@@ -170,8 +170,10 @@ function Flow({ tree, locked, onNodeSelect }: Props) {
   const localDragId = useRef<string | null>(null)
 
   // Move nodes that a peer is dragging, from the smoothed target — but never a node
-  // the local user is dragging (their own gesture wins). When a peer's drag clears,
-  // the node simply stays put (last smoothed pos == persisted pos), so no snap-back.
+  // the local user is dragging (their own gesture wins). onNodeDragStop broadcasts
+  // the exact final position before clearing the drag, so the observer's easing
+  // converges to that true target; any residual drift self-heals on the next
+  // canvas remount (tab switch / plan change / reload rebuilds nodes from the tree).
   useEffect(() => {
     const drags = smoothed.filter((p) => p.drag && p.drag.nodeId !== localDragId.current)
     if (drags.length === 0) return
@@ -197,6 +199,7 @@ function Flow({ tree, locked, onNodeSelect }: Props) {
 
   // Persist each node's final position, debounced per node id.
   const saveTimers = useRef(new Map<string, ReturnType<typeof setTimeout>>())
+  const dragClearTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const onNodeDragStart = useCallback<OnNodeDrag<CanvasNode>>((_e, node) => {
     localDragId.current = node.id
   }, [])
@@ -219,9 +222,30 @@ function Flow({ tree, locked, onNodeSelect }: Props) {
       else moveOption.mutate({ id, payload })
       timers.delete(node.id)
     }, DRAG_SAVE_MS))
-    setDrag(null)
+
+    // Broadcast the exact final position once (the 50ms throttle in onNodeDrag
+    // may have swallowed the last few pixels of movement), then let peers'
+    // easing settle onto it before releasing the drag — otherwise the node
+    // visibly snaps back to the last-throttled position on other screens.
+    setDrag({ nodeId: node.id, x: node.position.x, y: node.position.y })
+    if (dragClearTimer.current) clearTimeout(dragClearTimer.current)
+    dragClearTimer.current = setTimeout(() => {
+      setDrag(null)
+      dragClearTimer.current = null
+    }, 250)
     localDragId.current = null
   }, [moveSubPlan, moveOption, setDrag])
+
+  // Clear local presence on unmount — otherwise switching views/plans leaves a
+  // frozen cursor (and any pending drag-settle timer) visible to peers.
+  useEffect(() => () => {
+    setCursor(null)
+    setDrag(null)
+    if (dragClearTimer.current) {
+      clearTimeout(dragClearTimer.current)
+      dragClearTimer.current = null
+    }
+  }, [setCursor, setDrag])
 
   const isValidConnection = useCallback((c: Connection | Edge) => {
     if (!c.source || !c.target || c.source === c.target) return false
