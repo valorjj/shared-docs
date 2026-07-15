@@ -26,6 +26,7 @@ import TitleDescModal from './TitleDescModal'
 import ConnectModal, { type ConnectCandidate } from './ConnectModal'
 import DiscussionPane from './DiscussionPane'
 import DecisionPresenceStack from './collab/DecisionPresenceStack'
+import { PlanPresenceProvider } from './collab/usePlanPresence'
 import styles from './PlanDetail.module.css'
 import type { SubPlanNode } from './types'
 
@@ -294,6 +295,7 @@ export default function PlanDetail() {
       {isError && <ErrorState error={error} onRetry={() => refetch()} />}
 
       {tree && (
+        <PlanPresenceProvider planId={planId}>
         <div key={planId} className={discussionOpen ? styles.split : styles.mainWrap}>
           <div className={styles.main}>
           <div ref={sentinelRef} aria-hidden="true" className={styles.sentinel} />
@@ -307,7 +309,7 @@ export default function PlanDetail() {
             <span className={styles.controlSpacer} />
             <Button variant="ghost" size="sm" leading={<MessagesSquare size={14} />}
               onClick={toggleDiscussion}>논의</Button>
-            <DecisionPresenceStack planId={planId} />
+            <DecisionPresenceStack />
             <div className={styles.stripLifecycle}>{lifecycleControls}</div>
           </div>
 
@@ -372,6 +374,7 @@ export default function PlanDetail() {
             </aside>
           )}
         </div>
+        </PlanPresenceProvider>
       )}
 
       {/* 안건 add/edit */}
