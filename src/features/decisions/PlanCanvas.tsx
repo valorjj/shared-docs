@@ -201,6 +201,12 @@ function Flow({ tree, locked, onNodeSelect }: Props) {
   const saveTimers = useRef(new Map<string, ReturnType<typeof setTimeout>>())
   const dragClearTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const onNodeDragStart = useCallback<OnNodeDrag<CanvasNode>>((_e, node) => {
+    // Cancel any pending settle timer from a just-dropped node — otherwise its
+    // stale setDrag(null) fires mid-gesture and briefly nulls this node's broadcast.
+    if (dragClearTimer.current) {
+      clearTimeout(dragClearTimer.current)
+      dragClearTimer.current = null
+    }
     localDragId.current = node.id
   }, [])
 
