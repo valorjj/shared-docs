@@ -173,7 +173,7 @@ export function Panel({ open, onClose, title, children }: Props) {
 .close {
   flex: none; display: inline-flex; align-items: center; justify-content: center;
   width: 32px; height: 32px; border: none; background: transparent;
-  color: var(--c-text-secondary); border-radius: var(--r-md); cursor: pointer;
+  color: var(--c-text-muted); border-radius: var(--r-md); cursor: pointer;
 }
 .close:hover { background: var(--c-surface-tint); color: var(--c-text); }
 .body { flex: 1; overflow-y: auto; padding: var(--sp-4); }
@@ -302,12 +302,12 @@ export default function OptionPanel({ option, isChosen, decided, locked }: Props
 .vote {
   flex: none; display: inline-flex; align-items: center; gap: var(--sp-1);
   padding: var(--sp-1) var(--sp-2); border: 1px solid var(--c-border);
-  border-radius: var(--r-pill); background: var(--c-surface); color: var(--c-text-secondary);
+  border-radius: var(--r-pill); background: var(--c-surface); color: var(--c-text-muted);
   font-size: var(--fs-xs); cursor: pointer;
 }
 .vote:disabled { opacity: 0.5; cursor: default; }
 .voteOn { border-color: var(--c-primary); color: var(--c-primary); background: var(--c-primary-soft); }
-.desc { margin: 0; font-size: var(--fs-sm); color: var(--c-text-secondary); white-space: pre-wrap; }
+.desc { margin: 0; font-size: var(--fs-sm); color: var(--c-text-muted); white-space: pre-wrap; }
 .voters { margin: 0; font-size: var(--fs-xs); color: var(--c-text-muted); }
 .comments { border-top: 1px solid var(--c-border); padding-top: var(--sp-3); }
 ```
@@ -411,7 +411,7 @@ export default function SubPlanPanel({ subPlanId, planId, onOpenSubPlan }: Props
 .wrap { display: flex; flex-direction: column; gap: var(--sp-4); }
 .metaRow { display: flex; align-items: center; gap: var(--sp-2); }
 .deadline { font-size: var(--fs-xs); color: var(--c-text-subtle); }
-.desc { margin: 0; font-size: var(--fs-sm); color: var(--c-text-secondary); white-space: pre-wrap; }
+.desc { margin: 0; font-size: var(--fs-sm); color: var(--c-text-muted); white-space: pre-wrap; }
 .section { display: flex; flex-direction: column; gap: var(--sp-2); }
 .heading { margin: 0; font-size: var(--fs-sm); font-weight: var(--fw-semi); color: var(--c-text); }
 .empty { margin: 0; font-size: var(--fs-sm); color: var(--c-text-muted); }

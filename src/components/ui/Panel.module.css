@@ -30,7 +30,7 @@
 .close {
   flex: none; display: inline-flex; align-items: center; justify-content: center;
   width: 32px; height: 32px; border: none; background: transparent;
-  color: var(--c-text-secondary); border-radius: var(--r-md); cursor: pointer;
+  color: var(--c-text-muted); border-radius: var(--r-md); cursor: pointer;
 }
 .close:hover { background: var(--c-surface-tint); color: var(--c-text); }
 .body { flex: 1; overflow-y: auto; padding: var(--sp-4); }
