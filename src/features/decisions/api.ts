@@ -1,11 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '../../api/client'
+import { commentKeys } from '../../api/comments'
 import { useActiveWorkspace } from '../../auth/useActiveWorkspace'
 import type {
-  CanvasPositionPayload, CreateEdgePayload, CreateFlowEdgePayload, CreateLinkResourcePayload, CreatePlanPayload,
-  CreateProConPayload, CreateSubPlanPayload, FlowEdge, LockDecisionPayload, OptionNode, PlanEvent, PlanResource,
-  PlanSummary, PlanTree, ReorderSubPlansPayload, SubPlanDetail, SubPlanEdge, SubPlanNode, TitleDescPayload,
-  UpdatePlanPayload, UpdateResourceTitlePayload,
+  CanvasPositionPayload, CommentPin, CreateEdgePayload, CreateFlowEdgePayload, CreateLinkResourcePayload,
+  CreatePlanPayload, CreateProConPayload, CreateSubPlanPayload, FlowEdge, LockDecisionPayload, OptionNode, PlanEvent,
+  PlanResource, PlanSummary, PlanTree, ReorderSubPlansPayload, SubPlanDetail, SubPlanEdge, SubPlanNode,
+  TitleDescPayload, UpdatePlanPayload, UpdateResourceTitlePayload,
 } from './types'
 import type { Note } from '../notes/types'
 
@@ -501,5 +502,52 @@ export function useDeleteResource() {
   return useMutation({
     mutationFn: (id: number) => deleteResourceReq(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: decisionKeys.scope(activeId) }),
+  })
+}
+
+// ── Comment pins (댓글 핀) ──
+export function useCreateCommentPin(planId: number) {
+  const qc = useQueryClient()
+  const { activeId } = useActiveWorkspace()
+  return useMutation({
+    mutationFn: async (payload: { x: number; y: number; content: string }) =>
+      (await apiClient.post<CommentPin>(`/api/plans/${planId}/comment-pins`, payload)).data,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: decisionKeys.scope(activeId) })
+      qc.invalidateQueries({ queryKey: commentKeys.scope(activeId) })
+    },
+  })
+}
+
+/** Persist a comment pin's dragged position. Fire-and-forget, no invalidation
+ *  (mirrors useMoveOption/useMoveSubPlan). */
+export function useMoveCommentPin() {
+  return useMutation({
+    mutationFn: async (v: { id: number; payload: { x: number; y: number } }) => {
+      await apiClient.patch(`/api/comment-pins/${v.id}/position`, v.payload)
+    },
+  })
+}
+
+export function useSetCommentPinResolved() {
+  const qc = useQueryClient()
+  const { activeId } = useActiveWorkspace()
+  return useMutation({
+    mutationFn: async (v: { id: number; resolved: boolean }) => {
+      await apiClient.patch(`/api/comment-pins/${v.id}/resolved`, { resolved: v.resolved })
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: decisionKeys.scope(activeId) }),
+  })
+}
+
+export function useDeleteCommentPin() {
+  const qc = useQueryClient()
+  const { activeId } = useActiveWorkspace()
+  return useMutation({
+    mutationFn: async (id: number) => { await apiClient.delete(`/api/comment-pins/${id}`) },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: decisionKeys.scope(activeId) })
+      qc.invalidateQueries({ queryKey: commentKeys.scope(activeId) })
+    },
   })
 }
