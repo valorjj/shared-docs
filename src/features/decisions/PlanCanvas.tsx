@@ -5,8 +5,11 @@ import {
   type Connection, type Edge, type OnNodeDrag,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
-import { Plus } from 'lucide-react'
-import { EmptyState, Button } from '../../components/ui'
+import { Plus, Flag, Star, AlertTriangle, Home, Car, Heart, Briefcase, Clock, X, type LucideIcon } from 'lucide-react'
+import {
+  EmptyState, Button,
+  ContextMenu, ContextMenuItem, ContextMenuDivider, ContextMenuGroup, useContextMenu,
+} from '../../components/ui'
 import SubPlanCanvasNode, { type SubPlanCanvasNodeType } from './SubPlanCanvasNode'
 import OptionCanvasNode, { type OptionCanvasNodeType } from './OptionCanvasNode'
 import DeletableEdge, { type DeletableEdgeType } from './DeletableEdge'
@@ -14,13 +17,26 @@ import OwnershipEdge, { type OwnershipEdgeType } from './OwnershipEdge'
 import TitleDescModal from './TitleDescModal'
 import {
   useMoveSubPlan, useMoveOption, useAddFlowEdge, useDeleteFlowEdge, useDeleteEdge, useAddSubPlanOnCanvas,
+  useDeleteSubPlan, useDeleteOption, useSetAppearance,
 } from './api'
 import { useSettings } from '../settings/settingsContext'
 import { usePlanPresence } from './collab/usePlanPresence'
 import { useSmoothedPresence } from './collab/useSmoothedPresence'
 import PresenceCursors from './PresenceCursors'
 import styles from './PlanCanvas.module.css'
-import type { PlanTree } from './types'
+import { ACCENT_COLORS, ACCENT_ICONS, type AccentColor, type AccentIcon, type PlanTree } from './types'
+
+const ICON_MAP: Record<AccentIcon, LucideIcon> = {
+  Flag, Star, AlertTriangle, Home, Car, Heart, Briefcase, Clock,
+}
+
+const COLOR_LABEL: Record<AccentColor, string> = {
+  red: '빨강', amber: '노랑', green: '초록', blue: '파랑', purple: '보라', gray: '회색',
+}
+
+const ICON_LABEL: Record<AccentIcon, string> = {
+  Flag: '깃발', Star: '별', AlertTriangle: '주의', Home: '집', Car: '자동차', Heart: '하트', Briefcase: '업무', Clock: '시간',
+}
 
 const nodeTypes = { subplan: SubPlanCanvasNode, option: OptionCanvasNode }
 const edgeTypes = { deletable: DeletableEdge, ownership: OwnershipEdge }
@@ -164,6 +180,15 @@ function Flow({ tree, locked, onNodeSelect, focusNodeId }: Props) {
   const [nodes, setNodes, onNodesChange] = useNodesState<CanvasNode>(buildNodes(tree))
   const [edges, setEdges, onEdgesChange] = useEdgesState<CanvasEdge>(buildEdges(tree))
   const [adding, setAdding] = useState(false)
+
+  const paneMenu = useContextMenu()
+  const nodeMenu = useContextMenu()
+  const [menuNode, setMenuNode] = useState<{ kind: 'sp' | 'opt'; id: number } | null>(null)
+  const [paneFlowPos, setPaneFlowPos] = useState<{ x: number; y: number } | null>(null)
+  const [composerAt, setComposerAt] = useState<{ x: number; y: number } | null>(null)   // consumed in Task 10
+  const deleteSubPlan = useDeleteSubPlan()
+  const deleteOption = useDeleteOption()
+  const setAppearance = useSetAppearance()
 
   const { theme } = useSettings()
   const colorMode = theme === 'light' ? 'light' : 'dark'
@@ -329,6 +354,21 @@ function Flow({ tree, locked, onNodeSelect, focusNodeId }: Props) {
 
   const onCanvasMouseLeave = useCallback(() => setCursor(null), [setCursor])
 
+  const onPaneContextMenu = useCallback((e: React.MouseEvent | MouseEvent) => {
+    e.preventDefault()
+    const me = e as React.MouseEvent
+    setPaneFlowPos(screenToFlowPosition({ x: me.clientX, y: me.clientY }))
+    paneMenu.openAt(me.clientX, me.clientY)
+  }, [screenToFlowPosition, paneMenu])
+
+  const onNodeContextMenu = useCallback((e: React.MouseEvent, node: CanvasNode) => {
+    e.preventDefault()
+    const parsed = parseNodeId(node.id)
+    if (parsed.kind !== 'sp' && parsed.kind !== 'opt') return   // pins have their own click→panel, no node menu
+    setMenuNode(parsed)
+    nodeMenu.openAt(e.clientX, e.clientY)
+  }, [nodeMenu])
+
   return (
     <div className={styles.canvas} ref={wrapRef} onMouseMove={onCanvasMouseMove} onMouseLeave={onCanvasMouseLeave}>
       {!locked && (
@@ -345,6 +385,8 @@ function Flow({ tree, locked, onNodeSelect, focusNodeId }: Props) {
         onNodeDrag={onNodeDrag}
         onNodeDragStop={onNodeDragStop}
         onNodeClick={(_, n) => onNodeSelect?.(parseNodeId(n.id))}
+        onPaneContextMenu={onPaneContextMenu}
+        onNodeContextMenu={onNodeContextMenu}
         onConnect={onConnect}
         isValidConnection={isValidConnection}
         onEdgesDelete={onEdgesDelete}
@@ -372,6 +414,80 @@ function Flow({ tree, locked, onNodeSelect, focusNodeId }: Props) {
         open={adding} onClose={() => setAdding(false)} entityLabel="안건" busy={addSubPlanM.isPending}
         onSubmit={(p) => addAtCenter(p, () => setAdding(false))}
       />
+      <ContextMenu open={paneMenu.open} position={paneMenu.position} onClose={paneMenu.close} ariaLabel="캔버스 메뉴">
+        <ContextMenuItem onSelect={() => { paneMenu.close(); if (paneFlowPos) setComposerAt(paneFlowPos) }}>
+          여기에 댓글
+        </ContextMenuItem>
+      </ContextMenu>
+      {menuNode && (
+        <ContextMenu open={nodeMenu.open} position={nodeMenu.position} onClose={nodeMenu.close} ariaLabel="노드 메뉴">
+          <ContextMenuItem onSelect={() => { nodeMenu.close(); onNodeSelect?.(menuNode) }}>열기</ContextMenuItem>
+          {menuNode.kind === 'sp' && !locked && (() => {
+            const sp = tree.subPlans.find((s) => s.id === menuNode.id)
+            if (!sp) return null
+            return (
+              <>
+                <ContextMenuDivider />
+                <ContextMenuGroup label="색">
+                  {ACCENT_COLORS.map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      className={`${styles.swatch} ${sp.accentColor === c ? styles.swatchOn : ''}`}
+                      style={{ background: `var(--c-tag-${c})` }}
+                      aria-label={COLOR_LABEL[c]}
+                      onClick={() => setAppearance.mutate({ id: sp.id, accentColor: c, icon: sp.icon })}
+                    />
+                  ))}
+                  <button
+                    type="button"
+                    className={`${styles.swatch} ${styles.swatchClear} ${!sp.accentColor ? styles.swatchOn : ''}`}
+                    aria-label="색 없음"
+                    onClick={() => setAppearance.mutate({ id: sp.id, accentColor: null, icon: sp.icon })}
+                  />
+                </ContextMenuGroup>
+                <ContextMenuGroup label="아이콘">
+                  {ACCENT_ICONS.map((name) => {
+                    const Ico = ICON_MAP[name]
+                    return (
+                      <button
+                        key={name}
+                        type="button"
+                        className={`${styles.iconChip} ${sp.icon === name ? styles.iconChipOn : ''}`}
+                        aria-label={ICON_LABEL[name]}
+                        onClick={() => setAppearance.mutate({ id: sp.id, accentColor: sp.accentColor, icon: name })}
+                      >
+                        <Ico size={15} />
+                      </button>
+                    )
+                  })}
+                  <button
+                    type="button"
+                    className={`${styles.iconChip} ${!sp.icon ? styles.iconChipOn : ''}`}
+                    aria-label="아이콘 없음"
+                    onClick={() => setAppearance.mutate({ id: sp.id, accentColor: sp.accentColor, icon: null })}
+                  >
+                    <X size={14} />
+                  </button>
+                </ContextMenuGroup>
+              </>
+            )
+          })()}
+          {!locked && (
+            <>
+              <ContextMenuDivider />
+              <ContextMenuItem danger onSelect={() => {
+                nodeMenu.close()
+                if (window.confirm('삭제할까요? 되돌릴 수 없어요.')) {
+                  if (menuNode.kind === 'sp') deleteSubPlan.mutate(menuNode.id)
+                  else deleteOption.mutate(menuNode.id)
+                }
+              }}>삭제</ContextMenuItem>
+            </>
+          )}
+        </ContextMenu>
+      )}
+      {composerAt && null /* Task 10 renders the 댓글 composer at this flow position */}
     </div>
   )
 }
