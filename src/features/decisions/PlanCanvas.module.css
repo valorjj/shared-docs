@@ -27,3 +27,34 @@
   background: transparent;
   font-size: var(--fs-xs);
 }
+
+/* Node context-menu color/icon swatches — mirrors SubPlanCard.module.css. */
+.swatch {
+  width: 20px;
+  height: 20px;
+  border-radius: var(--r-pill);
+  border: 2px solid transparent;
+  cursor: pointer;
+  padding: 0;
+}
+.swatchOn { border-color: var(--c-text); }
+.swatchClear {
+  background: var(--c-surface);
+  border: 1px dashed var(--c-border-strong);
+  position: relative;
+}
+
+.iconChip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--r-sm);
+  border: 1px solid transparent;
+  background: none;
+  color: var(--c-text-muted);
+  cursor: pointer;
+}
+.iconChip:hover { background: var(--c-surface-tint); color: var(--c-text); }
+.iconChipOn { border-color: var(--c-text); color: var(--c-text); }

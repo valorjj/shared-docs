@@ -1,44 +1,62 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   ReactFlow, ReactFlowProvider, Background, Controls, MiniMap, MarkerType,
   useNodesState, useEdgesState, useReactFlow, addEdge,
   type Connection, type Edge, type OnNodeDrag,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
-import { Plus } from 'lucide-react'
-import { EmptyState, Button } from '../../components/ui'
+import { Plus, Flag, Star, AlertTriangle, Home, Car, Heart, Briefcase, Clock, X, type LucideIcon } from 'lucide-react'
+import {
+  EmptyState, Button,
+  ContextMenu, ContextMenuItem, ContextMenuDivider, ContextMenuGroup, useContextMenu,
+} from '../../components/ui'
 import SubPlanCanvasNode, { type SubPlanCanvasNodeType } from './SubPlanCanvasNode'
 import OptionCanvasNode, { type OptionCanvasNodeType } from './OptionCanvasNode'
+import CommentPinNode, { type CommentPinNodeType } from './CommentPinNode'
 import DeletableEdge, { type DeletableEdgeType } from './DeletableEdge'
 import OwnershipEdge, { type OwnershipEdgeType } from './OwnershipEdge'
 import TitleDescModal from './TitleDescModal'
+import PinComposer from './PinComposer'
+import { layoutPositions } from './canvasLayout'
 import {
   useMoveSubPlan, useMoveOption, useAddFlowEdge, useDeleteFlowEdge, useDeleteEdge, useAddSubPlanOnCanvas,
+  useDeleteSubPlan, useDeleteOption, useSetAppearance, useMoveCommentPin, useCreateCommentPin,
 } from './api'
 import { useSettings } from '../settings/settingsContext'
 import { usePlanPresence } from './collab/usePlanPresence'
 import { useSmoothedPresence } from './collab/useSmoothedPresence'
 import PresenceCursors from './PresenceCursors'
 import styles from './PlanCanvas.module.css'
-import type { PlanTree } from './types'
+import { ACCENT_COLORS, ACCENT_ICONS, type AccentColor, type AccentIcon, type PlanTree } from './types'
 
-const nodeTypes = { subplan: SubPlanCanvasNode, option: OptionCanvasNode }
+const ICON_MAP: Record<AccentIcon, LucideIcon> = {
+  Flag, Star, AlertTriangle, Home, Car, Heart, Briefcase, Clock,
+}
+
+const COLOR_LABEL: Record<AccentColor, string> = {
+  red: '빨강', amber: '노랑', green: '초록', blue: '파랑', purple: '보라', gray: '회색',
+}
+
+const ICON_LABEL: Record<AccentIcon, string> = {
+  Flag: '깃발', Star: '별', AlertTriangle: '주의', Home: '집', Car: '자동차', Heart: '하트', Briefcase: '업무', Clock: '시간',
+}
+
+const nodeTypes = { subplan: SubPlanCanvasNode, option: OptionCanvasNode, pin: CommentPinNode }
 const edgeTypes = { deletable: DeletableEdge, ownership: OwnershipEdge }
 
-const CLUSTER_GAP_X = 520   // horizontal gap between 안건 clusters (auto-layout)
-const OPT_OFFSET_X = 320    // options placed to the right of their 안건
-const OPT_GAP_Y = 84        // vertical gap between sibling option nodes
+const OPT_OFFSET_X = 320    // options placed to the right of their 안건 (last-ditch fallback)
 const SNAP = 16
 const DRAG_SAVE_MS = 400
 
 const spId = (id: number) => `sp:${id}`
 const optId = (id: number) => `opt:${id}`
-const parseNodeId = (nid: string): { kind: 'sp' | 'opt'; id: number } => {
+const pinId = (id: number) => `pin:${id}`
+const parseNodeId = (nid: string): { kind: 'sp' | 'opt' | 'pin'; id: number } => {
   const [k, n] = nid.split(':')
-  return { kind: k as 'sp' | 'opt', id: Number(n) }
+  return { kind: k as 'sp' | 'opt' | 'pin', id: Number(n) }
 }
 
-type CanvasNode = SubPlanCanvasNodeType | OptionCanvasNodeType
+type CanvasNode = SubPlanCanvasNodeType | OptionCanvasNodeType | CommentPinNodeType
 type CanvasEdge = DeletableEdgeType | OwnershipEdgeType
 
 /** Per-option decision state for the canvas. A decided 안건's chosen option is
@@ -57,23 +75,30 @@ function optionStates(tree: PlanTree): Map<number, 'chosen' | 'dimmed' | 'normal
 }
 
 /** 안건 nodes + their option nodes. Saved canvasX/Y win; nulls fall back to a
- *  left→right cluster fan-out (안건, then its options stacked to the right). */
+ *  dagre left→right layered layout (see canvasLayout.ts) so downstream 안건 land
+ *  in the next rank instead of on top of the upstream option column. */
 function buildNodes(tree: PlanTree): CanvasNode[] {
   const states = optionStates(tree)
+  const auto = layoutPositions(tree)   // dagre fallback
   const nodes: CanvasNode[] = []
-  tree.subPlans.forEach((sp, i) => {
-    const baseX = sp.canvasX ?? i * CLUSTER_GAP_X
-    const baseY = sp.canvasY ?? 0
+  tree.subPlans.forEach((sp) => {
+    const a = auto.get(spId(sp.id)) ?? { x: 0, y: 0 }
+    const baseX = sp.canvasX ?? a.x
+    const baseY = sp.canvasY ?? a.y
     nodes.push({ id: spId(sp.id), type: 'subplan', position: { x: baseX, y: baseY }, data: { subPlan: sp } })
-    sp.options.forEach((o, j) => {
-      const ox = o.canvasX ?? baseX + OPT_OFFSET_X
-      const oy = o.canvasY ?? baseY + (j - (sp.options.length - 1) / 2) * OPT_GAP_Y
+    sp.options.forEach((o) => {
+      const oa = auto.get(optId(o.id)) ?? { x: baseX + OPT_OFFSET_X, y: baseY }
+      const ox = o.canvasX ?? oa.x
+      const oy = o.canvasY ?? oa.y
       const st = states.get(o.id)
       nodes.push({
         id: optId(o.id), type: 'option', position: { x: ox, y: oy },
         data: { option: o, chosen: st === 'chosen', dimmed: st === 'dimmed' },
       })
     })
+  })
+  tree.commentPins.forEach((p) => {
+    nodes.push({ id: pinId(p.id), type: 'pin', position: { x: p.x, y: p.y }, data: { pin: p } })
   })
   return nodes
 }
@@ -113,9 +138,14 @@ function buildEdges(tree: PlanTree): CanvasEdge[] {
   return edges
 }
 
-type Props = { tree: PlanTree; locked: boolean; onNodeSelect?: (sel: { kind: 'sp' | 'opt'; id: number }) => void }
+type Props = {
+  tree: PlanTree
+  locked: boolean
+  onNodeSelect?: (sel: { kind: 'sp' | 'opt' | 'pin'; id: number }) => void
+  focusNodeId?: string
+}
 
-export default function PlanCanvas({ tree, locked, onNodeSelect }: Props) {
+export default function PlanCanvas({ tree, locked, onNodeSelect, focusNodeId }: Props) {
   if (tree.subPlans.length === 0) {
     return (
       <div className={`${styles.canvas} ${styles.canvasEmpty}`}>
@@ -125,7 +155,7 @@ export default function PlanCanvas({ tree, locked, onNodeSelect }: Props) {
   }
   return (
     <ReactFlowProvider>
-      <Flow tree={tree} locked={locked} onNodeSelect={onNodeSelect} />
+      <Flow tree={tree} locked={locked} onNodeSelect={onNodeSelect} focusNodeId={focusNodeId} />
     </ReactFlowProvider>
   )
 }
@@ -152,17 +182,35 @@ function CanvasEmpty({ tree, locked }: Props) {
   )
 }
 
-function Flow({ tree, locked, onNodeSelect }: Props) {
+function Flow({ tree, locked, onNodeSelect, focusNodeId }: Props) {
   // Seed controlled state ONCE from the initial tree (React reads an initializer
   // only on first render). Later tree refetches are intentionally ignored — the
   // canvas owns its state while mounted; the next mount re-reads fresh data.
-  const [nodes, setNodes, onNodesChange] = useNodesState<CanvasNode>(buildNodes(tree))
-  const [edges, setEdges, onEdgesChange] = useEdgesState<CanvasEdge>(buildEdges(tree))
+  // buildNodes/buildEdges now run a dagre layout — memoize the seed so it's
+  // computed once per mount, not re-evaluated (and discarded) on every render
+  // as a call-expression argument (P5a presence re-renders Flow up to 60fps).
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const initialNodes = useMemo(() => buildNodes(tree), [])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const initialEdges = useMemo(() => buildEdges(tree), [])
+  const [nodes, setNodes, onNodesChange] = useNodesState<CanvasNode>(initialNodes)
+  const [edges, setEdges, onEdgesChange] = useEdgesState<CanvasEdge>(initialEdges)
   const [adding, setAdding] = useState(false)
+  const [showResolved, setShowResolved] = useState(false)
+
+  const paneMenu = useContextMenu()
+  const nodeMenu = useContextMenu()
+  const [menuNode, setMenuNode] = useState<{ kind: 'sp' | 'opt' | 'pin'; id: number } | null>(null)
+  const [paneFlowPos, setPaneFlowPos] = useState<{ x: number; y: number } | null>(null)
+  const [composerAt, setComposerAt] = useState<{ x: number; y: number } | null>(null)
+  const deleteSubPlan = useDeleteSubPlan()
+  const deleteOption = useDeleteOption()
+  const setAppearance = useSetAppearance()
+  const createPin = useCreateCommentPin(tree.id)
 
   const { theme } = useSettings()
   const colorMode = theme === 'light' ? 'light' : 'dark'
-  const { screenToFlowPosition } = useReactFlow()
+  const { screenToFlowPosition, setCenter, flowToScreenPosition } = useReactFlow()
   const { peers, setCursor, setDrag } = usePlanPresence()
   const smoothed = useSmoothedPresence(peers)
   const lastCursorSent = useRef(0)
@@ -188,8 +236,53 @@ function Flow({ tree, locked, onNodeSelect }: Props) {
     )
   }, [smoothed, setNodes])
 
+  // The canvas seeds nodes once from the initial tree (see buildNodes), so this
+  // effect is what keeps `pin:` nodes live — new/removed/resolved pins from peers,
+  // and the 해결된 댓글 표시 toggle — without touching sp/opt nodes. It also runs on
+  // mount (tree.commentPins/showResolved are both deps), so resolved pins start
+  // hidden even though buildNodes seeded all of them. Never clobbers the position
+  // of the pin the local user is currently dragging (localDragId guard).
+  useEffect(() => {
+    setNodes((ns) => {
+      const pinNodes = ns.filter((n) => n.id.startsWith('pin:'))
+      const byId = new Map(pinNodes.map((n) => [n.id, n]))
+      const want = tree.commentPins.filter((p) => showResolved || !p.resolved)
+      const wantIds = new Set(want.map((p) => pinId(p.id)))
+      // drop removed / now-hidden pins
+      let next = ns.filter((n) => !n.id.startsWith('pin:') || wantIds.has(n.id))
+      // add new + refresh data (keep position for the pin the user is dragging)
+      for (const p of want) {
+        const key = pinId(p.id)
+        const existing = byId.get(key)
+        if (!existing) {
+          const pinNode: CommentPinNodeType = { id: key, type: 'pin', position: { x: p.x, y: p.y }, data: { pin: p } }
+          next = next.concat(pinNode)
+        } else if (key !== localDragId.current) {
+          next = next.map((n): CanvasNode => n.id === key
+            ? { ...(n as CommentPinNodeType), position: { x: p.x, y: p.y }, data: { pin: p } }
+            : n)
+        }
+      }
+      return next
+    })
+  }, [tree.commentPins, showResolved, setNodes])
+
+  // Best-effort focus target from ?focus=sp:{id}/opt:{id} (e.g. the 캔버스에서 보기
+  // link on the 안건 detail page). No-ops if the node isn't on this canvas (e.g.
+  // a nested 안건) — the user just lands on canvas, per spec.
+  useEffect(() => {
+    if (!focusNodeId) return
+    const n = nodes.find((x) => x.id === focusNodeId)
+    if (!n) return
+    setCenter(n.position.x, n.position.y, { zoom: 1, duration: 400 })
+    onNodeSelect?.(parseNodeId(focusNodeId))
+    // run once on mount for this focus target
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusNodeId])
+
   const moveSubPlan = useMoveSubPlan()
   const moveOption = useMoveOption()
+  const moveCommentPin = useMoveCommentPin()
   const addFlowEdge = useAddFlowEdge(tree.id)
   const deleteFlowEdge = useDeleteFlowEdge()
   const deleteRelatedEdge = useDeleteEdge()
@@ -225,7 +318,8 @@ function Flow({ tree, locked, onNodeSelect }: Props) {
     timers.set(node.id, setTimeout(() => {
       const payload = { canvasX: node.position.x, canvasY: node.position.y }
       if (kind === 'sp') moveSubPlan.mutate({ id, payload })
-      else moveOption.mutate({ id, payload })
+      else if (kind === 'opt') moveOption.mutate({ id, payload })
+      else if (kind === 'pin') moveCommentPin.mutate({ id, payload: { x: node.position.x, y: node.position.y } })
       timers.delete(node.id)
     }, DRAG_SAVE_MS))
 
@@ -240,7 +334,7 @@ function Flow({ tree, locked, onNodeSelect }: Props) {
       dragClearTimer.current = null
     }, 250)
     localDragId.current = null
-  }, [moveSubPlan, moveOption, setDrag])
+  }, [moveSubPlan, moveOption, moveCommentPin, setDrag])
 
   // Clear local presence on unmount — otherwise switching views/plans leaves a
   // frozen cursor (and any pending drag-settle timer) visible to peers.
@@ -311,13 +405,47 @@ function Flow({ tree, locked, onNodeSelect }: Props) {
 
   const onCanvasMouseLeave = useCallback(() => setCursor(null), [setCursor])
 
+  const onPaneContextMenu = useCallback((e: React.MouseEvent | MouseEvent) => {
+    e.preventDefault()
+    const me = e as React.MouseEvent
+    setPaneFlowPos(screenToFlowPosition({ x: me.clientX, y: me.clientY }))
+    paneMenu.openAt(me.clientX, me.clientY)
+  }, [screenToFlowPosition, paneMenu])
+
+  const onNodeContextMenu = useCallback((e: React.MouseEvent, node: CanvasNode) => {
+    e.preventDefault()
+    const parsed = parseNodeId(node.id)
+    if (parsed.kind !== 'sp' && parsed.kind !== 'opt') return   // pins have their own click→panel, no node menu
+    setMenuNode(parsed)
+    nodeMenu.openAt(e.clientX, e.clientY)
+  }, [nodeMenu])
+
   return (
     <div className={styles.canvas} ref={wrapRef} onMouseMove={onCanvasMouseMove} onMouseLeave={onCanvasMouseLeave}>
-      {!locked && (
-        <div className={styles.toolbar}>
-          <Button variant="outline" size="sm" leading={<Plus size={14} />} onClick={() => setAdding(true)}>안건 추가</Button>
-        </div>
-      )}
+      <div className={styles.toolbar}>
+        {!locked && (
+          <>
+            <Button variant="outline" size="sm" leading={<Plus size={14} />} onClick={() => setAdding(true)}>안건 추가</Button>
+            <Button variant="outline" size="sm" onClick={() => {
+              const auto = layoutPositions(tree)
+              setNodes((ns) => ns.map((n) => {
+                const p = auto.get(n.id)
+                return p ? { ...n, position: p } : n
+              }))
+              auto.forEach((p, id) => {
+                const { kind, id: dbId } = parseNodeId(id)
+                if (kind === 'sp') moveSubPlan.mutate({ id: dbId, payload: { canvasX: p.x, canvasY: p.y } })
+                else if (kind === 'opt') moveOption.mutate({ id: dbId, payload: { canvasX: p.x, canvasY: p.y } })
+              })
+            }}>정렬</Button>
+          </>
+        )}
+        {/* Pins aren't lock-gated (a resolved pin on a locked plan must stay
+            reachable), so this toggle renders regardless of lock state. */}
+        <Button variant="ghost" size="sm" onClick={() => setShowResolved((v) => !v)}>
+          {showResolved ? '해결된 댓글 숨기기' : '해결된 댓글 표시'}
+        </Button>
+      </div>
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -327,6 +455,8 @@ function Flow({ tree, locked, onNodeSelect }: Props) {
         onNodeDrag={onNodeDrag}
         onNodeDragStop={onNodeDragStop}
         onNodeClick={(_, n) => onNodeSelect?.(parseNodeId(n.id))}
+        onPaneContextMenu={onPaneContextMenu}
+        onNodeContextMenu={onNodeContextMenu}
         onConnect={onConnect}
         isValidConnection={isValidConnection}
         onEdgesDelete={onEdgesDelete}
@@ -354,6 +484,95 @@ function Flow({ tree, locked, onNodeSelect }: Props) {
         open={adding} onClose={() => setAdding(false)} entityLabel="안건" busy={addSubPlanM.isPending}
         onSubmit={(p) => addAtCenter(p, () => setAdding(false))}
       />
+      <ContextMenu open={paneMenu.open} position={paneMenu.position} onClose={paneMenu.close} ariaLabel="캔버스 메뉴">
+        <ContextMenuItem onSelect={() => { paneMenu.close(); if (paneFlowPos) setComposerAt(paneFlowPos) }}>
+          여기에 댓글
+        </ContextMenuItem>
+      </ContextMenu>
+      {menuNode && (
+        <ContextMenu open={nodeMenu.open} position={nodeMenu.position} onClose={nodeMenu.close} ariaLabel="노드 메뉴">
+          <ContextMenuItem onSelect={() => { nodeMenu.close(); onNodeSelect?.(menuNode) }}>열기</ContextMenuItem>
+          {menuNode.kind === 'sp' && !locked && (() => {
+            const sp = tree.subPlans.find((s) => s.id === menuNode.id)
+            if (!sp) return null
+            return (
+              <>
+                <ContextMenuDivider />
+                <ContextMenuGroup label="색">
+                  {ACCENT_COLORS.map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      className={`${styles.swatch} ${sp.accentColor === c ? styles.swatchOn : ''}`}
+                      style={{ background: `var(--c-tag-${c})` }}
+                      aria-label={COLOR_LABEL[c]}
+                      onClick={() => setAppearance.mutate({ id: sp.id, accentColor: c, icon: sp.icon })}
+                    />
+                  ))}
+                  <button
+                    type="button"
+                    className={`${styles.swatch} ${styles.swatchClear} ${!sp.accentColor ? styles.swatchOn : ''}`}
+                    aria-label="색 없음"
+                    onClick={() => setAppearance.mutate({ id: sp.id, accentColor: null, icon: sp.icon })}
+                  />
+                </ContextMenuGroup>
+                <ContextMenuGroup label="아이콘">
+                  {ACCENT_ICONS.map((name) => {
+                    const Ico = ICON_MAP[name]
+                    return (
+                      <button
+                        key={name}
+                        type="button"
+                        className={`${styles.iconChip} ${sp.icon === name ? styles.iconChipOn : ''}`}
+                        aria-label={ICON_LABEL[name]}
+                        onClick={() => setAppearance.mutate({ id: sp.id, accentColor: sp.accentColor, icon: name })}
+                      >
+                        <Ico size={15} />
+                      </button>
+                    )
+                  })}
+                  <button
+                    type="button"
+                    className={`${styles.iconChip} ${!sp.icon ? styles.iconChipOn : ''}`}
+                    aria-label="아이콘 없음"
+                    onClick={() => setAppearance.mutate({ id: sp.id, accentColor: sp.accentColor, icon: null })}
+                  >
+                    <X size={14} />
+                  </button>
+                </ContextMenuGroup>
+              </>
+            )
+          })()}
+          {!locked && (
+            <>
+              <ContextMenuDivider />
+              <ContextMenuItem danger onSelect={() => {
+                nodeMenu.close()
+                if (window.confirm('삭제할까요? 되돌릴 수 없어요.')) {
+                  if (menuNode.kind === 'sp') deleteSubPlan.mutate(menuNode.id)
+                  else deleteOption.mutate(menuNode.id)
+                }
+              }}>삭제</ContextMenuItem>
+            </>
+          )}
+        </ContextMenu>
+      )}
+      {composerAt && (() => {
+        const s = flowToScreenPosition(composerAt)
+        const rect = wrapRef.current?.getBoundingClientRect()
+        const left = s.x - (rect?.left ?? 0)
+        const top = s.y - (rect?.top ?? 0)
+        return (
+          <PinComposer
+            screenX={left} screenY={top} busy={createPin.isPending}
+            onSubmit={(content) => createPin.mutate(
+              { x: composerAt.x, y: composerAt.y, content },
+              { onSuccess: () => setComposerAt(null) },
+            )}
+            onCancel={() => setComposerAt(null)}
+          />
+        )
+      })()}
     </div>
   )
 }

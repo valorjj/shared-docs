@@ -21,6 +21,7 @@ import Comments from '../../components/Comments'
 import PlanCanvas from './PlanCanvas'
 import OptionPanel from './OptionPanel'
 import SubPlanPanel from './SubPlanPanel'
+import CommentPinPanel from './CommentPinPanel'
 import Timeline from './Timeline'
 import TitleDescModal from './TitleDescModal'
 import ConnectModal, { type ConnectCandidate } from './ConnectModal'
@@ -76,12 +77,9 @@ export default function PlanDetail() {
   // modal state
   const [addingSubPlan, setAddingSubPlan] = useState(false)
   const [editingSubPlan, setEditingSubPlan] = useState<SubPlanNode | null>(null)
-  const [view, setView] = useState<'list' | 'canvas' | 'timeline'>(() => {
-    const saved = localStorage.getItem(`plan-view-${planId}`)
-    return saved === 'list' || saved === 'canvas' || saved === 'timeline' ? saved : 'canvas'
-  })
+  const [view, setView] = useState<'list' | 'canvas' | 'timeline'>('canvas')
   const [connectingFor, setConnectingFor] = useState<SubPlanNode | null>(null)
-  const [selectedNode, setSelectedNode] = useState<{ kind: 'sp' | 'opt'; id: number } | null>(null)
+  const [selectedNode, setSelectedNode] = useState<{ kind: 'sp' | 'opt' | 'pin'; id: number } | null>(null)
 
   const [discussionOpen, setDiscussionOpen] = useState(
     () => localStorage.getItem(`discussion-open-${planId}`) === '1',
@@ -91,8 +89,6 @@ export default function PlanDetail() {
       localStorage.setItem(`discussion-open-${planId}`, v ? '0' : '1')
       return !v
     })
-
-  useEffect(() => { localStorage.setItem(`plan-view-${planId}`, view) }, [view, planId])
 
   const { data: timeline, isLoading: timelineLoading } = useTimeline(planId, view === 'timeline')
   const locked = tree?.lockedAt != null
@@ -108,6 +104,11 @@ export default function PlanDetail() {
       .find((m) => m != null)
     return match ?? null
   }, [selectedNode, tree])
+
+  const selectedPin = useMemo(
+    () => (selectedNode?.kind === 'pin' ? tree?.commentPins.find((p) => p.id === selectedNode.id) ?? null : null),
+    [selectedNode, tree],
+  )
 
   const [scrolled, setScrolled] = useState(false)
   const sentinelRef = useRef<HTMLDivElement>(null)
@@ -170,6 +171,7 @@ export default function PlanDetail() {
   const [hoveredSubPlanId, setHoveredSubPlanId] = useState<number | null>(null)
 
   const [searchParams] = useSearchParams()
+  const focusNodeId = searchParams.get('focus') ?? undefined
   const jumpedRef = useRef<string | null>(null)
   useEffect(() => {
     if (!tree) return
@@ -327,7 +329,7 @@ export default function PlanDetail() {
             </div>
           )}
 
-          {view === 'canvas' && <PlanCanvas tree={tree} locked={locked} onNodeSelect={setSelectedNode} />}
+          {view === 'canvas' && <PlanCanvas tree={tree} locked={locked} onNodeSelect={setSelectedNode} focusNodeId={focusNodeId} />}
 
           {view === 'timeline' && (
             timelineLoading
@@ -424,6 +426,11 @@ export default function PlanDetail() {
             locked={locked}
             onOpenSubPlan={(id) => setSelectedNode({ kind: 'sp', id })}
           />
+        </Panel>
+      )}
+      {selectedNode?.kind === 'pin' && selectedPin && (
+        <Panel open onClose={() => setSelectedNode(null)} title="댓글">
+          <CommentPinPanel pin={selectedPin} onDeleted={() => setSelectedNode(null)} />
         </Panel>
       )}
     </Page>

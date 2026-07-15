@@ -1,0 +1,23 @@
+.popover {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 6;
+  width: 240px;
+  padding: var(--sp-2);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  background: var(--c-surface);
+}
+.input {
+  width: 100%;
+  min-height: 60px;
+  resize: vertical;
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-sm);
+  background: var(--c-bg);
+  color: var(--c-text);
+  padding: var(--sp-1) var(--sp-2);
+  font: inherit;
+}
+.actions { display: flex; justify-content: flex-end; gap: var(--sp-1); margin-top: var(--sp-1); }

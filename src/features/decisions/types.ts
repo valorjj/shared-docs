@@ -82,6 +82,15 @@ export type FlowEdge = {
   targetSubPlanId: number
 }
 
+export type CommentPin = {
+  id: number
+  x: number
+  y: number
+  resolved: boolean
+  commentCount: number
+  createdBy: number | null
+}
+
 export type PlanTree = {
   id: number
   title: string
@@ -99,6 +108,7 @@ export type PlanTree = {
   subPlans: SubPlanNode[]
   edges: SubPlanEdge[]
   optionFlowEdges: FlowEdge[]
+  commentPins: CommentPin[]
 }
 
 export type SubPlanDetail = {

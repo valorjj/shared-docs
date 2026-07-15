@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { Plus, ListChecks, ListTree, CornerLeftUp, CheckCircle2 } from 'lucide-react'
+import { Plus, ListChecks, ListTree, CornerLeftUp, CheckCircle2, Compass } from 'lucide-react'
 import { Page, PageHeader, PageTitle, BackLink, Button, Badge, EmptyState, ErrorState, Skeleton } from '../../components/ui'
 import { useAuth } from '../../auth/useAuth'
 import { useActiveWorkspace } from '../../auth/useActiveWorkspace'
@@ -80,6 +80,9 @@ export default function SubPlanDetail() {
             <Link to={`/decisions/${planId}`}>{detail.planTitle}</Link>
             <span className={styles.crumbSep}>›</span>
             <span className={styles.crumbCurrent} aria-current="page">{detail.title}</span>
+            <Link to={`/decisions/${planId}?focus=sp:${subPlanId}`} className={styles.upLink}>
+              <Compass size={12} aria-hidden="true" /> 캔버스에서 보기
+            </Link>
             {detail.parentSubPlanId != null && (
               <Link
                 to={`/decisions/${planId}/subplans/${detail.parentSubPlanId}`}
