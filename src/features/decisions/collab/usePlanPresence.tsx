@@ -15,18 +15,22 @@ export type Peer = {
   color: string
   cursor: PeerCursor
   drag: PeerDrag
+  focus: string | null
+  hover: string | null
 }
 export type PlanPresence = {
   peers: Peer[]
   setCursor: (pos: { x: number; y: number } | null) => void
   setDrag: (d: PeerDrag) => void
+  setFocus: (nodeId: string | null) => void
+  setHover: (nodeId: string | null) => void
 }
 
 type AwarenessUser = { userId: number; name: string; color: string }
-type AwarenessState = { user?: AwarenessUser; cursor?: PeerCursor; drag?: PeerDrag }
+type AwarenessState = { user?: AwarenessUser; cursor?: PeerCursor; drag?: PeerDrag; focus?: string | null; hover?: string | null }
 
 const noop = () => {}
-const Ctx = createContext<PlanPresence>({ peers: [], setCursor: noop, setDrag: noop })
+const Ctx = createContext<PlanPresence>({ peers: [], setCursor: noop, setDrag: noop, setFocus: noop, setHover: noop })
 
 /** Single shared awareness connection for a plan. Owns the WebsocketProvider
  *  (awareness-only, empty Y.Doc). Both the avatar stack and the canvas consume
@@ -62,6 +66,8 @@ export function PlanPresenceProvider({ planId, children }: { planId: number; chi
                   color: state.user.color,
                   cursor: state.cursor ?? null,
                   drag: state.drag ?? null,
+                  focus: state.focus ?? null,
+                  hover: state.hover ?? null,
                 }]
               : [],
           ),
@@ -88,12 +94,20 @@ export function PlanPresenceProvider({ planId, children }: { planId: number; chi
   const setDrag = useCallback((d: PeerDrag) => {
     providerRef.current?.awareness.setLocalStateField('drag', d)
   }, [])
+  const setFocus = useCallback((nodeId: string | null) => {
+    providerRef.current?.awareness.setLocalStateField('focus', nodeId)
+  }, [])
+  const setHover = useCallback((nodeId: string | null) => {
+    providerRef.current?.awareness.setLocalStateField('hover', nodeId)
+  }, [])
 
   const value = useMemo<PlanPresence>(() => ({
     peers,
     setCursor,
     setDrag,
-  }), [peers, setCursor, setDrag])
+    setFocus,
+    setHover,
+  }), [peers, setCursor, setDrag, setFocus, setHover])
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }
