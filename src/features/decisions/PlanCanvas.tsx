@@ -88,9 +88,9 @@ function buildEdges(tree: PlanTree): CanvasEdge[] {
   return edges
 }
 
-type Props = { tree: PlanTree; locked: boolean }
+type Props = { tree: PlanTree; locked: boolean; onNodeSelect?: (sel: { kind: 'sp' | 'opt'; id: number }) => void }
 
-export default function PlanCanvas({ tree, locked }: Props) {
+export default function PlanCanvas({ tree, locked, onNodeSelect }: Props) {
   if (tree.subPlans.length === 0) {
     return (
       <div className={`${styles.canvas} ${styles.canvasEmpty}`}>
@@ -100,7 +100,7 @@ export default function PlanCanvas({ tree, locked }: Props) {
   }
   return (
     <ReactFlowProvider>
-      <Flow tree={tree} locked={locked} />
+      <Flow tree={tree} locked={locked} onNodeSelect={onNodeSelect} />
     </ReactFlowProvider>
   )
 }
@@ -127,7 +127,7 @@ function CanvasEmpty({ tree, locked }: Props) {
   )
 }
 
-function Flow({ tree, locked }: Props) {
+function Flow({ tree, locked, onNodeSelect }: Props) {
   // Seed controlled state ONCE from the initial tree (React reads an initializer
   // only on first render). Later tree refetches are intentionally ignored — the
   // canvas owns its state while mounted; the next mount re-reads fresh data.
@@ -224,6 +224,7 @@ function Flow({ tree, locked }: Props) {
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onNodeDragStop={onNodeDragStop}
+        onNodeClick={(_, n) => onNodeSelect?.(parseNodeId(n.id))}
         onConnect={onConnect}
         isValidConnection={isValidConnection}
         onEdgesDelete={onEdgesDelete}
