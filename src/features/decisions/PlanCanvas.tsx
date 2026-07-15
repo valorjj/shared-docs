@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   ReactFlow, ReactFlowProvider, Background, Controls, MiniMap, MarkerType,
   useNodesState, useEdgesState, useReactFlow, addEdge,
@@ -16,6 +16,9 @@ import {
   useMoveSubPlan, useMoveOption, useAddFlowEdge, useDeleteFlowEdge, useDeleteEdge, useAddSubPlanOnCanvas,
 } from './api'
 import { useSettings } from '../settings/settingsContext'
+import { usePlanPresence } from './collab/usePlanPresence'
+import { useSmoothedPresence } from './collab/useSmoothedPresence'
+import PresenceCursors from './PresenceCursors'
 import styles from './PlanCanvas.module.css'
 import type { PlanTree } from './types'
 
@@ -160,6 +163,30 @@ function Flow({ tree, locked, onNodeSelect }: Props) {
   const { theme } = useSettings()
   const colorMode = theme === 'light' ? 'light' : 'dark'
   const { screenToFlowPosition } = useReactFlow()
+  const { peers, setCursor, setDrag } = usePlanPresence()
+  const smoothed = useSmoothedPresence(peers)
+  const lastCursorSent = useRef(0)
+  const lastDragSent = useRef(0)
+  const localDragId = useRef<string | null>(null)
+
+  // Move nodes that a peer is dragging, from the smoothed target — but never a node
+  // the local user is dragging (their own gesture wins). onNodeDragStop broadcasts
+  // the exact final position before clearing the drag, so the observer's easing
+  // converges to that true target; any residual drift self-heals on the next
+  // canvas remount (tab switch / plan change / reload rebuilds nodes from the tree).
+  useEffect(() => {
+    const drags = smoothed.filter((p) => p.drag && p.drag.nodeId !== localDragId.current)
+    if (drags.length === 0) return
+    setNodes((ns) =>
+      ns.map((n) => {
+        const d = drags.find((p) => p.drag!.nodeId === n.id)
+        if (!d) return n
+        const { x, y } = d.drag!
+        if (n.position.x === x && n.position.y === y) return n
+        return { ...n, position: { x, y } }
+      }),
+    )
+  }, [smoothed, setNodes])
 
   const moveSubPlan = useMoveSubPlan()
   const moveOption = useMoveOption()
@@ -172,6 +199,24 @@ function Flow({ tree, locked, onNodeSelect }: Props) {
 
   // Persist each node's final position, debounced per node id.
   const saveTimers = useRef(new Map<string, ReturnType<typeof setTimeout>>())
+  const dragClearTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const onNodeDragStart = useCallback<OnNodeDrag<CanvasNode>>((_e, node) => {
+    // Cancel any pending settle timer from a just-dropped node — otherwise its
+    // stale setDrag(null) fires mid-gesture and briefly nulls this node's broadcast.
+    if (dragClearTimer.current) {
+      clearTimeout(dragClearTimer.current)
+      dragClearTimer.current = null
+    }
+    localDragId.current = node.id
+  }, [])
+
+  const onNodeDrag = useCallback<OnNodeDrag<CanvasNode>>((_e, node) => {
+    const now = performance.now()
+    if (now - lastDragSent.current < 50) return
+    lastDragSent.current = now
+    setDrag({ nodeId: node.id, x: node.position.x, y: node.position.y })
+  }, [setDrag])
+
   const onNodeDragStop = useCallback<OnNodeDrag<CanvasNode>>((_e, node) => {
     const { kind, id } = parseNodeId(node.id)
     const timers = saveTimers.current
@@ -183,7 +228,30 @@ function Flow({ tree, locked, onNodeSelect }: Props) {
       else moveOption.mutate({ id, payload })
       timers.delete(node.id)
     }, DRAG_SAVE_MS))
-  }, [moveSubPlan, moveOption])
+
+    // Broadcast the exact final position once (the 50ms throttle in onNodeDrag
+    // may have swallowed the last few pixels of movement), then let peers'
+    // easing settle onto it before releasing the drag — otherwise the node
+    // visibly snaps back to the last-throttled position on other screens.
+    setDrag({ nodeId: node.id, x: node.position.x, y: node.position.y })
+    if (dragClearTimer.current) clearTimeout(dragClearTimer.current)
+    dragClearTimer.current = setTimeout(() => {
+      setDrag(null)
+      dragClearTimer.current = null
+    }, 250)
+    localDragId.current = null
+  }, [moveSubPlan, moveOption, setDrag])
+
+  // Clear local presence on unmount — otherwise switching views/plans leaves a
+  // frozen cursor (and any pending drag-settle timer) visible to peers.
+  useEffect(() => () => {
+    setCursor(null)
+    setDrag(null)
+    if (dragClearTimer.current) {
+      clearTimeout(dragClearTimer.current)
+      dragClearTimer.current = null
+    }
+  }, [setCursor, setDrag])
 
   const isValidConnection = useCallback((c: Connection | Edge) => {
     if (!c.source || !c.target || c.source === c.target) return false
@@ -233,8 +301,18 @@ function Flow({ tree, locked, onNodeSelect }: Props) {
     })
   }, [addSubPlanM, moveSubPlan, screenToFlowPosition, setNodes])
 
+  const onCanvasMouseMove = useCallback((e: React.MouseEvent) => {
+    const now = performance.now()
+    if (now - lastCursorSent.current < 50) return   // ~20 packets/sec
+    lastCursorSent.current = now
+    const pos = screenToFlowPosition({ x: e.clientX, y: e.clientY })
+    setCursor(pos)
+  }, [screenToFlowPosition, setCursor])
+
+  const onCanvasMouseLeave = useCallback(() => setCursor(null), [setCursor])
+
   return (
-    <div className={styles.canvas} ref={wrapRef}>
+    <div className={styles.canvas} ref={wrapRef} onMouseMove={onCanvasMouseMove} onMouseLeave={onCanvasMouseLeave}>
       {!locked && (
         <div className={styles.toolbar}>
           <Button variant="outline" size="sm" leading={<Plus size={14} />} onClick={() => setAdding(true)}>안건 추가</Button>
@@ -245,6 +323,8 @@ function Flow({ tree, locked, onNodeSelect }: Props) {
         edges={edges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
+        onNodeDragStart={onNodeDragStart}
+        onNodeDrag={onNodeDrag}
         onNodeDragStop={onNodeDragStop}
         onNodeClick={(_, n) => onNodeSelect?.(parseNodeId(n.id))}
         onConnect={onConnect}
@@ -269,6 +349,7 @@ function Flow({ tree, locked, onNodeSelect }: Props) {
         <MiniMap pannable zoomable ariaLabel="미니맵" />
         <Controls showInteractive={false} />
       </ReactFlow>
+      <PresenceCursors peers={smoothed} />
       <TitleDescModal
         open={adding} onClose={() => setAdding(false)} entityLabel="안건" busy={addSubPlanM.isPending}
         onSubmit={(p) => addAtCenter(p, () => setAdding(false))}
