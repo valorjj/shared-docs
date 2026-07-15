@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   ReactFlow, ReactFlowProvider, Background, Controls, MiniMap, MarkerType,
   useNodesState, useEdgesState, useReactFlow, addEdge,
@@ -163,9 +163,28 @@ function Flow({ tree, locked, onNodeSelect }: Props) {
   const { theme } = useSettings()
   const colorMode = theme === 'light' ? 'light' : 'dark'
   const { screenToFlowPosition } = useReactFlow()
-  const { peers, setCursor } = usePlanPresence()
+  const { peers, setCursor, setDrag } = usePlanPresence()
   const smoothed = useSmoothedPresence(peers)
   const lastCursorSent = useRef(0)
+  const lastDragSent = useRef(0)
+  const localDragId = useRef<string | null>(null)
+
+  // Move nodes that a peer is dragging, from the smoothed target — but never a node
+  // the local user is dragging (their own gesture wins). When a peer's drag clears,
+  // the node simply stays put (last smoothed pos == persisted pos), so no snap-back.
+  useEffect(() => {
+    const drags = smoothed.filter((p) => p.drag && p.drag.nodeId !== localDragId.current)
+    if (drags.length === 0) return
+    setNodes((ns) =>
+      ns.map((n) => {
+        const d = drags.find((p) => p.drag!.nodeId === n.id)
+        if (!d) return n
+        const { x, y } = d.drag!
+        if (n.position.x === x && n.position.y === y) return n
+        return { ...n, position: { x, y } }
+      }),
+    )
+  }, [smoothed, setNodes])
 
   const moveSubPlan = useMoveSubPlan()
   const moveOption = useMoveOption()
@@ -178,6 +197,17 @@ function Flow({ tree, locked, onNodeSelect }: Props) {
 
   // Persist each node's final position, debounced per node id.
   const saveTimers = useRef(new Map<string, ReturnType<typeof setTimeout>>())
+  const onNodeDragStart = useCallback<OnNodeDrag<CanvasNode>>((_e, node) => {
+    localDragId.current = node.id
+  }, [])
+
+  const onNodeDrag = useCallback<OnNodeDrag<CanvasNode>>((_e, node) => {
+    const now = performance.now()
+    if (now - lastDragSent.current < 50) return
+    lastDragSent.current = now
+    setDrag({ nodeId: node.id, x: node.position.x, y: node.position.y })
+  }, [setDrag])
+
   const onNodeDragStop = useCallback<OnNodeDrag<CanvasNode>>((_e, node) => {
     const { kind, id } = parseNodeId(node.id)
     const timers = saveTimers.current
@@ -189,7 +219,9 @@ function Flow({ tree, locked, onNodeSelect }: Props) {
       else moveOption.mutate({ id, payload })
       timers.delete(node.id)
     }, DRAG_SAVE_MS))
-  }, [moveSubPlan, moveOption])
+    setDrag(null)
+    localDragId.current = null
+  }, [moveSubPlan, moveOption, setDrag])
 
   const isValidConnection = useCallback((c: Connection | Edge) => {
     if (!c.source || !c.target || c.source === c.target) return false
@@ -261,6 +293,8 @@ function Flow({ tree, locked, onNodeSelect }: Props) {
         edges={edges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
+        onNodeDragStart={onNodeDragStart}
+        onNodeDrag={onNodeDrag}
         onNodeDragStop={onNodeDragStop}
         onNodeClick={(_, n) => onNodeSelect?.(parseNodeId(n.id))}
         onConnect={onConnect}
