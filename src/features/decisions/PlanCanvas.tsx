@@ -76,8 +76,11 @@ function optionStates(tree: PlanTree): Map<number, 'chosen' | 'dimmed' | 'normal
 
 /** 안건 nodes + their option nodes. Saved canvasX/Y win; nulls fall back to a
  *  dagre left→right layered layout (see canvasLayout.ts) so downstream 안건 land
- *  in the next rank instead of on top of the upstream option column. */
-function buildNodes(tree: PlanTree): CanvasNode[] {
+ *  in the next rank instead of on top of the upstream option column. Comment pins
+ *  are filtered by `showResolved` here (not left to a later reconciliation pass) —
+ *  otherwise a resolved pin would flash on screen for one frame before the pin
+ *  live-sync effect removes it. */
+function buildNodes(tree: PlanTree, showResolved: boolean): CanvasNode[] {
   const states = optionStates(tree)
   const auto = layoutPositions(tree)   // dagre fallback
   const nodes: CanvasNode[] = []
@@ -97,7 +100,7 @@ function buildNodes(tree: PlanTree): CanvasNode[] {
       })
     })
   })
-  tree.commentPins.forEach((p) => {
+  tree.commentPins.filter((p) => showResolved || !p.resolved).forEach((p) => {
     nodes.push({ id: pinId(p.id), type: 'pin', position: { x: p.x, y: p.y }, data: { pin: p } })
   })
   return nodes
@@ -189,14 +192,18 @@ function Flow({ tree, locked, onNodeSelect, focusNodeId }: Props) {
   // buildNodes/buildEdges now run a dagre layout — memoize the seed so it's
   // computed once per mount, not re-evaluated (and discarded) on every render
   // as a call-expression argument (P5a presence re-renders Flow up to 60fps).
+  const [showResolved, setShowResolved] = useState(false)
+  // showResolved is read here at its initial value only (mirrors the []
+  // deps below) — buildNodes must exclude resolved pins from the very first
+  // frame, otherwise the pin live-sync effect removing them one tick later
+  // reads as a one-frame flash.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const initialNodes = useMemo(() => buildNodes(tree), [])
+  const initialNodes = useMemo(() => buildNodes(tree, showResolved), [])
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const initialEdges = useMemo(() => buildEdges(tree), [])
   const [nodes, setNodes, onNodesChange] = useNodesState<CanvasNode>(initialNodes)
   const [edges, setEdges, onEdgesChange] = useEdgesState<CanvasEdge>(initialEdges)
   const [adding, setAdding] = useState(false)
-  const [showResolved, setShowResolved] = useState(false)
 
   const paneMenu = useContextMenu()
   const nodeMenu = useContextMenu()

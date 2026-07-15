@@ -2,6 +2,7 @@ import { Button } from '../../components/ui'
 import Comments from '../../components/Comments'
 import { useSetCommentPinResolved, useDeleteCommentPin } from './api'
 import type { CommentPin } from './types'
+import styles from './CommentPinPanel.module.css'
 
 export default function CommentPinPanel({ pin, onDeleted }: { pin: CommentPin; onDeleted: () => void }) {
   const setResolved = useSetCommentPinResolved()
@@ -9,7 +10,7 @@ export default function CommentPinPanel({ pin, onDeleted }: { pin: CommentPin; o
 
   return (
     <div>
-      <div style={{ display: 'flex', gap: 'var(--sp-2)', marginBottom: 'var(--sp-3)' }}>
+      <div className={styles.actions}>
         <Button
           variant="outline"
           size="sm"
