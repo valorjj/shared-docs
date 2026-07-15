@@ -16,6 +16,9 @@ import {
   useMoveSubPlan, useMoveOption, useAddFlowEdge, useDeleteFlowEdge, useDeleteEdge, useAddSubPlanOnCanvas,
 } from './api'
 import { useSettings } from '../settings/settingsContext'
+import { usePlanPresence } from './collab/usePlanPresence'
+import { useSmoothedPresence } from './collab/useSmoothedPresence'
+import PresenceCursors from './PresenceCursors'
 import styles from './PlanCanvas.module.css'
 import type { PlanTree } from './types'
 
@@ -160,6 +163,9 @@ function Flow({ tree, locked, onNodeSelect }: Props) {
   const { theme } = useSettings()
   const colorMode = theme === 'light' ? 'light' : 'dark'
   const { screenToFlowPosition } = useReactFlow()
+  const { peers, setCursor } = usePlanPresence()
+  const smoothed = useSmoothedPresence(peers)
+  const lastCursorSent = useRef(0)
 
   const moveSubPlan = useMoveSubPlan()
   const moveOption = useMoveOption()
@@ -233,8 +239,18 @@ function Flow({ tree, locked, onNodeSelect }: Props) {
     })
   }, [addSubPlanM, moveSubPlan, screenToFlowPosition, setNodes])
 
+  const onCanvasMouseMove = useCallback((e: React.MouseEvent) => {
+    const now = performance.now()
+    if (now - lastCursorSent.current < 50) return   // ~20 packets/sec
+    lastCursorSent.current = now
+    const pos = screenToFlowPosition({ x: e.clientX, y: e.clientY })
+    setCursor(pos)
+  }, [screenToFlowPosition, setCursor])
+
+  const onCanvasMouseLeave = useCallback(() => setCursor(null), [setCursor])
+
   return (
-    <div className={styles.canvas} ref={wrapRef}>
+    <div className={styles.canvas} ref={wrapRef} onMouseMove={onCanvasMouseMove} onMouseLeave={onCanvasMouseLeave}>
       {!locked && (
         <div className={styles.toolbar}>
           <Button variant="outline" size="sm" leading={<Plus size={14} />} onClick={() => setAdding(true)}>안건 추가</Button>
@@ -269,6 +285,7 @@ function Flow({ tree, locked, onNodeSelect }: Props) {
         <MiniMap pannable zoomable ariaLabel="미니맵" />
         <Controls showInteractive={false} />
       </ReactFlow>
+      <PresenceCursors peers={smoothed} />
       <TitleDescModal
         open={adding} onClose={() => setAdding(false)} entityLabel="안건" busy={addSubPlanM.isPending}
         onSubmit={(p) => addAtCenter(p, () => setAdding(false))}
