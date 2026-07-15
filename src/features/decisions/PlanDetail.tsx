@@ -21,6 +21,7 @@ import Comments from '../../components/Comments'
 import PlanCanvas from './PlanCanvas'
 import OptionPanel from './OptionPanel'
 import SubPlanPanel from './SubPlanPanel'
+import CommentPinPanel from './CommentPinPanel'
 import Timeline from './Timeline'
 import TitleDescModal from './TitleDescModal'
 import ConnectModal, { type ConnectCandidate } from './ConnectModal'
@@ -103,6 +104,11 @@ export default function PlanDetail() {
       .find((m) => m != null)
     return match ?? null
   }, [selectedNode, tree])
+
+  const selectedPin = useMemo(
+    () => (selectedNode?.kind === 'pin' ? tree?.commentPins.find((p) => p.id === selectedNode.id) ?? null : null),
+    [selectedNode, tree],
+  )
 
   const [scrolled, setScrolled] = useState(false)
   const sentinelRef = useRef<HTMLDivElement>(null)
@@ -420,6 +426,11 @@ export default function PlanDetail() {
             locked={locked}
             onOpenSubPlan={(id) => setSelectedNode({ kind: 'sp', id })}
           />
+        </Panel>
+      )}
+      {selectedNode?.kind === 'pin' && selectedPin && (
+        <Panel open onClose={() => setSelectedNode(null)} title="댓글">
+          <CommentPinPanel pin={selectedPin} onDeleted={() => setSelectedNode(null)} />
         </Panel>
       )}
     </Page>
