@@ -28,14 +28,14 @@
 
 ### Task BE-1: Remove the lock layer (V30)
 
-**Files:** Create `db/migration/V30__drop_plan_lock.sql`; delete `PlanLockGuard.kt`; modify `Plan.kt`, `PlanController.kt`, `PlanRepository.kt`, `DecisionDto.kt`, and every service injecting/calling `PlanLockGuard` (grep list from inventory: `OptionProConService`, `OptionResourceService`, `PlanResourceService`, `PlanDiscussionService`, `VoteService`, plus the soon-to-be-deleted `EdgeService`/`DecisionService`/`CommentPinService`/`OptionFlowEdgeService` — for those about-to-die files, leave them for their own task).
+**Files:** Create `db/migration/V30__drop_plan_lock.sql`; delete `PlanLockGuard.kt`; modify `Plan.kt`, `PlanController.kt`, `PlanRepository.kt`, `DecisionDto.kt`, and **every** file that injects/calls `PlanLockGuard` — from the inventory grep that is: `OptionProConService`, `OptionResourceService`, `PlanResourceService`, `PlanDiscussionService`, `VoteService`, `EdgeService`, `DecisionService`, `DecisionController`, `CommentPinService`, `OptionFlowEdgeService`, `PlanService`. **Critical:** strip lock usage from ALL of them (even the ones later tasks will delete whole) — otherwise deleting `PlanLockGuard.kt` breaks compilation this task. Re-run the grep `grep -rl -i "lockguard\|assertUnlocked\|lockedAt\|locked_at" src/main` and clear every hit.
 
 - [ ] **Migration** — `V30__drop_plan_lock.sql`:
 ```sql
 ALTER TABLE plans DROP COLUMN locked_at;
 ```
 - [ ] Remove `lockedAt` from `Plan.kt` and any `lockedAt`/`isLocked` from `PlanRepository.kt`.
-- [ ] Delete `PlanLockGuard.kt`. Remove its injection and every `lockGuard.assertUnlockedBy*(...)` call from the surviving services (`OptionProConService`, `OptionResourceService`, `PlanResourceService`, `PlanDiscussionService`, `VoteService`). The guarded operations become always-allowed.
+- [ ] Delete `PlanLockGuard.kt`. Remove its injection and every `lockGuard.assertUnlockedBy*(...)` call from ALL referencing files (grep list above, including files later tasks will delete whole — they must still compile now). The guarded operations become always-allowed.
 - [ ] Remove lock/unlock endpoints from `PlanController.kt` (`POST /api/plans/{id}/lock`, `/unlock`) and any lock service methods on `PlanService.kt`.
 - [ ] Remove `lockedAt`/`locked` fields from response DTOs in `DecisionDto.kt` (e.g. `PlanTreeResponse`, `PlanSummaryResponse`, `SubPlanDetailResponse`).
 - [ ] Remove/adjust tests referencing lock (search `test` tree for `lock`/`Locked`).
@@ -108,7 +108,7 @@ fun setConfirmed(
 ```
 Service logic: load option by id + workspace (404 `OptionNotFoundException` if absent); set `confirmed = req.confirmed`; `confirmedAt = if (req.confirmed) Instant.now() else null`; `confirmedBy = if (req.confirmed) me.userId else null`; save; record event (`OPTION_CONFIRMED` or `OPTION_REVOKED`) via `PlanEventRecorder`; publish change-signal; return mapped `OptionResponse`. NOT lock-gated (no locks exist).
 - [ ] DTO in `DecisionDto.kt`: `data class SetOptionConfirmedRequest(val confirmed: Boolean)`; add `confirmed`, `confirmedAt`, `confirmedBy` to `OptionResponse`.
-- [ ] `PlanEnums.kt`: add `OPTION_CONFIRMED`, `OPTION_REVOKED` to the event-type enum; remove `DECISION_MADE`/`DECISION_REVERTED` (or equivalents). Update `TimelineService`/`formatPlanEvent` mapping.
+- [ ] `PlanEnums.kt`: **add** `OPTION_CONFIRMED`, `OPTION_REVOKED` to the event-type enum. **Do NOT delete** the existing `DECISION_MADE`/`DECISION_REVERTED` (or equivalent) constants — `PlanEvent.type` is `@Enumerated(EnumType.STRING)` on an append-only audit table, and historical rows carry those strings; deleting the constants would break deserialization. Just stop *recording* them (the recording code goes with the deleted `DecisionService`). Update `TimelineService`/`formatPlanEvent` to map the two new types (leave the old mappings so historical events still render).
 - [ ] `VoteService.kt`: remove any coupling to `Decision`/frozen-tally-at-확정 and to lock; votes are always live and mutable now.
 - [ ] `PlanService.getTree`: drop `decision` assembly; options now carry their own confirm state via the mapper.
 - [ ] Tests: replace `DecisionServiceTest` with `OptionConfirmServiceTest` (confirm sets fields+event; revoke clears; multi-confirm on one 안건 independent; foreign-workspace 404; realtime publish). Fix vote tests that assumed freeze-at-확정.
