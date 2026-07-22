@@ -1,4 +1,4 @@
-import { BaseEdge, EdgeLabelRenderer, getBezierPath, useReactFlow, type Edge, type EdgeProps } from '@xyflow/react'
+import { BaseEdge, EdgeLabelRenderer, getStraightPath, useReactFlow, type Edge, type EdgeProps } from '@xyflow/react'
 import { X } from 'lucide-react'
 import styles from './DeletableEdge.module.css'
 
@@ -6,13 +6,13 @@ export type DeletableEdgeData = { kind: 'flow' | 'related'; dimmed?: boolean; ch
 export type DeletableEdgeType = Edge<DeletableEdgeData, 'deletable'>
 
 export default function DeletableEdge(
-  { id, data, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, markerEnd, selected }: EdgeProps<DeletableEdgeType>,
+  { id, data, sourceX, sourceY, targetX, targetY, markerEnd, selected }: EdgeProps<DeletableEdgeType>,
 ) {
   const { deleteElements } = useReactFlow()
-  const [path, labelX, labelY] = getBezierPath({ sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition })
-  // 관련 edges: muted dashed. Flow edges collapse to the taken trail once decided:
+  const [path, labelX, labelY] = getStraightPath({ sourceX, sourceY, targetX, targetY })
+  // 관련 edges: muted solid. Flow edges collapse to the taken trail once decided:
   // the chosen option's edge is emphasized (primary), unchosen ones dim.
-  const edgeStyle = data?.kind === 'related' ? { strokeDasharray: '6 4', opacity: 0.5 }
+  const edgeStyle = data?.kind === 'related' ? { opacity: 0.5 }
     : data?.dimmed ? { opacity: 0.28 }
     : data?.chosen ? { stroke: 'var(--c-primary)' }
     : undefined

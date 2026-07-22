@@ -477,6 +477,7 @@ function Flow({ tree, locked, onNodeSelect, focusNodeId }: Props) {
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         colorMode={colorMode}
+        proOptions={{ hideAttribution: true }}
         fitView
         fitViewOptions={{ padding: 0.2 }}
         minZoom={0.3}
