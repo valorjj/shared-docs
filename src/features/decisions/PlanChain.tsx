@@ -107,9 +107,10 @@ export default function PlanChain({ tree, planId }: Props) {
   const toggleConfirm = (o: OptionNode) => confirm.mutate({ id: o.id, confirmed: !o.confirmed })
 
   const stations = tree.subPlans
-  const sheetOption = sheetOptionId == null
+  const sheetOwner = sheetOptionId == null
     ? null
-    : stations.flatMap((sp) => sp.options).find((o) => o.id === sheetOptionId) ?? null
+    : stations.find((sp) => sp.options.some((o) => o.id === sheetOptionId)) ?? null
+  const sheetOption = sheetOwner?.options.find((o) => o.id === sheetOptionId) ?? null
   const last = stations[stations.length - 1]
   // Reveal the "next 안건" affordance only once the frontier 안건 is decided.
   const canAddNext = stations.length > 0 && isDecided(last)
@@ -204,8 +205,12 @@ export default function PlanChain({ tree, planId }: Props) {
         </div>
       )}
 
-      {sheetOption && (
-        <OptionSheet option={sheetOption} onClose={() => setSheetOptionId(null)} />
+      {sheetOption && sheetOwner && (
+        <OptionSheet
+          option={sheetOption}
+          subPlanId={sheetOwner.id}
+          onClose={() => setSheetOptionId(null)}
+        />
       )}
     </div>
   )

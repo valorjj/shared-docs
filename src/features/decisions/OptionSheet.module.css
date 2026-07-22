@@ -64,3 +64,9 @@
   border-top: 1px solid var(--c-border);
   padding-top: var(--sp-4);
 }
+
+.block { margin-top: var(--sp-4); }
+.blockLabel {
+  font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;
+  color: var(--c-text-muted); margin: 0 0 var(--sp-2);
+}
