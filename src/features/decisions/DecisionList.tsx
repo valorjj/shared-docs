@@ -84,9 +84,7 @@ export default function DecisionList() {
       <button type="button" className={styles.cardMain} onClick={() => navigate(`/decisions/${p.id}`)}>
         <div className={styles.cardTop}>
           <span className={styles.cardTitle}>{p.title}</span>
-          {p.lockedAt != null
-            ? <Badge>잠김</Badge>
-            : view === 'completed' ? <Badge>완료</Badge> : null}
+          {view === 'completed' ? <Badge>완료</Badge> : null}
           <DeadlineChip
             deadline={p.deadline}
             settledAt={view === 'completed' ? p.completedAt : null}

@@ -1,4 +1,4 @@
-import { Flag, ListPlus, CirclePlus, CheckCircle2, RefreshCw, RotateCcw, Lock, LockOpen, CalendarClock, CalendarX, Trash2, Plus, Minus, Paperclip, type LucideIcon } from 'lucide-react'
+import { Flag, ListPlus, CirclePlus, CheckCircle2, RefreshCw, RotateCcw, Lock, LockOpen, CalendarClock, CalendarX, Trash2, Plus, Minus, Paperclip, CheckCheck, Undo2, type LucideIcon } from 'lucide-react'
 import type { PlanEvent, PlanEventType } from './types'
 
 const ICONS: Record<PlanEventType, LucideIcon> = {
@@ -18,6 +18,8 @@ const ICONS: Record<PlanEventType, LucideIcon> = {
   PROCON_REMOVED: Minus,
   RESOURCE_ADDED: Paperclip,
   RESOURCE_REMOVED: Trash2,
+  OPTION_CONFIRMED: CheckCheck,
+  OPTION_REVOKED: Undo2,
 }
 
 export function planEventIcon(type: PlanEventType): LucideIcon {
@@ -61,6 +63,8 @@ export function planEventText(e: PlanEvent, actor: string): string {
     case 'PROCON_REMOVED': return `${actor}님이 장단점을 삭제했어요`
     case 'RESOURCE_ADDED': return `${actor}님이 자료 ${q(p.title)}을(를) 추가했어요`
     case 'RESOURCE_REMOVED': return `${actor}님이 자료 ${q(p.title)}을(를) 삭제했어요`
+    case 'OPTION_CONFIRMED': return `${actor}님이 ${q(p.optionTitle)} 후보를 확정했어요`
+    case 'OPTION_REVOKED': return `${actor}님이 ${q(p.optionTitle)} 후보 확정을 취소했어요`
     default: return `${actor}님이 활동했어요`
   }
 }
