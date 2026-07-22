@@ -13,20 +13,9 @@ export type PlanSummary = {
   decidedCount: number
   createdByUserId: number
   createdAt: string
-  lockedAt: string | null
-  lockedByUserId: number | null
   deletedAt: string | null
   deadline: string | null
   completedAt: string | null
-}
-
-export type DecisionInfo = {
-  id: number
-  chosenOptionId: number
-  reason: string
-  decidedByUserId: number
-  decidedAt: string
-  voteSnapshot: string | null
 }
 
 export type ProConKind = 'PRO' | 'CON'
@@ -40,8 +29,6 @@ export type OptionNode = {
   proCons: ProCon[]
   voterUserIds: number[]
   resources: OptionResource[]
-  canvasX: number | null
-  canvasY: number | null
   confirmed: boolean
   confirmedAt: string | null
   confirmedBy: number | null
@@ -60,38 +47,13 @@ export type SubPlanNode = {
   title: string
   description: string | null
   sortOrder: number
-  canvasX: number | null
-  canvasY: number | null
   deadline: string | null
   status: SubPlanStatus
   options: OptionNode[]
-  decision: DecisionInfo | null
   parentSubPlanId: number | null
   accentColor: string | null
   icon: string | null
   childSubPlanCount: number
-}
-
-export type SubPlanEdge = {
-  id: number
-  sourceSubPlanId: number
-  targetSubPlanId: number
-}
-
-/** An option-sourced flow edge: 선택지 → downstream 안건 ("choosing this leads there"). */
-export type FlowEdge = {
-  id: number
-  sourceOptionId: number
-  targetSubPlanId: number
-}
-
-export type CommentPin = {
-  id: number
-  x: number
-  y: number
-  resolved: boolean
-  commentCount: number
-  createdBy: number | null
 }
 
 export type PlanTree = {
@@ -104,14 +66,9 @@ export type PlanTree = {
   groupLabel: string | null
   createdByUserId: number
   createdAt: string
-  lockedAt: string | null
-  lockedByUserId: number | null
   deadline: string | null
   completedAt: string | null
   subPlans: SubPlanNode[]
-  edges: SubPlanEdge[]
-  optionFlowEdges: FlowEdge[]
-  commentPins: CommentPin[]
 }
 
 export type SubPlanDetail = {
@@ -125,11 +82,9 @@ export type SubPlanDetail = {
   deadline: string | null
   status: SubPlanStatus
   options: OptionNode[]
-  decision: DecisionInfo | null
   children: SubPlanNode[]
   ancestorIds: number[]
   planTitle: string
-  locked: boolean
 }
 
 // ── Payloads ──
@@ -139,10 +94,6 @@ export type UpdatePlanPayload = { title?: string; description?: string; groupLab
 export type TitleDescPayload = { title: string; description?: string }
 export type CreateSubPlanPayload = { title: string; description?: string; parentSubPlanId?: number }
 export type CreateProConPayload = { kind: ProConKind; content: string }
-export type LockDecisionPayload = { chosenOptionId: number; reason: string }
-export type CanvasPositionPayload = { canvasX: number; canvasY: number }
-export type CreateEdgePayload = { sourceSubPlanId: number; targetSubPlanId: number }
-export type CreateFlowEdgePayload = { sourceOptionId: number; targetSubPlanId: number }
 export type SetOptionConfirmedPayload = { confirmed: boolean }
 
 export type PlanEventType =
