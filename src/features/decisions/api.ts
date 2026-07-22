@@ -5,7 +5,7 @@ import type {
   CreateLinkResourcePayload,
   CreatePlanPayload, CreateProConPayload, CreateSubPlanPayload, OptionNode, PlanEvent,
   PlanResource, PlanSummary, PlanTree, ReorderSubPlansPayload, SubPlanDetail, SubPlanNode,
-  TitleDescPayload, UpdatePlanPayload, UpdateResourceTitlePayload,
+  TitleDescPayload, UpdateOptionPayload, UpdatePlanPayload, UpdateResourceTitlePayload,
 } from './types'
 import type { Note } from '../notes/types'
 
@@ -212,7 +212,7 @@ export function useAddOption() {
 export function useUpdateOption() {
   const qc = useQueryClient(); const { activeId } = useActiveWorkspace()
   return useMutation({
-    mutationFn: async (v: { id: number; payload: TitleDescPayload }) =>
+    mutationFn: async (v: { id: number; payload: UpdateOptionPayload }) =>
       (await apiClient.patch<OptionNode>(`/api/options/${v.id}`, v.payload)).data,
     onSuccess: () => qc.invalidateQueries({ queryKey: decisionKeys.scope(activeId) }),
   })

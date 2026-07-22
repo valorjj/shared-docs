@@ -29,6 +29,8 @@ export type OptionNode = {
   proCons: ProCon[]
   voterUserIds: number[]
   resources: OptionResource[]
+  pros: string | null
+  cons: string | null
   confirmed: boolean
   confirmedAt: string | null
   confirmedBy: number | null
@@ -92,6 +94,7 @@ export type CreatePlanPayload = { title: string; description?: string; groupLabe
 export type SetDeadlinePayload = { deadline: string }   // YYYY-MM-DD
 export type UpdatePlanPayload = { title?: string; description?: string; groupLabel?: string }
 export type TitleDescPayload = { title: string; description?: string }
+export type UpdateOptionPayload = { title?: string; description?: string; sortOrder?: number; pros?: string; cons?: string }
 export type CreateSubPlanPayload = { title: string; description?: string; parentSubPlanId?: number }
 export type CreateProConPayload = { kind: ProConKind; content: string }
 export type SetOptionConfirmedPayload = { confirmed: boolean }
