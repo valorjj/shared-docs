@@ -1,0 +1,247 @@
+.chain {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Station: rail + body ── */
+.station {
+  display: flex;
+  gap: var(--sp-3);
+}
+
+.rail {
+  width: 20px;
+  flex: none;
+  position: relative;
+}
+/* the vertical line */
+.rail::before {
+  content: '';
+  position: absolute;
+  left: 9px;
+  top: 6px;
+  bottom: -6px;
+  width: 2px;
+  background: var(--c-border);
+}
+.station.decided .rail::before {
+  background: var(--c-primary);
+}
+/* last station: stop the line short */
+.station:last-child .rail::before {
+  bottom: auto;
+  height: 26px;
+}
+
+.dot {
+  position: absolute;
+  left: 3px;
+  top: 6px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--c-surface);
+  border: 2px solid var(--c-border-strong);
+}
+.station.decided .dot {
+  border-color: var(--c-primary);
+  background: var(--c-primary);
+}
+.station.pending .dot {
+  border-style: dashed;
+}
+
+.body {
+  flex: 1;
+  min-width: 0;
+  padding-bottom: var(--sp-5);
+}
+
+/* ── 안건 header ── */
+.agHead {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  margin: 0 2px 3px;
+}
+.agName {
+  font-size: var(--fs-md);
+  font-weight: var(--fw-semi);
+  color: var(--c-text);
+}
+.badge {
+  font-size: var(--fs-xs);
+  color: var(--c-primary);
+  background: var(--c-primary-soft);
+  padding: 2px var(--sp-2);
+  border-radius: var(--r-pill);
+  white-space: nowrap;
+}
+.meta {
+  font-size: var(--fs-xs);
+  color: var(--c-text-subtle);
+  margin: 0 2px var(--sp-3);
+}
+
+/* ── candidate checklist ── */
+.cands {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.cand {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3);
+  margin-bottom: var(--sp-2);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+}
+.candOn {
+  border-color: var(--c-primary);
+  background: var(--c-primary-soft);
+}
+
+.chk {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  border-radius: 50%;
+  border: 2px solid var(--c-border-strong);
+  background: transparent;
+  color: var(--c-surface);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+}
+.candOn .chk {
+  background: var(--c-primary);
+  border-color: var(--c-primary);
+}
+.chk:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.candBody {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: var(--c-text);
+  text-align: left;
+}
+.cName {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--fs-base);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.candOn .cName {
+  font-weight: var(--fw-semi);
+}
+.chev {
+  flex: none;
+  color: var(--c-text-placeholder);
+}
+
+/* ── vote avatar pips ── */
+.votes {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+}
+.av {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semi);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid var(--c-surface);
+  margin-left: -5px;
+}
+.candOn .av {
+  border-color: var(--c-primary-soft-strong);
+}
+
+/* ── add row (dashed) ── */
+.add {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  text-align: left;
+  padding: var(--sp-3);
+  margin-top: 2px;
+  font-size: var(--fs-sm);
+  color: var(--c-text-muted);
+  background: transparent;
+  border: 1px dashed var(--c-border-dashed);
+  border-radius: var(--r-lg);
+  cursor: pointer;
+}
+.add:hover {
+  color: var(--c-text);
+  border-color: var(--c-border-strong);
+}
+
+.addForm {
+  display: flex;
+  gap: var(--sp-2);
+  margin-top: 2px;
+}
+.addInput {
+  flex: 1;
+  min-width: 0;
+  padding: var(--sp-3);
+  font-size: var(--fs-base);
+  color: var(--c-text);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+}
+.addInput:focus {
+  outline: none;
+  border-color: var(--c-primary);
+}
+.addSubmit {
+  flex: none;
+  padding: 0 var(--sp-4);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  color: #fff;
+  background: var(--c-primary);
+  border: none;
+  border-radius: var(--r-lg);
+  cursor: pointer;
+}
+.addSubmit:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* ── empty state ── */
+.empty {
+  padding: var(--sp-6) var(--sp-2);
+}
+.emptyText {
+  font-size: var(--fs-sm);
+  color: var(--c-text-muted);
+  margin: 0 0 var(--sp-4);
+  text-align: center;
+}
