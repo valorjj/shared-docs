@@ -12,6 +12,12 @@ type Props = {
   disabled?: boolean
 }
 
+const isBlankHtml = (html: string | null): boolean => {
+  if (!html) return true
+  // strip tags + &nbsp; and check for any real text
+  return html.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim() === ''
+}
+
 /**
  * Small non-collaborative rich-text field for Decisions 장점/단점. Read mode shows
  * server-sanitized HTML with no editor mounted (mobile-light). Tap → edit mode
@@ -22,7 +28,7 @@ export default function RichTextField({ value, placeholder, onSave, disabled }: 
   const [editing, setEditing] = useState(false)
 
   if (!editing) {
-    const empty = !value || value.trim() === ''
+    const empty = isBlankHtml(value)
     return (
       <button
         type="button"
@@ -53,6 +59,9 @@ function RichTextEditor({
 }: { value: string | null; placeholder: string; onSave: (html: string) => void; onDone: () => void }) {
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const latestRef = useRef<string>(value ?? '')
+  const initialRef = useRef<string>(value ?? '')
+  const onSaveRef = useRef(onSave)
+  useEffect(() => { onSaveRef.current = onSave }, [onSave])
 
   const editor = useEditor({
     extensions: [
@@ -67,7 +76,13 @@ function RichTextEditor({
     onUpdate: ({ editor }) => {
       latestRef.current = editor.getHTML()
       if (debounceRef.current) clearTimeout(debounceRef.current)
-      debounceRef.current = setTimeout(() => onSave(latestRef.current), 600)
+      debounceRef.current = setTimeout(() => {
+        const html = latestRef.current
+        if (html !== initialRef.current) {
+          onSaveRef.current(html)
+          initialRef.current = html
+        }
+      }, 600)
     },
   })
 
@@ -75,7 +90,13 @@ function RichTextEditor({
 
   const flushAndExit = () => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
-    if (editor) onSave(editor.getHTML())
+    if (editor) {
+      const html = editor.getHTML()
+      if (html !== initialRef.current) {
+        onSaveRef.current(html)
+        initialRef.current = html
+      }
+    }
     onDone()
   }
 
