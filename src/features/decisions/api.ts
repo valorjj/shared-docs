@@ -3,9 +3,9 @@ import { apiClient } from '../../api/client'
 import { useActiveWorkspace } from '../../auth/useActiveWorkspace'
 import type {
   CreateLinkResourcePayload,
-  CreatePlanPayload, CreateProConPayload, CreateSubPlanPayload, OptionNode, PlanEvent,
+  CreatePlanPayload, CreateSubPlanPayload, OptionNode, PlanEvent,
   PlanResource, PlanSummary, PlanTree, ReorderSubPlansPayload, SubPlanDetail, SubPlanNode,
-  TitleDescPayload, UpdatePlanPayload, UpdateResourceTitlePayload,
+  TitleDescPayload, UpdateOptionPayload, UpdatePlanPayload, UpdateResourceTitlePayload,
 } from './types'
 import type { Note } from '../notes/types'
 
@@ -212,7 +212,7 @@ export function useAddOption() {
 export function useUpdateOption() {
   const qc = useQueryClient(); const { activeId } = useActiveWorkspace()
   return useMutation({
-    mutationFn: async (v: { id: number; payload: TitleDescPayload }) =>
+    mutationFn: async (v: { id: number; payload: UpdateOptionPayload }) =>
       (await apiClient.patch<OptionNode>(`/api/options/${v.id}`, v.payload)).data,
     onSuccess: () => qc.invalidateQueries({ queryKey: decisionKeys.scope(activeId) }),
   })
@@ -229,23 +229,6 @@ export function useSetOptionConfirmed() {
   return useMutation({
     mutationFn: async (v: { id: number; confirmed: boolean }) =>
       (await apiClient.patch<OptionNode>(`/api/options/${v.id}/confirm`, { confirmed: v.confirmed })).data,
-    onSuccess: () => qc.invalidateQueries({ queryKey: decisionKeys.scope(activeId) }),
-  })
-}
-
-// ── ProCon (장단점) mutations ──
-export function useAddProCon() {
-  const qc = useQueryClient(); const { activeId } = useActiveWorkspace()
-  return useMutation({
-    mutationFn: async (v: { optionId: number; payload: CreateProConPayload }) =>
-      (await apiClient.post(`/api/options/${v.optionId}/procons`, v.payload)).data,
-    onSuccess: () => qc.invalidateQueries({ queryKey: decisionKeys.scope(activeId) }),
-  })
-}
-export function useDeleteProCon() {
-  const qc = useQueryClient(); const { activeId } = useActiveWorkspace()
-  return useMutation({
-    mutationFn: async (id: number) => { await apiClient.delete(`/api/procons/${id}`) },
     onSuccess: () => qc.invalidateQueries({ queryKey: decisionKeys.scope(activeId) }),
   })
 }

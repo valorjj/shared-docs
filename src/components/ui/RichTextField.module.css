@@ -1,0 +1,25 @@
+/* RichTextField.module.css — Bear-minimal: hairline, no shadow, calm. */
+.read {
+  display: block; width: 100%; text-align: left;
+  border: 1px solid var(--c-border); border-radius: var(--r-md);
+  padding: var(--sp-2) var(--sp-3); background: transparent;
+  font: inherit; color: inherit; cursor: text; min-height: 2.4rem;
+}
+.read:hover { border-color: var(--c-border-strong, var(--c-border)); }
+.empty { color: var(--c-text-muted); }
+.placeholder { color: var(--c-text-muted); }
+.html, .editor { font-size: var(--fs-base); line-height: 1.55; }
+.html :where(p) { margin: 0 0 var(--sp-1); }
+.html :where(ul, ol) { margin: 0 0 var(--sp-1); padding-left: 1.25rem; }
+.html :where(a) { color: var(--c-accent); text-decoration: underline; }
+.editWrap {
+  border: 1px solid var(--c-accent); border-radius: var(--r-md);
+  padding: var(--sp-2) var(--sp-3); background: var(--c-surface);
+}
+.editor:focus { outline: none; }
+.editor :where(p) { margin: 0 0 var(--sp-1); }
+.editor :where(ul, ol) { margin: 0 0 var(--sp-1); padding-left: 1.25rem; }
+.editor :where(p.is-editor-empty:first-child)::before {
+  content: attr(data-placeholder); color: var(--c-text-muted);
+  float: left; height: 0; pointer-events: none;
+}
