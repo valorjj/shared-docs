@@ -239,6 +239,14 @@ export function useDeleteOption() {
     onSuccess: () => qc.invalidateQueries({ queryKey: decisionKeys.scope(activeId) }),
   })
 }
+export function useSetOptionConfirmed() {
+  const qc = useQueryClient(); const { activeId } = useActiveWorkspace()
+  return useMutation({
+    mutationFn: async (v: { id: number; confirmed: boolean }) =>
+      (await apiClient.patch<OptionNode>(`/api/options/${v.id}/confirm`, { confirmed: v.confirmed })).data,
+    onSuccess: () => qc.invalidateQueries({ queryKey: decisionKeys.scope(activeId) }),
+  })
+}
 
 // ── ProCon (장단점) mutations ──
 export function useAddProCon() {

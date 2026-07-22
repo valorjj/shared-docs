@@ -42,6 +42,9 @@ export type OptionNode = {
   resources: OptionResource[]
   canvasX: number | null
   canvasY: number | null
+  confirmed: boolean
+  confirmedAt: string | null
+  confirmedBy: number | null
 }
 
 export type VoteSnapshotEntry = { optionId: number; title: string; count: number; voters: string[] }
@@ -140,6 +143,7 @@ export type LockDecisionPayload = { chosenOptionId: number; reason: string }
 export type CanvasPositionPayload = { canvasX: number; canvasY: number }
 export type CreateEdgePayload = { sourceSubPlanId: number; targetSubPlanId: number }
 export type CreateFlowEdgePayload = { sourceOptionId: number; targetSubPlanId: number }
+export type SetOptionConfirmedPayload = { confirmed: boolean }
 
 export type PlanEventType =
   | 'PLAN_CREATED' | 'SUBPLAN_ADDED' | 'OPTION_ADDED'
@@ -149,6 +153,7 @@ export type PlanEventType =
   | 'DEADLINE_SET' | 'DEADLINE_CLEARED'
   | 'PROCON_ADDED' | 'PROCON_REMOVED'
   | 'RESOURCE_ADDED' | 'RESOURCE_REMOVED'
+  | 'OPTION_CONFIRMED' | 'OPTION_REVOKED'
 
 export type PlanEvent = {
   id: number
