@@ -29,18 +29,27 @@ export default function RichTextField({ value, placeholder, onSave, disabled }: 
 
   if (!editing) {
     const empty = isBlankHtml(value)
+    const enterEdit = () => { if (!disabled) setEditing(true) }
     return (
-      <button
-        type="button"
-        className={empty ? `${styles.read} ${styles.empty}` : styles.read}
-        onClick={() => { if (!disabled) setEditing(true) }}
-        disabled={disabled}
+      <div
+        role="button"
+        tabIndex={disabled ? -1 : 0}
         aria-label="편집"
+        className={empty ? `${styles.read} ${styles.empty}` : styles.read}
+        onClick={(e) => {
+          // Let links inside the HTML navigate instead of entering edit mode.
+          if ((e.target as HTMLElement).closest('a')) return
+          enterEdit()
+        }}
+        onKeyDown={(e) => {
+          if (e.key === ' ') e.preventDefault()
+          if (e.key === 'Enter' || e.key === ' ') enterEdit()
+        }}
       >
         {empty
           ? <span className={styles.placeholder}>{placeholder}</span>
           : <div className={styles.html} dangerouslySetInnerHTML={{ __html: value! }} />}
-      </button>
+      </div>
     )
   }
 
@@ -86,7 +95,12 @@ function RichTextEditor({
     },
   })
 
-  useEffect(() => () => { if (debounceRef.current) clearTimeout(debounceRef.current) }, [])
+  useEffect(() => () => {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    if (latestRef.current !== initialRef.current) {
+      onSaveRef.current(latestRef.current)
+    }
+  }, [])
 
   const flushAndExit = () => {
     if (debounceRef.current) clearTimeout(debounceRef.current)

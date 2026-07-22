@@ -8,7 +8,7 @@
 .read:hover { border-color: var(--c-border-strong, var(--c-border)); }
 .empty { color: var(--c-text-muted); }
 .placeholder { color: var(--c-text-muted); }
-.html, .editor { font-size: 0.9rem; line-height: 1.55; }
+.html, .editor { font-size: var(--fs-base); line-height: 1.55; }
 .html :where(p) { margin: 0 0 var(--sp-1); }
 .html :where(ul, ol) { margin: 0 0 var(--sp-1); padding-left: 1.25rem; }
 .html :where(a) { color: var(--c-accent); text-decoration: underline; }
