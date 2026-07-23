@@ -108,7 +108,7 @@ under `.main` instead of a persistent side-by-side rather than overlaying, which
 - `DecisionList`'s `Tabs` strip has 5 items (보드/스토리/완료/휴지통/활동); `Tabs.module.css` wraps
   (`flex-wrap: wrap`) rather than scrolling, so on very narrow phones it can break to two rows and push content
   down unpredictably rather than committing to either a scroll-strip or an overflow menu.
-- Discussion pane on mobile is a full-width block appended below the spine (not a sheet/overlay) — functional but
+- ~~Discussion pane on mobile is a full-width block appended below the spine (not a sheet/overlay)~~ — **correction (2026-07-23):** this was a misread; `PlanDetail.module.css` already makes `.pane` a fixed bottom sheet (`position:fixed; inset:auto 0 0 0; height:70vh; rounded top; shadow; safe-area padding`) at ≤900px. **Shipped the missing drawer polish:** backdrop scrim + tap-to-dismiss + body-scroll-lock (gated to ≤900px). Remaining below was:
   buries it under whatever content is already on screen; a decisively-mobile UX would slide it in as a sheet.
 
 **Severity:** Medium. Structurally mobile-aware (BackLink, safe-area, tabs collapse to `결정/기록`), but the
@@ -284,7 +284,7 @@ Ordered by severity first, then by reach (how many pages/how-frequently-tapped t
 | 1 | Shared items (`/shared/:noteId`) | Add a `BackLink`/`onBack` to `/shared`, matching every other drill-in page's pattern | High | S |
 | 2 | Cross-cutting (`IconButton`, `Tabs`, `.todos__check`) | Add the Recipes-proven touch hit-area overlay (`@media (hover: none) and (pointer: coarse)` + `::after { inset: -12px }`) to `IconButton` `size="sm"`, `Tabs`, and `.todos__check` | High | S |
 | 3 | Todos (`/data/todos`) | Bump `.todos__check` to a real ≥44px target (or ship fix #2 first, which covers it) | High | S |
-| 4 | Decisions (`/decisions`, `/decisions/:planId`) | Give the discussion pane (`DiscussionPane`) its own mobile presentation (bottom sheet) instead of stacking full-width under the spine | Medium | M |
+| 4 | ~~Decisions discussion pane~~ | **✅ Shipped 2026-07-23.** Pane was already a ≤900px bottom sheet; added backdrop scrim + tap-to-dismiss + body-scroll-lock. (Original "make it a sheet" was a misread.) | Medium | ~~M~~ S |
 | 5 | Calc (`/calc`) | Add a mobile tab/toggle between the active mode form and the tape (history), so recalling a past entry doesn't require scrolling past the whole form | Medium | M |
 | 6 | Calendar (`/calendar`) | Add `flex-wrap` (or a two-row layout) to `.header` at narrow widths so the filter pill + title + 2 buttons never risk crowding | Low | S |
 | 7 | Sheets (`/sheets`) | Bump `SheetEditorToolbar .mobileOnly` and `SheetTabStrip` tab height toward 44px | Low | S |
