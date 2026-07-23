@@ -44,3 +44,19 @@
   opacity: 0.45;
   cursor: not-allowed;
 }
+
+/* Touch devices: expand each tab's hit area vertically to ≥44px (HIG
+ * minimum) without changing its visual height. Vertical only — tabs sit
+ * side by side with a 2px gap, so horizontal expansion would overlap
+ * neighbours and make taps near the seam ambiguous. */
+@media (hover: none) and (pointer: coarse) {
+  .tab { position: relative; }
+  .tab::after {
+    content: '';
+    position: absolute;
+    top: -9px;
+    bottom: -9px;
+    left: 0;
+    right: 0;
+  }
+}

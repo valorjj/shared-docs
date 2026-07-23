@@ -47,3 +47,17 @@
   background: var(--c-danger-soft);
   color: var(--c-danger);
 }
+
+/* Touch devices: the compact 28px "sm" button gets a ≥44px invisible hit
+ * area (Apple HIG minimum) via an overflowing pseudo-element — no visual
+ * resize, no layout shift. -8px lands the hit area at exactly 44px, which
+ * keeps overlap minimal on the tightly-packed sm action rows (Decisions,
+ * Todos) where -12px could make neighbouring targets ambiguous. */
+@media (hover: none) and (pointer: coarse) {
+  .sz-sm { position: relative; }
+  .sz-sm::after {
+    content: '';
+    position: absolute;
+    inset: -8px;
+  }
+}
