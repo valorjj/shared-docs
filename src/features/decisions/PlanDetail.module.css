@@ -148,6 +148,11 @@
   flex-direction: column;
 }
 
+/* Desktop: pane is a side rail, no scrim. */
+.paneBackdrop {
+  display: none;
+}
+
 @media (max-width: 900px) {
   .split { display: block; }
 
@@ -163,6 +168,15 @@
     padding-bottom: calc(var(--sp-4) + env(safe-area-inset-bottom, 0px));
     box-shadow: var(--shadow-lg); /* floating surface — shadow allowed */
     overflow-y: auto;
+  }
+
+  /* Drawer mode: dim + tap-to-dismiss behind the bottom sheet. */
+  .paneBackdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 99; /* below .pane (100) */
+    background: var(--c-overlay);
   }
 }
 

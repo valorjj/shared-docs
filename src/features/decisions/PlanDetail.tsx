@@ -4,6 +4,7 @@ import { CheckCircle2, RotateCcw, MessagesSquare } from 'lucide-react'
 import { Page, PageHeader, PageTitle, BackLink, Button, IconButton, ErrorState, Skeleton, Tabs } from '../../components/ui'
 import { useAuth } from '../../auth/useAuth'
 import { useActiveWorkspace } from '../../auth/useActiveWorkspace'
+import { useMediaQuery } from '../../lib/useMediaQuery'
 import { useMembers } from '../workspaces/membersApi'
 import {
   usePlanTree, useTimeline, useCompletePlan, useUncompletePlan,
@@ -45,6 +46,19 @@ export default function PlanDetail() {
       localStorage.setItem(`discussion-open-${planId}`, v ? '0' : '1')
       return !v
     })
+
+  // ≤900px the discussion pane is a bottom-sheet drawer over the spine — lock
+  // body scroll while it's open so the page behind doesn't scroll under it.
+  // Above 900px the pane is a side rail (no overlay), so this must not apply.
+  const paneIsDrawer = useMediaQuery('(max-width: 900px)')
+  useEffect(() => {
+    if (!(discussionOpen && paneIsDrawer)) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = prev
+    }
+  }, [discussionOpen, paneIsDrawer])
 
   const { data: timeline, isLoading: timelineLoading } = useTimeline(planId, view === 'timeline')
   const completed = tree?.status === 'COMPLETED'
@@ -152,9 +166,14 @@ export default function PlanDetail() {
           )}
           </div>
           {discussionOpen && (
-            <aside className={styles.pane} aria-label="논의">
-              <DiscussionPane planId={planId} onClose={toggleDiscussion} />
-            </aside>
+            <>
+              {/* Scrim: only visible ≤900px (drawer mode); tap to dismiss.
+                  Above 900px the pane is a side rail and this is display:none. */}
+              <div className={styles.paneBackdrop} onClick={toggleDiscussion} aria-hidden="true" />
+              <aside className={styles.pane} aria-label="논의">
+                <DiscussionPane planId={planId} onClose={toggleDiscussion} />
+              </aside>
+            </>
           )}
         </div>
       )}
