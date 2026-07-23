@@ -79,3 +79,11 @@
 .renameInput:focus {
   border-color: var(--c-primary);
 }
+
+/* Touch devices: the tab's overflow:hidden (for text-ellipsis) would clip an
+   overflowing hit-area pseudo, so bump the real height to the 44px HIG min. */
+@media (hover: none) and (pointer: coarse) {
+  .tab {
+    min-height: 44px;
+  }
+}

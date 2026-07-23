@@ -286,11 +286,11 @@ Ordered by severity first, then by reach (how many pages/how-frequently-tapped t
 | 3 | Todos (`/data/todos`) | Bump `.todos__check` to a real ≥44px target (or ship fix #2 first, which covers it) | High | S |
 | 4 | ~~Decisions discussion pane~~ | **✅ Shipped 2026-07-23.** Pane was already a ≤900px bottom sheet; added backdrop scrim + tap-to-dismiss + body-scroll-lock. (Original "make it a sheet" was a misread.) | Medium | ~~M~~ S |
 | 5 | ~~Calc (`/calc`)~~ | **✅ Shipped 2026-07-23.** ≤900px 계산/기록 `Tabs` toggle; both panes stay mounted (CSS hide) so inputs+scroll survive; recalling a history entry jumps back to the form | Medium | M |
-| 6 | Calendar (`/calendar`) | Add `flex-wrap` (or a two-row layout) to `.header` at narrow widths so the filter pill + title + 2 buttons never risk crowding | Low | S |
-| 7 | Sheets (`/sheets`) | Bump `SheetEditorToolbar .mobileOnly` and `SheetTabStrip` tab height toward 44px | Low | S |
+| 6 | ~~Calendar~~ | **✅ Shipped 2026-07-23.** `flex-wrap:wrap` on `.header` | Low | S |
+| 7 | ~~Sheets~~ | **✅ Shipped 2026-07-23.** `.mobileOnly` 36→44px; `SheetTabStrip .tab` min-height 44 on touch (overflow:hidden precludes the ::after trick) | Low | S |
 | 8 | Links / Recipes list grids | Re-check `minmax(260–280px, 1fr)` card grids on a real 320px-class device; adjust minmax floor if cramped | Low | S |
 | 9 | Admin (`/admin`) | Reflow the member table to cards on mobile (mirror `MobileTable`) instead of horizontal scroll | Low | M |
-| 10 | Search palette | Drop or conditionally hide the keyboard-only footer hint row on touch (`useIsTouch()`) | Low | S |
+| 10 | ~~Search palette~~ | **✅ Shipped 2026-07-23.** Keyboard hints (`.hint`) hidden on touch via `@media (hover:none) and (pointer:coarse)`; result count kept | Low | S |
 
 **Already done — reference patterns, no further spec needed:** Notes hub + editor (drill-in + keyboard accessory
 bar, this branch), Sheets grid→card reflow, Purchases (`MobileTable`), Recipes touch hit-areas + drag-handle

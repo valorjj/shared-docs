@@ -199,6 +199,14 @@
   gap: 4px;
 }
 
+/* Touch devices have no keyboard — the ↑↓/Enter/Esc hints are meaningless.
+   Hide them; the result count (.hintRight) stays. */
+@media (hover: none) and (pointer: coarse) {
+  .hint {
+    display: none;
+  }
+}
+
 .hintRight {
   margin-left: auto;
   color: var(--c-text-placeholder);

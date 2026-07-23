@@ -16,6 +16,7 @@
 .header {
   display: flex;
   align-items: center;
+  flex-wrap: wrap; /* filter pill + title + 전체 워크스페이스 + 오늘 wrap to a 2nd row on narrow phones instead of crowding one line */
   gap: var(--sp-2);
   margin-bottom: var(--sp-2);
 }
