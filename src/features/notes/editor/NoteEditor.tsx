@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Editor } from '@tiptap/react'
 import {
   absoluteFileUrl,
@@ -20,6 +20,9 @@ import NoteEditorMeta from './NoteEditorMeta'
 import NoteEditorMobileBar from './NoteEditorMobileBar'
 import NoteEditorTitle from './NoteEditorTitle'
 import NoteEditorToolbar from './NoteEditorToolbar'
+import NoteEditorAccessoryBar from './NoteEditorAccessoryBar'
+import NoteInsertSheet from './NoteInsertSheet'
+import { buildSlashItems } from './slashItems'
 import NoteReferrers from './NoteReferrers'
 import { useNoteCollaboration } from '../collab/useNoteCollaboration'
 import { collabColorForUser } from '../collab/collabColor'
@@ -56,6 +59,9 @@ export default function NoteEditor({ note, onDeleted, onBack }: Props) {
   const [linkCardOpen, setLinkCardOpen] = useState(false)
   const [linkDialogOpen, setLinkDialogOpen] = useState(false)
   const openLinkDialog = useCallback(() => setLinkDialogOpen(true), [])
+  const [insertSheetOpen, setInsertSheetOpen] = useState(false)
+  const openInsertSheet = useCallback(() => setInsertSheetOpen(true), [])
+  const closeInsertSheet = useCallback(() => setInsertSheetOpen(false), [])
 
   // Autosave: pendingBody holds the latest HTML; bodyDirty drives the UI hint.
   const pendingBody = useRef<string | null>(null)
@@ -164,6 +170,15 @@ export default function NoteEditor({ note, onDeleted, onBack }: Props) {
   const onPickCalcSnapshot = useCallback(() => setCalcSnapshotOpen(true), [])
   const onPickLinkCard = useCallback(() => setLinkCardOpen(true), [])
 
+  // onPickFile closes over fileInputRef, but it's only ever invoked from a
+  // later click handler (NoteInsertSheet), never during this render.
+  const insertItems = useMemo(
+    () =>
+      // eslint-disable-next-line react-hooks/refs
+      buildSlashItems(onPickFile, onPickSnapshot, onPickLinkCard, onPickCalcSnapshot),
+    [onPickFile, onPickSnapshot, onPickLinkCard, onPickCalcSnapshot],
+  )
+
   const handleInsertSnapshot = (attrs: SnapshotAttrs) => {
     if (!editor) return
     editor.chain().focus().insertContent({ type: 'dataSnapshot', attrs }).run()
@@ -220,6 +235,9 @@ export default function NoteEditor({ note, onDeleted, onBack }: Props) {
           onRequestLinkDialog={openLinkDialog}
           onPickLinkCard={onPickLinkCard}
         />
+      )}
+      {canEdit && (
+        <NoteEditorAccessoryBar editor={editor} onOpenInsert={openInsertSheet} />
       )}
       <input
         ref={fileInputRef}
@@ -288,6 +306,12 @@ export default function NoteEditor({ note, onDeleted, onBack }: Props) {
         open={linkDialogOpen}
         editor={editor}
         onClose={() => setLinkDialogOpen(false)}
+      />
+      <NoteInsertSheet
+        open={insertSheetOpen}
+        onClose={closeInsertSheet}
+        editor={editor}
+        items={insertItems}
       />
       <ShareDialog
         noteId={note.id}
