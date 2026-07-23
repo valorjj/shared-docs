@@ -5,6 +5,7 @@ import { useNoteCollaboration } from '../notes/collab/useNoteCollaboration'
 import { collabColorForUser } from '../notes/collab/collabColor'
 import CollabAvatarStack from '../notes/collab/CollabAvatarStack'
 import { useAuth } from '../../auth/useAuth'
+import { BackLink } from '../../components/ui'
 import styles from './SharedNoteView.module.css'
 
 type Props = { noteId: number }
@@ -80,15 +81,27 @@ export default function SharedNoteView({ noteId }: Props) {
     }
   }, [noteId, canEdit, update])
 
-  if (shared.isLoading) return <p className={styles.state}>불러오는 중…</p>
+  if (shared.isLoading)
+    return (
+      <div className={styles.view}>
+        <BackLink to="/shared">공유받은 항목</BackLink>
+        <p className={styles.state}>불러오는 중…</p>
+      </div>
+    )
   if (shared.isError || !shared.data)
-    return <p className={styles.state}>공유받은 항목을 찾을 수 없어요.</p>
+    return (
+      <div className={styles.view}>
+        <BackLink to="/shared">공유받은 항목</BackLink>
+        <p className={styles.state}>공유받은 항목을 찾을 수 없어요.</p>
+      </div>
+    )
 
   const note = shared.data.note
   const titleValue = title ?? note.title ?? ''
 
   return (
     <div className={styles.view}>
+      <BackLink to="/shared">공유받은 항목</BackLink>
       {canEdit ? (
         <input
           className={styles.title}
