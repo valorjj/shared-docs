@@ -43,14 +43,29 @@
   font-style: italic;
 }
 
+.mobileToggle {
+  display: none;
+}
+
+.hidden {
+  display: none;
+}
+
 @media (max-width: 900px) {
   .root {
     flex-direction: column;
   }
+  .mobileToggle {
+    display: flex;
+    justify-content: center;
+    padding: var(--sp-3) var(--sp-5) 0;
+  }
+  /* Toggle mode: only one pane shows at a time, so the visible one fills
+     the remaining height (was flex:0 0 auto for the old stacked layout). */
   .workArea {
     border-right: none;
-    border-bottom: 1px solid var(--c-border);
-    flex: 0 0 auto;
+    flex: 1;
+    min-height: 0;
   }
   .modeBar {
     padding: var(--sp-4) var(--sp-5) 0;
@@ -61,5 +76,6 @@
   .tape {
     width: 100%;
     flex: 1;
+    min-height: 0;
   }
 }
