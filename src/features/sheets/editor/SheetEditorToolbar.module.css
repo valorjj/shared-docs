@@ -49,7 +49,7 @@
 
 @media (max-width: 767px) {
   .desktopOnly { display: none; }
-  .mobileOnly  { display: inline-flex; height: 36px; padding: 0 12px; }
+  .mobileOnly  { display: inline-flex; height: 44px; padding: 0 12px; }
   /* Row-add lives inside the card list; column-add lives inside the column sheet. */
 }
 
