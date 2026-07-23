@@ -94,36 +94,6 @@
   color: var(--c-danger);
 }
 
-.admin__table-wrap {
-  overflow-x: auto;
-}
-
-.admin__table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.92rem;
-}
-
-.admin__table th,
-.admin__table td {
-  padding: 0.65rem 0.6rem;
-  text-align: left;
-  vertical-align: middle;
-  border-bottom: 1px solid var(--c-border-dashed);
-}
-
-.admin__table th {
-  font-size: 0.78rem;
-  font-weight: var(--fw-semi);
-  color: var(--c-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.admin__row--me {
-  background: var(--c-surface-tint);
-}
-
 .admin__avatar {
   width: 28px;
   height: 28px;
@@ -212,12 +182,6 @@
 
 .admin__toggle input:disabled + span {
   opacity: 0.55;
-}
-
-.admin__time {
-  color: var(--c-text-muted);
-  font-size: 0.82rem;
-  white-space: nowrap;
 }
 
 .admin__add-form {

@@ -288,8 +288,8 @@ Ordered by severity first, then by reach (how many pages/how-frequently-tapped t
 | 5 | ~~Calc (`/calc`)~~ | **✅ Shipped 2026-07-23.** ≤900px 계산/기록 `Tabs` toggle; both panes stay mounted (CSS hide) so inputs+scroll survive; recalling a history entry jumps back to the form | Medium | M |
 | 6 | ~~Calendar~~ | **✅ Shipped 2026-07-23.** `flex-wrap:wrap` on `.header` | Low | S |
 | 7 | ~~Sheets~~ | **✅ Shipped 2026-07-23.** `.mobileOnly` 36→44px; `SheetTabStrip .tab` min-height 44 on touch (overflow:hidden precludes the ::after trick) | Low | S |
-| 8 | Links / Recipes list grids | Re-check `minmax(260–280px, 1fr)` card grids on a real 320px-class device; adjust minmax floor if cramped | Low | S |
-| 9 | Admin (`/admin`) | Reflow the member table to cards on mobile (mirror `MobileTable`) instead of horizontal scroll | Low | M |
+| 8 | Links / Recipes list grids | **Deferred — needs a real 320px device.** Re-check `minmax(260–280px,1fr)` floor; not a blind fix (audit's own note). | Low | S |
+| 9 | ~~Admin (`/admin`)~~ | **✅ Shipped 2026-07-23.** Member table converted to the `MobileTable` primitive (desktop table + mobile cards, one column def); bespoke table CSS removed. Minor: per-row 'me' highlight dropped (the 나 tag still marks it). | Low | M |
 | 10 | ~~Search palette~~ | **✅ Shipped 2026-07-23.** Keyboard hints (`.hint`) hidden on touch via `@media (hover:none) and (pointer:coarse)`; result count kept | Low | S |
 
 **Already done — reference patterns, no further spec needed:** Notes hub + editor (drill-in + keyboard accessory

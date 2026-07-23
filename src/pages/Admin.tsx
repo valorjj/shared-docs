@@ -7,6 +7,7 @@ import {
 } from '../api/admin'
 import { useAuth } from '../auth/useAuth'
 import { ErrorState, Spinner } from '../components/ui'
+import MobileTable, { type Column } from '../components/common/MobileTable'
 import type { Role } from '../auth/authContext'
 import './Admin.css'
 
@@ -53,91 +54,95 @@ function UsersSection({ users, currentUserId }: { users: AdminUser[]; currentUse
   const updateRole = useUpdateUserRole()
   const updateActive = useUpdateUserActive()
 
+  // Desktop → shared table, mobile → cards, one definition (reuses the
+  // MobileTable primitive, same as Purchases). Interactive cells (role
+  // picker, active toggle) live in each column's render.
+  const columns: Column<AdminUser>[] = [
+    {
+      key: 'avatar',
+      header: '',
+      mobile: 'hidden',
+      render: (u) =>
+        u.pictureUrl ? (
+          <img className="admin__avatar" src={u.pictureUrl} alt="" />
+        ) : (
+          <span className="admin__avatar admin__avatar--initial">
+            {u.name.charAt(0).toUpperCase()}
+          </span>
+        ),
+    },
+    {
+      key: 'email',
+      header: '이메일',
+      mobile: 'primary',
+      render: (u) => (
+        <>
+          {u.email}
+          {u.id === currentUserId && <span className="admin__me-tag">나</span>}
+          {u.role === 'SUPER_ADMIN' && (
+            <span className="admin__super-tag" title="설정 파일로만 부여됩니다">
+              SUPER ADMIN
+            </span>
+          )}
+        </>
+      ),
+    },
+    { key: 'name', header: '이름', mobile: 'secondary', render: (u) => u.name },
+    {
+      key: 'role',
+      header: '권한',
+      mobile: 'secondary',
+      render: (u) =>
+        u.role === 'SUPER_ADMIN' ? (
+          <span className="admin__role-readonly">{ROLE_LABELS.SUPER_ADMIN}</span>
+        ) : (
+          <select
+            className="admin__select"
+            value={u.role}
+            disabled={u.id === currentUserId || updateRole.isPending}
+            onChange={(e) => updateRole.mutate({ id: u.id, role: e.target.value as Role })}
+          >
+            {ROLE_OPTIONS.map((r) => (
+              <option key={r} value={r}>{ROLE_LABELS[r]}</option>
+            ))}
+          </select>
+        ),
+    },
+    {
+      key: 'active',
+      header: '활성',
+      mobile: 'secondary',
+      render: (u) => (
+        <label className="admin__toggle">
+          <input
+            type="checkbox"
+            checked={u.active}
+            disabled={u.id === currentUserId || updateActive.isPending}
+            onChange={(e) => updateActive.mutate({ id: u.id, active: e.target.checked })}
+          />
+          <span>{u.active ? '활성' : '비활성'}</span>
+        </label>
+      ),
+    },
+    {
+      key: 'lastLoginAt',
+      header: '최근 로그인',
+      mobile: 'meta',
+      render: (u) => (u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleString('ko-KR') : '—'),
+    },
+  ]
+
   return (
     <section className="admin__section">
       <h2 className="admin__section-title">사용자 ({users.length})</h2>
       <p className="admin__section-hint">한 번이라도 로그인한 사용자 목록입니다.</p>
 
-      {users.length === 0 ? (
-        <p className="admin__status">사용자가 없습니다.</p>
-      ) : (
-        <div className="admin__table-wrap">
-          <table className="admin__table">
-            <thead>
-              <tr>
-                <th></th>
-                <th>이메일</th>
-                <th>이름</th>
-                <th>권한</th>
-                <th>활성</th>
-                <th>최근 로그인</th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.map((u) => {
-                const isMe = u.id === currentUserId
-                return (
-                  <tr key={u.id} className={isMe ? 'admin__row--me' : ''}>
-                    <td>
-                      {u.pictureUrl ? (
-                        <img className="admin__avatar" src={u.pictureUrl} alt="" />
-                      ) : (
-                        <span className="admin__avatar admin__avatar--initial">
-                          {u.name.charAt(0).toUpperCase()}
-                        </span>
-                      )}
-                    </td>
-                    <td>
-                      {u.email}
-                      {isMe && <span className="admin__me-tag">나</span>}
-                      {u.role === 'SUPER_ADMIN' && (
-                        <span className="admin__super-tag" title="설정 파일로만 부여됩니다">
-                          SUPER ADMIN
-                        </span>
-                      )}
-                    </td>
-                    <td>{u.name}</td>
-                    <td>
-                      {u.role === 'SUPER_ADMIN' ? (
-                        <span className="admin__role-readonly">{ROLE_LABELS.SUPER_ADMIN}</span>
-                      ) : (
-                        <select
-                          className="admin__select"
-                          value={u.role}
-                          disabled={isMe || updateRole.isPending}
-                          onChange={(e) =>
-                            updateRole.mutate({ id: u.id, role: e.target.value as Role })
-                          }
-                        >
-                          {ROLE_OPTIONS.map((r) => (
-                            <option key={r} value={r}>{ROLE_LABELS[r]}</option>
-                          ))}
-                        </select>
-                      )}
-                    </td>
-                    <td>
-                      <label className="admin__toggle">
-                        <input
-                          type="checkbox"
-                          checked={u.active}
-                          disabled={isMe || updateActive.isPending}
-                          onChange={(e) =>
-                            updateActive.mutate({ id: u.id, active: e.target.checked })
-                          }
-                        />
-                        <span>{u.active ? '활성' : '비활성'}</span>
-                      </label>
-                    </td>
-                    <td className="admin__time">
-                      {u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleString('ko-KR') : '—'}
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
+      <MobileTable
+        columns={columns}
+        rows={users}
+        keyOf={(u) => u.id}
+        empty="사용자가 없습니다."
+      />
 
       {updateRole.isError && (
         <p className="admin__status admin__status--error">
