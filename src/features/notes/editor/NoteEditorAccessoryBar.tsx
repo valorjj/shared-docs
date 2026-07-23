@@ -71,6 +71,7 @@ export default function NoteEditorAccessoryBar({ editor, onOpenInsert }: Props) 
         onPress()
       }}
       aria-label={label}
+      aria-pressed={active}
       title={label}
     >
       <Icon size={18} strokeWidth={2} aria-hidden="true" />
@@ -86,7 +87,25 @@ export default function NoteEditorAccessoryBar({ editor, onOpenInsert }: Props) 
       {btn(editor.isActive('bulletList'), '글머리 기호', () => editor.chain().focus().toggleBulletList().run(), List)}
       {btn(editor.isActive('taskList'), '체크리스트', () => editor.chain().focus().toggleTaskList().run(), ListTodo)}
       {btn(editor.isActive('blockquote'), '인용', () => editor.chain().focus().toggleBlockquote().run(), Quote)}
-      {btn(false, '삽입', onOpenInsert, Plus)}
+      <button
+        type="button"
+        className={styles.btn}
+        // Unlike the formatting buttons above, the insert button must
+        // release focus: opening NoteInsertSheet while the editor stays
+        // focused leaves the software keyboard up, occluding the fixed
+        // bottom sheet. The ProseMirror selection survives blur, and each
+        // buildSlashItems item's `run` calls editor.chain().focus()... so
+        // the insert still lands in the right place and refocuses.
+        onPointerDown={(e) => {
+          e.preventDefault()
+          editor.commands.blur()
+          onOpenInsert()
+        }}
+        aria-label="삽입"
+        title="삽입"
+      >
+        <Plus size={18} strokeWidth={2} aria-hidden="true" />
+      </button>
     </div>
   )
 }

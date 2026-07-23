@@ -27,7 +27,7 @@ Each unit has one job, a clear prop interface, and is independently testable.
 | Unit | Type | Responsibility |
 |---|---|---|
 | `NoteEditorAccessoryBar.tsx` | new component | The formatting bar pinned above the keyboard. Mounts only on touch/mobile and only while the editor is focused. Renders the curated button set + `+`. |
-| `useKeyboardInset.ts` | new hook | Tracks the on-screen keyboard via the `visualViewport` API; returns the pixel offset the bar should sit at. Handles the no-`visualViewport` fallback. |
+| `useKeyboardInset.ts` | new hook | Tracks the on-screen keyboard via the `visualViewport` API; returns the pixel offset the bar should sit at (0 when no `visualViewport` or no keyboard present, so the bar stays hidden). |
 | `NoteInsertSheet.tsx` | new component | Bottom sheet opened by the bar's `+`; renders `buildSlashItems` as a tap list. Thumb-anchored. |
 | `NoteEditorToolbar.tsx` | changed | Accepts a `className` so `NoteEditor` can hide it under 768px (`display:none`) instead of rendering the scrolling strip. Desktop markup/behavior unchanged. |
 | `NoteEditor.tsx` | changed | Mounts the accessory bar (mobile) alongside the toolbar (desktop); owns insert-sheet open state; wires the shared `buildSlashItems` callbacks it already has. |
@@ -60,10 +60,12 @@ keyboardInset = window.innerHeight - visualViewport.height - visualViewport.offs
 
 The bar is `position: fixed; bottom: <keyboardInset>px`, so it rides on top of the keyboard and follows it up/down.
 
-Fallbacks / rules:
-- **No `visualViewport`** (rare/old browsers) → `position: sticky; bottom: 0` + `env(safe-area-inset-bottom)`.
-- **Focus-gated** — the bar appears when the editor gains focus and hides on blur, so it never floats over the note list or a dismissed keyboard.
-- **Safe-area insets** honored in the sticky fallback and for the home-indicator gap.
+Rules:
+- **Keyboard-driven** — the bar appears only when the editor is focused **and** a software keyboard is present (`visualViewport` inset > 0). On browsers without `visualViewport`, or on `<768px` viewports where no software keyboard is up (e.g. a tablet with a hardware keyboard, or a narrowed desktop window), the bar does not appear; the slash `/` menu is the universal formatting fallback available everywhere, on every surface.
+- **Focus-gated** — the bar appears when the editor gains focus and a keyboard inset is detected, and hides on blur (or when the inset returns to 0), so it never floats over the note list or a dismissed keyboard.
+- **Safe-area insets** honored via `env(safe-area-inset-bottom)` for the home-indicator gap.
+
+**Future enhancement (not built):** a `position: sticky; bottom: 0` fallback for browsers without `visualViewport` was considered and deliberately deferred — its value is limited, since without `visualViewport` a bottom-fixed bar would itself sit behind the keyboard with no way to detect and avoid it.
 
 ## Edge cases
 
@@ -81,7 +83,7 @@ Fallbacks / rules:
 
 ## Testing
 
-- `useKeyboardInset`: unit test the offset math and the no-`visualViewport` fallback branch.
+- `useKeyboardInset`: unit test the offset math and the no-`visualViewport` branch (returns 0, so the bar stays hidden).
 - `NoteEditorAccessoryBar`: renders the curated set; each button dispatches the correct Tiptap chain; `+` opens the sheet; hidden when unfocused / on desktop.
 - `NoteInsertSheet`: renders `buildSlashItems`; a tap runs the item and closes the sheet.
 - Manual smoke on a real phone (owed by user): type mid-document, verify the bar tracks the keyboard, format inline, insert a block via `+`, rotate orientation.

@@ -132,7 +132,7 @@ primary per-plan actions use sub-44px targets and the discussion pane doesn't ge
 - The "이 날에 추가" quick-add row (`구매`/`할 일`/`기념일` buttons, `Row gap={2} wrap`) does wrap, so that part is
   fine — the top header is the one row that doesn't.
 
-**Severity:** Low-Medium. Core interactions (date selection, event list, quick-add) are solid; the header row is
+**Severity:** Low. Core interactions (date selection, event list, quick-add) are solid; the header row is
 the one layout that wasn't stress-tested against the narrowest supported width.
 
 ---
@@ -182,7 +182,7 @@ Anniversaries/Links below, none of which use it, though none of them currently n
   see below).
 - The row's `IconButton size="sm"` delete button is 28×28px (same cross-cutting `IconButton` issue as Decisions).
 
-**Severity:** Medium-High. Small tap targets on the primary, highest-frequency action (toggling a checkbox) are
+**Severity:** High. Small tap targets on the primary, highest-frequency action (toggling a checkbox) are
 more painful than the same issue on a secondary action elsewhere.
 
 ### Anniversaries / Links (`/data/anniversaries`, `/data/links`)
@@ -282,11 +282,11 @@ Ordered by severity first, then by reach (how many pages/how-frequently-tapped t
 | # | Page / area | Fix summary | Severity | Size |
 |---|---|---|---|---|
 | 1 | Shared items (`/shared/:noteId`) | Add a `BackLink`/`onBack` to `/shared`, matching every other drill-in page's pattern | High | S |
-| 2 | Cross-cutting (`IconButton`, `Tabs`, `.todos__check`) | Add the Recipes-proven touch hit-area overlay (`@media (hover: none) and (pointer: coarse)` + `::after { inset: -12px }`) to `IconButton` `size="sm"`, `Tabs`, and `.todos__check` | Medium-High | S |
-| 3 | Todos (`/data/todos`) | Bump `.todos__check` to a real ≥44px target (or ship fix #2 first, which covers it) | Medium-High | S |
+| 2 | Cross-cutting (`IconButton`, `Tabs`, `.todos__check`) | Add the Recipes-proven touch hit-area overlay (`@media (hover: none) and (pointer: coarse)` + `::after { inset: -12px }`) to `IconButton` `size="sm"`, `Tabs`, and `.todos__check` | High | S |
+| 3 | Todos (`/data/todos`) | Bump `.todos__check` to a real ≥44px target (or ship fix #2 first, which covers it) | High | S |
 | 4 | Decisions (`/decisions`, `/decisions/:planId`) | Give the discussion pane (`DiscussionPane`) its own mobile presentation (bottom sheet) instead of stacking full-width under the spine | Medium | M |
 | 5 | Calc (`/calc`) | Add a mobile tab/toggle between the active mode form and the tape (history), so recalling a past entry doesn't require scrolling past the whole form | Medium | M |
-| 6 | Calendar (`/calendar`) | Add `flex-wrap` (or a two-row layout) to `.header` at narrow widths so the filter pill + title + 2 buttons never risk crowding | Low-Medium | S |
+| 6 | Calendar (`/calendar`) | Add `flex-wrap` (or a two-row layout) to `.header` at narrow widths so the filter pill + title + 2 buttons never risk crowding | Low | S |
 | 7 | Sheets (`/sheets`) | Bump `SheetEditorToolbar .mobileOnly` and `SheetTabStrip` tab height toward 44px | Low | S |
 | 8 | Links / Recipes list grids | Re-check `minmax(260–280px, 1fr)` card grids on a real 320px-class device; adjust minmax floor if cramped | Low | S |
 | 9 | Admin (`/admin`) | Reflow the member table to cards on mobile (mirror `MobileTable`) instead of horizontal scroll | Low | M |
