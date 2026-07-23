@@ -50,7 +50,8 @@
   flex-shrink: 0;
 }
 
+/* Mobile uses the keyboard accessory bar (NoteEditorAccessoryBar) instead of
+   this top strip — hide it so formatting lives at the thumbs, not off-screen. */
 @media (max-width: 767px) {
-  .bar { padding: 4px 6px; gap: 1px; }
-  .btn { width: 40px; height: 40px; }
+  .bar { display: none; }
 }

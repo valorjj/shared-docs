@@ -1,0 +1,39 @@
+.bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  /* `bottom` is set inline to the live keyboard inset. */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2px;
+  padding: 4px 6px;
+  border-top: 1px solid var(--c-border);
+  background: var(--c-surface);
+  z-index: 20;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 0;
+  min-width: 44px;
+  height: 44px;
+  border-radius: var(--r-sm);
+  background: transparent;
+  border: 0;
+  color: var(--c-text-muted);
+  cursor: pointer;
+  transition: color var(--t-fast), background var(--t-fast);
+}
+
+.btn:active {
+  background: var(--c-surface-tint);
+  color: var(--c-text);
+}
+
+.active {
+  background: var(--c-primary-soft);
+  color: var(--c-primary);
+}
