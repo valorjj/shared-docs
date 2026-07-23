@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { Tabs } from '../../components/ui'
+import { useMediaQuery } from '../../lib/useMediaQuery'
 import BasicMode from './modes/BasicMode'
 import DateMode from './modes/DateMode'
 import DutchMode from './modes/DutchMode'
@@ -17,6 +19,13 @@ export default function CalcWorkspace() {
    *  so changing the seed remounts the form and re-initializes state. */
   const [seedEntry, setSeedEntry] = useState<CalcEntry | null>(null)
 
+  // ≤900px the calc form and the tape (history) don't fit side by side, so a
+  // 계산/기록 toggle switches between them. Above 900px both panes show and
+  // this is ignored. Both panes stay mounted (hidden via CSS) so in-progress
+  // inputs and tape scroll survive a toggle.
+  const isMobile = useMediaQuery('(max-width: 900px)')
+  const [mobileView, setMobileView] = useState<'calc' | 'tape'>('calc')
+
   const handleSelectEntry = (entry: CalcEntry) => {
     if (seedEntry?.id === entry.id) {
       // Clicking the active row again deselects — convenient when the
@@ -26,6 +35,8 @@ export default function CalcWorkspace() {
     }
     setMode(entry.mode)
     setSeedEntry(entry)
+    // Recalling a past entry jumps back to the form so the seeded values show.
+    setMobileView('calc')
   }
 
   const handleModeChange = (next: CalcMode) => {
@@ -45,7 +56,18 @@ export default function CalcWorkspace() {
 
   return (
     <div className={styles.root}>
-      <div className={styles.workArea}>
+      {isMobile && (
+        <div className={styles.mobileToggle}>
+          <Tabs
+            items={[{ key: 'calc', label: '계산' }, { key: 'tape', label: '기록' }]}
+            value={mobileView}
+            onChange={setMobileView}
+          />
+        </div>
+      )}
+      <div
+        className={`${styles.workArea}${isMobile && mobileView !== 'calc' ? ` ${styles.hidden}` : ''}`}
+      >
         <div className={styles.modeBar}>
           <ModeTabs value={mode} onChange={handleModeChange} />
         </div>
@@ -67,7 +89,9 @@ export default function CalcWorkspace() {
           )}
         </div>
       </div>
-      <aside className={styles.tape}>
+      <aside
+        className={`${styles.tape}${isMobile && mobileView !== 'tape' ? ` ${styles.hidden}` : ''}`}
+      >
         <TapeView
           onSelectEntry={handleSelectEntry}
           activeEntryId={seedEntry?.id ?? null}
