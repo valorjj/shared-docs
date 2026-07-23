@@ -92,6 +92,20 @@
   cursor: not-allowed;
 }
 
+/* Touch devices: the 24px round check — the single most-tapped control in
+ * the app — gets a ≥44px invisible hit area (HIG minimum) without resizing
+ * the visual circle. -10px lands it at 44px. */
+@media (hover: none) and (pointer: coarse) {
+  .todos__check {
+    position: relative;
+  }
+  .todos__check::after {
+    content: '';
+    position: absolute;
+    inset: -10px;
+  }
+}
+
 .todos__row-body {
   flex: 1;
   display: flex;
