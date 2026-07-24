@@ -4,6 +4,7 @@ import { Button, Input } from '../../../components/ui'
 import { useCreateCalcEntry } from '../api'
 import { computeBasic } from '../compute/basic'
 import type { BasicInput, BasicLine, BasicOutput, CalcEntry } from '../types'
+import BasicFunctionBar from './BasicFunctionBar'
 import styles from './BasicMode.module.css'
 
 const STORAGE_KEY = 'shared-docs:calc:basic-scratchpad'
@@ -51,7 +52,7 @@ export default function BasicMode({ seedEntry = null }: Props) {
   // Live evaluation — parser is fast enough that a debounce isn't worth it.
   const output = useMemo<BasicOutput>(() => computeBasic({ body }), [body])
 
-  const insertAtCursor = (text: string) => {
+  const insertAtCursor = (text: string, caretOffset?: number) => {
     const ta = textareaRef.current
     if (!ta) return
     const start = ta.selectionStart ?? body.length
@@ -60,7 +61,7 @@ export default function BasicMode({ seedEntry = null }: Props) {
     setBody(next)
     requestAnimationFrame(() => {
       ta.focus()
-      const pos = start + text.length
+      const pos = start + (caretOffset ?? text.length)
       ta.setSelectionRange(pos, pos)
     })
   }
@@ -134,6 +135,8 @@ export default function BasicMode({ seedEntry = null }: Props) {
         </Button>
       </div>
 
+      <BasicFunctionBar onInsert={insertAtCursor} />
+
       <div className={styles.scratchpad}>
         <textarea
           ref={textareaRef}
@@ -163,7 +166,7 @@ export default function BasicMode({ seedEntry = null }: Props) {
           )}
         </span>
         <span className={styles.copyHint}>
-          결과를 클릭하면 커서 위치에 값이 삽입됩니다.
+          연산자로 시작하면 이전 결과에 이어집니다 · 결과를 클릭하면 삽입돼요
         </span>
       </div>
     </div>
