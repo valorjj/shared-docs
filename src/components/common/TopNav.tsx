@@ -1,18 +1,5 @@
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
-import {
-  BookOpen,
-  Calculator,
-  Calendar,
-  Database,
-  LogOut,
-  Search,
-  Settings,
-  Settings2,
-  Share2,
-  Table2,
-  Vote,
-  type LucideIcon,
-} from 'lucide-react'
+import { BookOpen, ChevronDown, LogOut, MoreHorizontal, Search, Settings2 } from 'lucide-react'
 import { useIsMobile } from '../../lib/useMediaQuery'
 import { useAuth } from '../../auth/useAuth'
 import { useSearchPalette } from '../../features/search/searchContext'
@@ -20,25 +7,8 @@ import { useSettings } from '../../features/settings/settingsContext'
 import WorkspaceSwitcher from '../../features/workspaces/WorkspaceSwitcher'
 import { Kbd } from '../ui'
 import { Menu, MenuItem, MenuSeparator } from '../ui/Menu'
+import { primaryItems, secondaryItems, isSecondaryActive } from './navItems'
 import './TopNav.css'
-
-type NavItem = {
-  to: string
-  Icon: LucideIcon
-  label: string
-  adminOnly?: boolean
-}
-
-const ITEMS: NavItem[] = [
-  { to: '/',         Icon: BookOpen,   label: '메모' },
-  { to: '/sheets',   Icon: Table2,     label: '시트' },
-  { to: '/data',     Icon: Database,   label: '데이터' },
-  { to: '/calc',     Icon: Calculator, label: '계산' },
-  { to: '/calendar', Icon: Calendar,   label: '캘린더' },
-  { to: '/decisions', Icon: Vote,      label: '결정' },
-  { to: '/shared',   Icon: Share2,     label: '공유' },
-  { to: '/admin',    Icon: Settings,   label: '관리', adminOnly: true },
-]
 
 const HIDDEN_PREFIXES = ['/login', '/auth']
 
@@ -53,7 +23,10 @@ export default function TopNav() {
   if (isMobile) return null
   if (HIDDEN_PREFIXES.some((p) => location.pathname.startsWith(p))) return null
 
-  const items = ITEMS.filter((it) => !it.adminOnly || user?.role === 'ADMIN')
+  const isAdmin = user?.role === 'ADMIN'
+  const primary = primaryItems()
+  const secondary = secondaryItems(isAdmin)
+  const moreActive = isSecondaryActive(location.pathname, isAdmin)
   const cmdLabel = navigator.platform.toLowerCase().includes('mac') ? '⌘' : 'Ctrl'
 
   const handleLogout = () => {
@@ -74,7 +47,7 @@ export default function TopNav() {
         <WorkspaceSwitcher />
 
         <nav className="top-nav__items">
-          {items.map((it) => (
+          {primary.map((it) => (
             <NavLink
               key={it.to}
               to={it.to}
@@ -89,6 +62,34 @@ export default function TopNav() {
               <span>{it.label}</span>
             </NavLink>
           ))}
+          {secondary.length > 0 && (
+            <Menu
+              align="start"
+              trigger={
+                <button
+                  type="button"
+                  className={`top-nav__item${moreActive ? ' top-nav__item--active' : ''}`}
+                  aria-label="더보기"
+                >
+                  <span className="top-nav__icon" aria-hidden="true">
+                    <MoreHorizontal size={16} strokeWidth={2} />
+                  </span>
+                  <span>더보기</span>
+                  <ChevronDown size={14} strokeWidth={2} aria-hidden="true" />
+                </button>
+              }
+            >
+              {secondary.map((it) => (
+                <MenuItem
+                  key={it.to}
+                  onSelect={() => navigate(it.to)}
+                  icon={<it.Icon size={14} strokeWidth={1.75} />}
+                >
+                  {it.label}
+                </MenuItem>
+              ))}
+            </Menu>
+          )}
         </nav>
 
         <button
