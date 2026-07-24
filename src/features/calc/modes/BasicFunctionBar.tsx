@@ -1,18 +1,19 @@
 import styles from './BasicFunctionBar.module.css'
 
-type Chip = { label: string; insert: string; caret?: number }
+// caret = caret offset from the insert start; default = end of inserted text.
+// aria = spoken label when the glyph isn't self-descriptive.
+type Chip = { label: string; insert: string; caret?: number; aria?: string }
 type Group = { name: string; chips: Chip[] }
 
-// caret = caret offset from the insert start; default = end of inserted text.
 const GROUPS: Group[] = [
   {
     name: '기본',
     chips: [
-      { label: '√', insert: 'sqrt()', caret: 5 },
-      { label: 'x²', insert: '^2' },
-      { label: 'xʸ', insert: '^' },
-      { label: '( )', insert: '()', caret: 1 },
-      { label: '!', insert: '!' },
+      { label: '√', insert: 'sqrt()', caret: 5, aria: '제곱근' },
+      { label: 'x²', insert: '^2', aria: '제곱' },
+      { label: 'xʸ', insert: '^', aria: '거듭제곱' },
+      { label: '( )', insert: '()', caret: 1, aria: '괄호' },
+      { label: '!', insert: '!', aria: '팩토리얼' },
     ],
   },
   {
@@ -21,16 +22,17 @@ const GROUPS: Group[] = [
       { label: 'sin', insert: 'sin()', caret: 4 },
       { label: 'cos', insert: 'cos()', caret: 4 },
       { label: 'tan', insert: 'tan()', caret: 4 },
-      { label: 'ln', insert: 'ln()', caret: 3 },
-      { label: 'log', insert: 'log()', caret: 4 },
-      { label: 'abs', insert: 'abs()', caret: 4 },
+      // expr-eval's `log` is the natural log (== ln); base-10 is `log10`.
+      { label: 'ln', insert: 'ln()', caret: 3, aria: '자연로그' },
+      { label: 'log₁₀', insert: 'log10()', caret: 6, aria: '상용로그' },
+      { label: 'abs', insert: 'abs()', caret: 4, aria: '절댓값' },
     ],
   },
   {
     name: '상수',
     chips: [
-      { label: 'π', insert: 'PI' },
-      { label: 'e', insert: 'E' },
+      { label: 'π', insert: 'PI', aria: '원주율' },
+      { label: 'e', insert: 'E', aria: '자연상수' },
     ],
   },
 ]
@@ -57,7 +59,7 @@ export default function BasicFunctionBar({ onInsert }: Props) {
                 e.preventDefault()
                 onInsert(c.insert, c.caret)
               }}
-              aria-label={c.label}
+              aria-label={c.aria ?? c.label}
             >
               {c.label}
             </button>

@@ -37,7 +37,9 @@ New component `src/features/calc/modes/BasicFunctionBar.tsx` (+ `.module.css`), 
 | Group | Chips → inserted text (caret) |
 |---|---|
 | 기본 | `√`→`sqrt(‸)` · `x²`→`^2` · `xʸ`→`^` · `( )`→`(‸)` · `!`→`!` |
-| 함수 | `sin`→`sin(‸)` · `cos`→`cos(‸)` · `tan`→`tan(‸)` · `ln`→`ln(‸)` · `log`→`log(‸)` · `abs`→`abs(‸)` |
+| 함수 | `sin`→`sin(‸)` · `cos`→`cos(‸)` · `tan`→`tan(‸)` · `ln`→`ln(‸)` · `log₁₀`→`log10(‸)` · `abs`→`abs(‸)` |
+
+> Note: `expr-eval`'s `log` is the **natural** log (identical to `ln`); base-10 is `log10`. The chip is labeled `log₁₀` and inserts `log10(` so a "log" button means base-10 as users expect — no silent wrong answers.
 | 상수 | `π`→`PI` · `e`→`E` |
 
 `‸` = caret position after insert. `%` is **omitted** (it is modulo in this engine, not percentage — would mislead finance users; true percentage is a possible later engine addition).
