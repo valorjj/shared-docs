@@ -1,5 +1,5 @@
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
-import { BookOpen, ChevronDown, LogOut, MoreHorizontal, Search, Settings2 } from 'lucide-react'
+import { BookOpen, ChevronDown, LogOut, Search, Settings2 } from 'lucide-react'
 import { useIsMobile } from '../../lib/useMediaQuery'
 import { useAuth } from '../../auth/useAuth'
 import { useSearchPalette } from '../../features/search/searchContext'
@@ -68,14 +68,16 @@ export default function TopNav() {
               trigger={
                 <button
                   type="button"
-                  className={`top-nav__item${moreActive ? ' top-nav__item--active' : ''}`}
+                  className={`top-nav__item top-nav__more${moreActive ? ' top-nav__item--active' : ''}`}
                   aria-label="더보기"
                 >
-                  <span className="top-nav__icon" aria-hidden="true">
-                    <MoreHorizontal size={16} strokeWidth={2} />
-                  </span>
                   <span>더보기</span>
-                  <ChevronDown size={14} strokeWidth={2} aria-hidden="true" />
+                  <ChevronDown
+                    className="top-nav__more-chevron"
+                    size={14}
+                    strokeWidth={2}
+                    aria-hidden="true"
+                  />
                 </button>
               }
             >

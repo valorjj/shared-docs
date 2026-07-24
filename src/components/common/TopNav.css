@@ -80,6 +80,29 @@
   justify-content: center;
 }
 
+/* 더보기 dropdown trigger — a <button> wearing the nav-link look, so it needs
+   the native-button resets the NavLink <a>s don't. */
+.top-nav__more {
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.top-nav__more[data-state='open'] {
+  color: var(--c-text);
+  background: var(--c-surface-tint);
+}
+
+.top-nav__more-chevron {
+  color: var(--c-text-subtle);
+  transition: transform var(--t-fast);
+}
+
+.top-nav__more[data-state='open'] .top-nav__more-chevron {
+  transform: rotate(180deg);
+}
+
 .top-nav__search {
   margin-left: auto;
   display: inline-flex;
