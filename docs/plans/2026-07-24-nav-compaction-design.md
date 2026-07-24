@@ -75,4 +75,4 @@ A `Menu` whose trigger is a `더보기` nav-style button (with a chevron). Items
 
 ## Testing
 
-No frontend test runner (project norm). Gates: `npx tsc -b --noEmit`, `npx eslint src/components/common/ src/features/workspaces/`, `npm run build`. Manual (owed by user): on a phone, confirm 5 bottom tabs, 더보기 opens the sheet with workspace switcher + secondary links + 검색/설정/account, secondary route highlights 더보기; on desktop, confirm the 더보기 dropdown holds 시트/데이터/공유/관리 and the row is no longer crowded.
+No frontend test runner (project norm). Gates: `npx tsc -b --noEmit`, `npx eslint src/components/common/ src/features/workspaces/`, `npm run build`. Manual (owed by user): on a phone, confirm 5 bottom tabs, 더보기 opens the sheet with workspace switcher + secondary links + 검색/설정/account, secondary route highlights 더보기; **open 새 워크스페이스 from inside the mobile 더보기 sheet** (Dialog-within-DropdownMenu-within-Dialog — the one genuinely new interaction path); on desktop, confirm the 더보기 dropdown holds 시트/데이터/공유/관리 and the row is no longer crowded.

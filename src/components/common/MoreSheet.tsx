@@ -1,7 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import { LogOut, Search, Settings2 } from 'lucide-react'
 import { AppSidebarSheet } from './AppSidebarSheet'
-import { NAV_ITEMS } from './navItems'
+import { secondaryItems } from './navItems'
 import WorkspaceSwitcher from '../../features/workspaces/WorkspaceSwitcher'
 import { useAuth } from '../../auth/useAuth'
 import { useSearchPalette } from '../../features/search/searchContext'
@@ -25,9 +25,7 @@ export default function MoreSheet({ open, onOpenChange }: Props) {
   const search = useSearchPalette()
   const settings = useSettings()
 
-  const secondary = NAV_ITEMS.filter(
-    (it) => !it.primary && (!it.adminOnly || user?.role === 'ADMIN'),
-  )
+  const secondary = secondaryItems(user?.role === 'ADMIN')
 
   const close = () => onOpenChange(false)
 

@@ -32,6 +32,14 @@ export const NAV_ITEMS: NavItem[] = [
   { to: '/admin',     Icon: Settings,   label: '관리',   primary: false, adminOnly: true },
 ]
 
+/** Primary destinations — their own slot in both navs. */
+export const primaryItems = (): NavItem[] => NAV_ITEMS.filter((i) => i.primary)
+
+/** Secondary (더보기) destinations, admin-filtered. One place for the
+ *  predicate so it can't drift across BottomNav / TopNav / MoreSheet. */
+export const secondaryItems = (isAdmin: boolean): NavItem[] =>
+  NAV_ITEMS.filter((i) => !i.primary && (!i.adminOnly || isAdmin))
+
 /** True when the current path belongs to a secondary (더보기) destination —
  *  used to light up the 더보기 tab/dropdown. All secondary routes are
  *  non-root, so a prefix match is safe. */

@@ -7,7 +7,7 @@ import { useSettings } from '../../features/settings/settingsContext'
 import WorkspaceSwitcher from '../../features/workspaces/WorkspaceSwitcher'
 import { Kbd } from '../ui'
 import { Menu, MenuItem, MenuSeparator } from '../ui/Menu'
-import { NAV_ITEMS, isSecondaryActive } from './navItems'
+import { primaryItems, secondaryItems, isSecondaryActive } from './navItems'
 import './TopNav.css'
 
 const HIDDEN_PREFIXES = ['/login', '/auth']
@@ -24,8 +24,8 @@ export default function TopNav() {
   if (HIDDEN_PREFIXES.some((p) => location.pathname.startsWith(p))) return null
 
   const isAdmin = user?.role === 'ADMIN'
-  const primary = NAV_ITEMS.filter((it) => it.primary)
-  const secondary = NAV_ITEMS.filter((it) => !it.primary && (!it.adminOnly || isAdmin))
+  const primary = primaryItems()
+  const secondary = secondaryItems(isAdmin)
   const moreActive = isSecondaryActive(location.pathname, isAdmin)
   const cmdLabel = navigator.platform.toLowerCase().includes('mac') ? '⌘' : 'Ctrl'
 

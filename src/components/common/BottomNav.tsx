@@ -3,7 +3,7 @@ import { NavLink, useLocation } from 'react-router-dom'
 import { MoreHorizontal } from 'lucide-react'
 import { useIsMobile } from '../../lib/useMediaQuery'
 import { useAuth } from '../../auth/useAuth'
-import { NAV_ITEMS, isSecondaryActive } from './navItems'
+import { primaryItems, isSecondaryActive } from './navItems'
 import MoreSheet from './MoreSheet'
 import './BottomNav.css'
 
@@ -18,7 +18,7 @@ export default function BottomNav() {
   if (!isMobile) return null
   if (HIDDEN_PREFIXES.some((p) => location.pathname.startsWith(p))) return null
 
-  const primary = NAV_ITEMS.filter((it) => it.primary)
+  const primary = primaryItems()
   const moreActive = isSecondaryActive(location.pathname, user?.role === 'ADMIN')
 
   return (
