@@ -66,6 +66,15 @@ export default function BasicMode({ seedEntry = null }: Props) {
     })
   }
 
+  // ⌘/Ctrl+Enter inserts the live `ans` token at the cursor — reuse the
+  // previous result with the keyboard, no mouse and no typing "ans".
+  const handleEditorKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+      e.preventDefault()
+      insertAtCursor('ans')
+    }
+  }
+
   const handleSave = () => {
     if (!hasAnyResult(output)) return
     const input: BasicInput = { body }
@@ -143,6 +152,7 @@ export default function BasicMode({ seedEntry = null }: Props) {
           className={styles.editor}
           value={body}
           onChange={(e) => setBody(e.target.value)}
+          onKeyDown={handleEditorKeyDown}
           placeholder={PLACEHOLDER}
           spellCheck={false}
           autoCorrect="off"
@@ -166,7 +176,7 @@ export default function BasicMode({ seedEntry = null }: Props) {
           )}
         </span>
         <span className={styles.copyHint}>
-          연산자로 시작하면 이전 결과에 이어집니다 · 결과를 클릭하면 삽입돼요
+          ⌘/Ctrl+Enter로 이전 결과(ans) 삽입 · 연산자로 시작하면 이어집니다
         </span>
       </div>
     </div>
